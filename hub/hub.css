@@ -1,0 +1,111 @@
+/* ERA v5 course hub — landing page. Tokens from ../shared/css/tokens.css. */
+
+.hub-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(4rem, 13vh, 9rem) 0 clamp(3rem, 8vh, 5rem);
+  background:
+    radial-gradient(120% 90% at 82% -10%, rgba(251, 113, 133, 0.13), transparent 55%),
+    radial-gradient(90% 80% at 6% 0%, rgba(45, 212, 191, 0.13), transparent 55%),
+    var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+.hub-hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at center, rgba(45, 212, 191, 0.30) 0, transparent 60%),
+    radial-gradient(circle at center, rgba(251, 113, 133, 0.30) 0, transparent 60%);
+  background-size: 48px 48px, 48px 48px;
+  background-position: 0 0, 24px 24px;
+  opacity: 0.08;
+  mask-image: radial-gradient(120% 100% at 50% 0%, #000 30%, transparent 80%);
+}
+.hub-hero-inner { position: relative; }
+.hub-title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(2.6rem, 7.5vw, 5.4rem);
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  margin: 0 0 1.4rem;
+}
+.hub-title .accent {
+  background: linear-gradient(120deg, var(--teal), var(--coral));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hub-sub {
+  max-width: 56ch;
+  font-size: clamp(1.02rem, 1.6vw, 1.2rem);
+  color: #c3cad9;
+  margin: 0;
+}
+
+.sessions { padding: clamp(3rem, 8vh, 5rem) 0 5rem; }
+.sessions-label {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 1.4rem;
+}
+.session-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
+
+.session-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  text-decoration: none;
+  color: inherit;
+  background: linear-gradient(180deg, var(--surface), var(--ink-2));
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  padding: 1.5rem 1.6rem;
+  transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.session-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(45, 212, 191, 0.5);
+  box-shadow: 0 18px 40px -22px rgba(45, 212, 191, 0.6);
+}
+.session-card:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+.session-card .row { display: flex; align-items: center; gap: 0.8rem; }
+.session-card h2 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.session-card p { margin: 0; color: #c3cad9; font-size: 0.98rem; }
+.card-proofs { list-style: none; margin: 0.2rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.card-proofs li { font-family: var(--mono); font-size: 0.82rem; color: var(--muted); display: flex; gap: 0.6rem; }
+.card-proofs li b { color: var(--teal); font-weight: 600; flex: none; }
+.card-cta { margin-top: auto; font-family: var(--mono); font-size: 0.9rem; color: var(--teal); }
+
+.session-card.soon {
+  cursor: default;
+  opacity: 0.7;
+  background: var(--ink-2);
+}
+.session-card.soon:hover { transform: none; border-color: var(--line-strong); box-shadow: none; }
+.soon-tag {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+
+.hub-foot { padding: 2.5rem 0 4rem; color: var(--muted); border-top: 1px solid var(--line); }
+.hub-foot .foot-meta { font-family: var(--mono); font-size: 0.85rem; color: var(--teal); margin-top: 0.4rem; }
+
+@media (max-width: 720px) {
+  .session-grid { grid-template-columns: 1fr; }
+}

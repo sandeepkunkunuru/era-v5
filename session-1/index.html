@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Session 1 · Four Proofs · ERA v5 · The School of AI</title>
+  <meta name="description" content="ERA v5 Session 1, proved live in your browser: activations, depth, embeddings, and data. Watch the decision boundary move." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1020'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23fb7185' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%232dd4bf'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/tokens.css" />
+  <link rel="stylesheet" href="./css/app.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+</head>
+<body>
+  <nav class="topbar wrap">
+    <a href="../">← ERA v5</a>
+    <a class="here">Session 1 · Four Proofs</a>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-grid" aria-hidden="true"></div>
+    <div class="wrap hero-inner">
+      <p class="eyebrow">Session 1 · Assignment QnA</p>
+      <h1 class="hero-title">The boundary<br />settles the argument.</h1>
+      <p class="hero-sub">
+        Four claims about activations, depth, embeddings, and data. None of them are asserted
+        here. Each one is <em>trained live in your browser</em>, so you watch the decision
+        boundary move and judge for yourself.
+      </p>
+      <div class="legend">
+        <span class="chip"><span class="dot dot-0"></span>class 0</span>
+        <span class="chip"><span class="dot dot-1"></span>class 1</span>
+        <span class="chip chip-quiet">teal ↔ coral field = the model's P(class 1)</span>
+      </div>
+      <div class="lab">
+        <span class="lab-label">random seed</span>
+        <input id="seed-input" type="number" value="42" min="0" step="1" aria-label="random seed" />
+        <button id="seed-shuffle" class="btn btn-ghost" type="button">🎲 New sample</button>
+        <span class="lab-note">reseeds every dataset below — each Retrain converges from fresh data.</span>
+      </div>
+      <p style="margin-top:1.6rem"><a class="scroll-hint" href="#proof-1">Start with activations ↓</a></p>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- S1-1 -->
+    <section class="proof reveal" id="proof-1">
+      <div class="proof-head">
+        <span class="marker">S1-1</span>
+        <h2 class="proof-title">Activations exist for a reason.</h2>
+      </div>
+      <p class="claim">
+        A model with no nonlinearity can only draw a straight boundary, so it cannot separate
+        two concentric rings. Add a single ReLU hidden layer and it wraps the ring. Only the
+        activation changes.
+      </p>
+      <div class="console two">
+        <figure class="panel">
+          <figcaption>Linear + sigmoid <span class="tag">no activation</span></figcaption>
+          <canvas id="p1-linear-canvas" class="field"></canvas>
+          <div class="readout">train accuracy <b id="p1-linear-acc">—</b></div>
+        </figure>
+        <figure class="panel">
+          <figcaption>One ReLU hidden layer <span class="tag tag-hot">nonlinear</span></figcaption>
+          <canvas id="p1-relu-canvas" class="field"></canvas>
+          <div class="readout">train accuracy <b id="p1-relu-acc">—</b></div>
+        </figure>
+      </div>
+      <div class="controls">
+        <button id="p1-train" class="btn">Train both</button>
+        <p class="status" id="p1-status">Press train. The linear model gets a straight line; the ReLU model gets a ring.</p>
+      </div>
+    </section>
+
+    <!-- S1-2 -->
+    <section class="proof reveal" id="proof-2">
+      <div class="proof-head">
+        <span class="marker">S1-2</span>
+        <h2 class="proof-title">Depth without nonlinearity is a lie.</h2>
+      </div>
+      <p class="claim">
+        Five stacked linear layers collapse to a single linear map — so a 5-layer linear net is
+        no stronger than 1 layer. Both fail identically. Insert ReLUs between the same five layers
+        and it suddenly solves the ring.
+      </p>
+      <div class="console three">
+        <figure class="panel">
+          <figcaption>1 linear layer</figcaption>
+          <canvas id="p2-one-canvas" class="field"></canvas>
+          <div class="readout">acc <b id="p2-one-acc">—</b></div>
+        </figure>
+        <figure class="panel">
+          <figcaption>5 linear layers <span class="tag">no activation</span></figcaption>
+          <canvas id="p2-five-canvas" class="field"></canvas>
+          <div class="readout">acc <b id="p2-five-acc">—</b></div>
+        </figure>
+        <figure class="panel">
+          <figcaption>5 layers + ReLU <span class="tag tag-hot">nonlinear</span></figcaption>
+          <canvas id="p2-relu-canvas" class="field"></canvas>
+          <div class="readout">acc <b id="p2-relu-acc">—</b></div>
+        </figure>
+      </div>
+      <div class="controls">
+        <button id="p2-train" class="btn">Train all three</button>
+        <p class="status" id="p2-status">The first two boundaries will be the same line. The third breaks the tie.</p>
+      </div>
+      <pre class="matrix" id="p2-matrix"></pre>
+    </section>
+
+    <!-- S1-3 -->
+    <section class="proof reveal" id="proof-3">
+      <div class="proof-head">
+        <span class="marker">S1-3</span>
+        <h2 class="proof-title">Embeddings learn similarity from nothing but next-token.</h2>
+      </div>
+      <p class="claim">
+        A tiny model is trained only to predict the next token in a toy grammar — animals, fruits,
+        and verbs that share next-token distributions. Similarity is never supplied. Yet the
+        embedding table clusters same-category tokens on its own.
+      </p>
+      <div class="console solo">
+        <figure class="panel wide">
+          <figcaption>Learned embeddings, projected to 2D (PCA)</figcaption>
+          <canvas id="p3-canvas" class="field tall"></canvas>
+          <div class="readout" id="p3-nn">—</div>
+        </figure>
+        <aside class="side">
+          <p class="side-label">categories</p>
+          <ul class="cats">
+            <li><span class="dot" style="background:#2DD4BF"></span>animals — cat, dog, cow, fox</li>
+            <li><span class="dot" style="background:#FB7185"></span>fruits — apple, mango, pear, plum</li>
+            <li><span class="dot" style="background:#FBBF24"></span>verbs — eat, chase, see, like</li>
+            <li><span class="dot" style="background:#8A93A8"></span>the — structural</li>
+          </ul>
+          <p class="side-note">grammar: <span class="mono">the &lt;animal&gt; &lt;verb&gt; the &lt;fruit/animal&gt;</span></p>
+        </aside>
+      </div>
+      <div class="controls">
+        <button id="p3-train" class="btn">Train next-token model</button>
+        <p class="status" id="p3-status">Start random. Watch same-category tokens drift together as it learns to predict the next word.</p>
+      </div>
+    </section>
+
+    <!-- S1-4 -->
+    <section class="proof reveal" id="proof-4">
+      <div class="proof-head">
+        <span class="marker">S1-4</span>
+        <h2 class="proof-title">Memorization vs generalization — data closes the gap.</h2>
+      </div>
+      <p class="claim">
+        One high-capacity net, one noisy task, three dataset sizes. On 20 points it drives train
+        accuracy to ~100% while held-out accuracy stays poor — it memorized the noise. Grow the
+        data and the train/test gap shrinks.
+      </p>
+      <div class="console solo">
+        <figure class="panel wide">
+          <figcaption>Train vs held-out accuracy, by dataset size</figcaption>
+          <canvas id="p4-canvas" class="field tall"></canvas>
+          <div class="readout"><span class="swatch sw-0"></span>train &nbsp;&nbsp;<span class="swatch sw-1"></span>held-out test</div>
+        </figure>
+        <aside class="side">
+          <p class="side-label">fixed setup</p>
+          <ul class="cats plain">
+            <li>model — 64 × 64 ReLU net (same every run)</li>
+            <li>task — noisy two-moons, 8% label flips</li>
+            <li>test — one shared 2000-point held-out set</li>
+            <li>sizes — 20 · 200 · 2000 training points</li>
+          </ul>
+          <p class="side-note">only the amount of data changes.</p>
+        </aside>
+      </div>
+      <div class="controls">
+        <button id="p4-train" class="btn">Train at 20 · 200 · 2000</button>
+        <p class="status" id="p4-status">Same model each time. Only the dataset grows.</p>
+      </div>
+      <pre class="matrix" id="p4-gap"></pre>
+    </section>
+
+    <!-- How it works -->
+    <section class="how reveal" id="how">
+      <h2>How this works</h2>
+      <p class="how-lead">
+        There is no server and nothing precomputed. Every boundary above is trained on your
+        machine, in JavaScript, the moment you press a button — so what you see is the model
+        actually learning, not a recording of one.
+      </p>
+      <div class="how-grid">
+        <div class="how-card">
+          <h3>The engine</h3>
+          <p>Each model is a real neural net built with <span class="k">TensorFlow.js</span> and trained by gradient descent (Adam) right in the page. Tiny nets, so it runs on the CPU backend in seconds.</p>
+          <p>The plane is coloured by sampling the model on a 64×64 grid and painting <code>P(class 1)</code> — teal→coral. The white valley between them is the decision boundary.</p>
+        </div>
+        <div class="how-card">
+          <h3>The data</h3>
+          <p>S1-1 &amp; S1-2 use two noisy concentric <span class="k">rings</span> — deliberately not linearly separable. S1-4 uses noisy <span class="k">two-moons</span> with a fraction of labels flipped, so a small dataset can memorize the noise.</p>
+          <p>S1-3 uses a toy <span class="k">grammar</span> where animals, fruits and verbs share next-token distributions — the only signal the embedding ever sees.</p>
+        </div>
+        <div class="how-card">
+          <h3>The seed control</h3>
+          <p>The <span class="k">random seed</span> up top regenerates every dataset. Change it (or hit <em>New sample</em>) and Retrain: the numbers wobble a little, but the story never does. That is the point — the result is the phenomenon, not one lucky run.</p>
+        </div>
+        <div class="how-card">
+          <h3>Reading the proofs</h3>
+          <p>S1-2 also multiplies the five weight matrices numerically — <code>K1·K2·K3·K4·K5</code> collapses to one 2×1 map, which is <em>why</em> stacked linear layers can only draw a line.</p>
+          <p>Every claim is re-run headless in <code>verify/</code> so the numbers here match a reproducible check, not a screenshot.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot wrap">
+    <p>Built for <strong>ERA v5 · Session 1</strong> — every boundary above was trained in your browser with TensorFlow.js. No precomputed results.</p>
+    <p class="foot-meta">Data is everything. So is the activation.</p>
+  </footer>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

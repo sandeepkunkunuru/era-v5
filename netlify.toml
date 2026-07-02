@@ -1,0 +1,11 @@
+# Static site — no framework, no build step beyond staging. Everything trains
+# client-side with TensorFlow.js.
+[build]
+  publish = "dist"
+  command = "bash build.sh"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"

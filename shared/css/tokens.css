@@ -1,0 +1,107 @@
+/* ERA v5 — shared design system. Imported by the course hub and every session
+   page so the whole course reads as one instrument. Page-specific layout lives
+   in each page's own stylesheet. */
+:root {
+  --ink: #0b1020;
+  --ink-2: #0e1428;
+  --surface: #141a2e;
+  --surface-2: #1b2340;
+  --line: rgba(230, 234, 242, 0.10);
+  --line-strong: rgba(230, 234, 242, 0.18);
+  --text: #e6eaf2;
+  --muted: #8a93a8;
+  --teal: #2dd4bf;
+  --coral: #fb7185;
+  --gold: #fbbf24;
+  --display: "Space Grotesk", system-ui, sans-serif;
+  --body: "Inter", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { width: min(1080px, 92vw); margin-inline: auto; }
+
+/* --- shared atoms --- */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin: 0 0 1.4rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: #cdd4e2;
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot-0 { background: var(--teal); }
+.dot-1 { background: var(--coral); }
+
+.marker {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+  background: linear-gradient(120deg, var(--teal), #7ff0e0);
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  flex: none;
+}
+
+.btn {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--ink);
+  background: linear-gradient(120deg, var(--teal), #6ee7d8);
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 1.4rem;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.2s ease, opacity 0.2s;
+  box-shadow: 0 8px 24px -12px rgba(45, 212, 191, 0.7);
+}
+.btn:hover { transform: translateY(-1px); box-shadow: 0 12px 30px -12px rgba(45, 212, 191, 0.9); }
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: 0.55; cursor: progress; }
+.btn:focus-visible { outline: 2px solid var(--coral); outline-offset: 3px; }
+
+/* ghost variant for secondary actions */
+.btn-ghost {
+  background: transparent;
+  color: var(--teal);
+  border: 1px solid var(--line-strong);
+  box-shadow: none;
+}
+.btn-ghost:hover { border-color: var(--teal); box-shadow: none; }
+
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { transition: none; opacity: 1; transform: none; }
+  .btn { transition: none; }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "verify",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.20.0",
+    "puppeteer": "^23.11.1"
+  }
+}
