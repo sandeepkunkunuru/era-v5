@@ -84,10 +84,46 @@
       </table></div>
     </section>
 
+    <!-- beyond the cap: budget curve + scale -->
+    <section class="proof reveal" id="beyond">
+      <div class="proof-head">
+        <span class="marker">S2·3</span>
+        <h2 class="proof-title">Beyond the cap — what fairness really costs.</h2>
+      </div>
+      <p class="claim">
+        Strip the English cap and parity-aware BPE makes all four languages <em>identical</em> — perfect
+        fairness, gap zero. Two things a single score can't show: how the shared cost moves with the vocabulary
+        budget, and whether any of this survives past four curated languages.
+      </p>
+      <div class="beyond-grid">
+        <figure class="chart-fig">
+          <figcaption>Common fertility vs vocabulary budget
+            <span class="chart-sub">all four languages — one line (parity spread &lt; 0.002)</span></figcaption>
+          <div class="chartwrap"><svg id="budget-chart" viewBox="0 0 640 320" role="img"
+            aria-label="Fertility falls from 1.9 toward 1.0 as the vocabulary budget grows; all four languages track one curve"></svg></div>
+          <p class="chart-note">1.39 is our 10k operating point, <b>not a floor</b> — more budget slides every
+            language toward 1.0 <em>together</em>. The floor is one token per word.</p>
+        </figure>
+        <aside class="scale-panel">
+          <p class="scale-label">does it generalize?</p>
+          <div class="scale-hero"><span class="scale-num">12</span>
+            <span class="scale-unit">languages<br />5 scripts</span></div>
+          <ul class="scale-list">
+            <li>parity spread <b>0.001</b> — Latin · Cyrillic · Arabic · Brahmic</li>
+            <li>nobody starved: Indonesian (2k words) sits with German (23k words)</li>
+            <li>shared cost rises with count: 4 → 1.39, 12 → 2.11</li>
+          </ul>
+          <p class="scale-warn">⚠ the <code>\S+</code> word metric breaks for CJK — Chinese ~57 chars per
+            "word", so tokens-per-word can't measure fairness there at all.</p>
+        </aside>
+      </div>
+      <div class="chart-tip" id="chart-tip" hidden></div>
+    </section>
+
     <!-- verify + downloads -->
     <section class="proof reveal" id="verify">
       <div class="proof-head">
-        <span class="marker">S2·3</span>
+        <span class="marker">S2·4</span>
         <h2 class="proof-title">Don't trust the numbers — re-run them.</h2>
       </div>
       <p class="claim">

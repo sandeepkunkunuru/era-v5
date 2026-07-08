@@ -202,12 +202,62 @@ function wireReveal() {
 }
 
 /* ---- boot ---- */
+/* ---- budget curve: pure-parity common fertility vs vocab size (measured, experiments/parity_bpe.py) ---- */
+const BUDGET = [[4000, 1.903], [6000, 1.670], [8000, 1.510], [10000, 1.390],
+  [12000, 1.308], [14000, 1.242], [16000, 1.176], [20000, 1.046]];
+function renderBudgetChart() {
+  const svg = document.getElementById("budget-chart"); if (!svg) return;
+  const W = 640, H = 320, L = 48, R = 18, T = 18, B = 36;
+  const x0 = L, x1 = W - R, y0 = T, y1 = H - B, xmin = 4000, xmax = 20000, ymin = 1.0, ymax = 2.0;
+  const X = (v) => x0 + (v - xmin) / (xmax - xmin) * (x1 - x0);
+  const Y = (f) => y1 - (f - ymin) / (ymax - ymin) * (y1 - y0);
+  const mono = "font-family:var(--mono)";
+  let s = "";
+  for (let f = 1.0; f <= 2.0001; f += 0.2) {
+    const y = Y(f).toFixed(1), floor = Math.abs(f - 1.0) < 1e-9;
+    s += `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" style="stroke:var(--${floor ? "coral" : "line"})" `
+      + `stroke-width="1" ${floor ? 'stroke-dasharray="4 4" opacity="0.65"' : 'opacity="0.6"'}/>`;
+    s += `<text x="${x0 - 8}" y="${(+y + 3).toFixed(1)}" text-anchor="end" font-size="10" style="fill:var(--muted);${mono}">${f.toFixed(1)}</text>`;
+  }
+  for (const v of [4000, 8000, 12000, 16000, 20000])
+    s += `<text x="${X(v).toFixed(1)}" y="${y1 + 18}" text-anchor="middle" font-size="10" style="fill:var(--muted);${mono}">${v / 1000}k</text>`;
+  s += `<text x="${x1}" y="${(Y(1.0) - 6).toFixed(1)}" text-anchor="end" font-size="9.5" style="fill:var(--coral);${mono}">floor 1.0 · one token / word</text>`;
+  s += `<polyline points="${BUDGET.map(([v, f]) => `${X(v).toFixed(1)},${Y(f).toFixed(1)}`).join(" ")}" `
+    + `fill="none" style="stroke:var(--teal)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  for (const [v, f] of BUDGET) s += `<circle cx="${X(v).toFixed(1)}" cy="${Y(f).toFixed(1)}" r="3" style="fill:var(--teal)"/>`;
+  const mx = X(10000).toFixed(1), my = Y(1.390).toFixed(1);
+  s += `<line x1="${mx}" y1="${my}" x2="${mx}" y2="${y1}" style="stroke:var(--gold)" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>`;
+  s += `<circle cx="${mx}" cy="${my}" r="4.5" style="fill:var(--gold);stroke:var(--ink)" stroke-width="2"/>`;
+  s += `<text x="${(+mx + 8).toFixed(1)}" y="${(+my - 8).toFixed(1)}" font-size="10.5" font-weight="600" style="fill:var(--gold);${mono}">shipped 10k → 1.39</text>`;
+  s += `<line id="bc-cross" x1="0" y1="${y0}" x2="0" y2="${y1}" style="stroke:var(--text)" stroke-width="1" opacity="0" stroke-dasharray="2 3"/>`;
+  s += `<circle id="bc-dot" r="5" style="fill:var(--teal);stroke:var(--ink)" stroke-width="2" opacity="0"/>`;
+  s += `<rect id="bc-hit" x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" fill="transparent"/>`;
+  svg.innerHTML = s;
+  const cross = svg.querySelector("#bc-cross"), dot = svg.querySelector("#bc-dot"),
+    hit = svg.querySelector("#bc-hit"), tip = document.getElementById("chart-tip"), pt = svg.createSVGPoint();
+  const nearest = (vx) => BUDGET.reduce((a, d) => Math.abs(d[0] - vx) < Math.abs(a[0] - vx) ? d : a);
+  hit.addEventListener("mousemove", (e) => {
+    pt.x = e.clientX; pt.y = e.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const [v, f] = nearest(xmin + (loc.x - x0) / (x1 - x0) * (xmax - xmin));
+    const px = X(v).toFixed(1), py = Y(f).toFixed(1);
+    cross.setAttribute("x1", px); cross.setAttribute("x2", px); cross.setAttribute("opacity", "0.5");
+    dot.setAttribute("cx", px); dot.setAttribute("cy", py); dot.setAttribute("opacity", "1");
+    tip.hidden = false; tip.innerHTML = `${v.toLocaleString()} tokens · <b>${f.toFixed(3)}</b> / word`;
+    tip.style.left = e.clientX + "px"; tip.style.top = e.clientY + "px";
+  });
+  hit.addEventListener("mouseleave", () => {
+    cross.setAttribute("opacity", "0"); dot.setAttribute("opacity", "0"); tip.hidden = true;
+  });
+}
+
 (async function () {
   wireReveal();
   const R = await fetch("./results.json").then((r) => r.json());
   renderScore(R);
   renderAxis(R);
   renderTable(R);
+  renderBudgetChart();
   buildVerifyRows();
   document.getElementById("verify-btn").addEventListener("click", () => runVerify(R));
   runVerify(R);   // auto-run once on load; the button re-runs it on demand

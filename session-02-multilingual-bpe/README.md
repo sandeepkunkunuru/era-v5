@@ -84,7 +84,7 @@ the H3/H4 post-hoc pipeline and is what the live widget serves.
 | `optimize.py` | do normalization (NFC/NFD/NFKC) or a finer allocation help? | **No** — normalization is neutral; the ceiling is ~2,400 safe / ~2,600 at the cap-edge (risky). |
 | `augment.py` | how far does whole-word reclamation go? | drives H3's 2,336 → ~2,430 (safe) / ~2,600 (cap-edge). |
 | `vocap.py` | does a principled VoCap-style allocation beat the grid? | **No** — marginal-utility water-filling lands on the *same* base budget → confirms we're on the allocation frontier. |
-| `parity_bpe.py` | the principled parity-aware trainer + is the fertility a floor? | **Pure parity → all four = 1.390, gap 0.** Not a floor: fertility → 1.0 as V → 11,416 (= total unique word types). Also: **fertility-parity ≠ Rényi-efficiency parity** (Zouhar's info-theoretic quality metric). |
+| `parity_bpe.py` | the principled parity-aware trainer + is the fertility a floor? | **Pure parity → all four = 1.390, gap 0.** Not a floor: fertility falls toward 1.0 with budget (needs ≥ 11,416 tokens = unique word types; nears 1.0 by V≈20k). Also: **fertility-parity ≠ Rényi-efficiency parity** (Zouhar's info-theoretic quality metric). |
 | `scale.py` | does parity survive 12 languages / 5 scripts, off the 4 pages? | **Yes** — spread stays ~0.001 across Latin/Cyrillic/Arabic/Brahmic; no language starved. But **CJK breaks the `\S+`-word metric** (Chinese ~57 chars/"word"). |
 
 ---
@@ -98,7 +98,7 @@ the H3/H4 post-hoc pipeline and is what the live widget serves.
    everyone else is taxed to ~1.58. The metric rewards you for *mitigating a distortion its own constraint
    creates* — and forcing English low makes total tokenization *more* expensive, not less.
 3. **1.390 is not a floor.** It is the value at V=10k; the common fertility falls monotonically with budget
-   toward **1.0** (each `\S+` word its own token), reached at V ≈ 11,416 = the number of unique word types.
+   toward **1.0** (each `\S+` word its own token). Reaching 1.0 needs at least the **11,416 unique word types** in vocab; because BPE also spends slots on intermediate merges, it only *nears* 1.0 in practice (V=20k → 1.05).
    Going below 1.0 needs superword (cross-whitespace) tokens.
 4. **Parity is budget-invariant and scale-robust.** Parity-aware BPE holds the spread at ~0.001 at every
    budget and across 12 languages / 5 scripts; low-resource languages are not starved.

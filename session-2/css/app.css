@@ -188,6 +188,38 @@ table.stats { width: 100%; border-collapse: collapse; font-size: 0.95rem; min-wi
 .dlbtns .btn { text-decoration: none; }
 .dlbtns .sz { font-family: var(--mono); font-weight: 400; opacity: 0.7; }
 
+/* ---------- beyond the cap: budget chart + scale ---------- */
+.beyond-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 1.2rem; align-items: stretch; }
+.chart-fig { margin: 0; display: flex; flex-direction: column; gap: 0.7rem;
+  background: linear-gradient(180deg, var(--surface), var(--ink-2));
+  border: 1px solid var(--line-strong); border-radius: 14px; padding: 1rem 1.1rem; }
+.chart-fig figcaption { font-family: var(--mono); font-size: 0.8rem; color: #cdd4e2;
+  display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+.chart-sub { color: var(--muted); font-size: 0.72rem; }
+.chartwrap { overflow-x: auto; }
+#budget-chart { width: 100%; height: auto; min-width: 460px; display: block; cursor: crosshair; }
+.chart-note { font-size: 0.9rem; color: #c3cad9; margin: 0; }
+.scale-panel { background: var(--ink-2); border: 1px solid var(--line); border-radius: 14px;
+  padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem; }
+.scale-label { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted); margin: 0; }
+.scale-hero { display: flex; align-items: baseline; gap: 0.6rem; }
+.scale-num { font-family: var(--display); font-weight: 700; font-size: 3.2rem; line-height: 0.9;
+  color: var(--gold); }
+.scale-unit { font-family: var(--mono); font-size: 0.8rem; color: #cdd4e2; line-height: 1.25; }
+.scale-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column;
+  gap: 0.5rem; font-size: 0.9rem; color: #cdd4e2; }
+.scale-list b { color: var(--teal); font-variant-numeric: tabular-nums; }
+.scale-warn { font-size: 0.82rem; color: var(--coral); margin: 0.2rem 0 0; }
+.scale-warn code { font-family: var(--mono); background: rgba(251,113,133,0.1); padding: 0.05rem 0.3rem;
+  border-radius: 4px; }
+.chart-tip { position: fixed; z-index: 10; pointer-events: none; font-family: var(--mono);
+  font-size: 0.76rem; background: var(--ink); color: var(--text); border: 1px solid var(--line-strong);
+  border-radius: 8px; padding: 0.4rem 0.6rem; transform: translate(-50%, -130%); white-space: nowrap;
+  box-shadow: 0 8px 24px -10px rgba(0,0,0,0.7); }
+.chart-tip b { color: var(--teal); }
+@media (max-width: 720px) { .beyond-grid { grid-template-columns: 1fr; } }
+
 /* ---------- how it works (shared with S1 idiom) ---------- */
 .how { padding: clamp(3.2rem, 8vh, 5.5rem) 0; border-bottom: 1px solid var(--line); }
 .how h2 { font-family: var(--display); font-weight: 600; font-size: clamp(1.5rem, 3.4vw, 2.1rem); letter-spacing: -0.015em; margin: 0 0 0.6rem; }
