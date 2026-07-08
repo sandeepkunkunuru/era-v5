@@ -11,6 +11,22 @@ screenshots. You press a button, the boundary moves, and you check the claim you
 | # | Title | What it proves |
 |---|-------|----------------|
 | [Session 1](./session-1) | Four proofs | activations · depth · embeddings · data — see below |
+| [Session 2](./session-2) | Multilingual BPE | one 10k-vocab tokenizer made *fair* across four scripts — score 2,336 |
+
+### Session 2 — cross-lingual fertility parity
+
+One BPE tokenizer, 10,000-token joint vocabulary, tuned so tokens-per-word is as equal as
+possible across **English · Hindi · Telugu · Spanish**, with English held under 1.2. The score is
+`1000 / (X₄ − X₁)` — smaller spread, higher score.
+
+| | Result |
+|---|---|
+| **The trick** | script-disjoint allocation — a joint **Latin** group (English + Spanish, since they share a script) unioned with disjoint **Devanagari** and **Telugu** groups |
+| **Why it wins** | a naive joint tokenizer starves Telugu to ~1.95 (score 1,239); giving each script its own budget clusters all four in 1.18–1.61 → **score 2,336** (1.9×) |
+| **Honesty** | the page re-tokenizes all four pages live in-browser (a faithful BPE port) and checks the numbers against the reported ones |
+
+The tokenizer is trained in `session-02-multilingual-bpe/` (`train_h3.py`); `build_widget.py`
+publishes the artifacts into `session-2/`.
 
 ### Session 1 — the four claims
 

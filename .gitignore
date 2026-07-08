@@ -1,3 +1,5 @@
+__pycache__/
+*.pyc
 verify/node_modules/
 verify/package-lock.json
 node_modules/

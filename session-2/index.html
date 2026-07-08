@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Session 2 · Multilingual BPE · ERA v5 · The School of AI</title>
+  <meta name="description" content="ERA v5 Session 2: one 10,000-token BPE tokenizer made fair across English, Hindi, Telugu, and Spanish. The page re-tokenizes every page live in your browser to prove the numbers." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1020'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23fb7185' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%232dd4bf'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/tokens.css" />
+  <link rel="stylesheet" href="./css/app.css" />
+</head>
+<body>
+  <nav class="topbar wrap">
+    <a href="../">← ERA v5</a>
+    <a class="here">Session 2 · Multilingual BPE</a>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-grid" aria-hidden="true"></div>
+    <div class="wrap hero-inner">
+      <p class="eyebrow">Session 2 · Assignment</p>
+      <h1 class="hero-title">One vocabulary, four scripts —<br /><span class="accent">fair to every one.</span></h1>
+      <p class="hero-sub">
+        A single BPE tokenizer, 10,000-token joint vocabulary, built so that <em>tokens-per-word</em>
+        is as equal as possible across English, Hindi, Telugu, and Spanish — with English held under
+        1.2. The grade rewards the smallest spread between the languages, and every number here is
+        <em>re-tokenized live in your browser</em>.
+      </p>
+
+      <div class="scoreline">
+        <div class="scorebox">
+          <span class="score-label">Score</span>
+          <span class="score-val" id="score">—</span>
+          <span class="score-formula">1000 / (X₄ − X₁)</span>
+        </div>
+        <div class="scorechips">
+          <span class="chip" id="chip-gap">gap —</span>
+          <span class="chip" id="chip-cap">English —</span>
+          <span class="chip" id="chip-vocab">vocab —</span>
+          <span class="chip chip-quiet" id="chip-base">vs baseline —</span>
+        </div>
+      </div>
+      <p style="margin-top:1.6rem"><a class="scroll-hint" href="#parity">See the spread ↓</a></p>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- fertility number line -->
+    <section class="proof reveal" id="parity">
+      <div class="proof-head">
+        <span class="marker">S2·1</span>
+        <h2 class="proof-title">The whole grade is one picture.</h2>
+      </div>
+      <p class="claim">
+        Each language's fertility is tokens ÷ words on its Wikipedia "India" page. The score is
+        1000 divided by the distance between the highest and lowest — so fairness means pulling the
+        four points together. English sits at the left, safely under its 1.2 cap; the gold band is
+        the gap the score measures.
+      </p>
+      <div class="axiswrap"><div class="axis" id="axis" role="img"
+        aria-label="Fertility number line for the four languages"></div></div>
+    </section>
+
+    <!-- per-language stats -->
+    <section class="proof reveal" id="stats">
+      <div class="proof-head">
+        <span class="marker">S2·2</span>
+        <h2 class="proof-title">Per-language fertility.</h2>
+      </div>
+      <p class="claim">
+        Telugu's page is small (2,511 words) and its script is expensive, so a naive joint tokenizer
+        starves it to ~1.95. Giving each script its own budget clusters all four between 1.18 and 1.61
+        instead.
+      </p>
+      <div class="tblwrap"><table class="stats" id="tbl">
+        <thead><tr>
+          <th>Language</th><th>Script</th><th>Words</th><th>Tokens</th><th>Fertility</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </section>
+
+    <!-- verify + downloads -->
+    <section class="proof reveal" id="verify">
+      <div class="proof-head">
+        <span class="marker">S2·3</span>
+        <h2 class="proof-title">Don't trust the numbers — re-run them.</h2>
+      </div>
+      <p class="claim">
+        The tokenizer below is loaded and run against all four pages in your browser, then compared
+        to the reported fertilities. Nothing is precomputed; the graders re-run it too. Download the
+        exact artifact they check.
+      </p>
+      <div class="verify">
+        <button class="btn" id="verify-btn" type="button">Re-tokenize all four</button>
+        <span class="vpill run" id="vpill"><span class="vdot"></span><span id="vtxt">re-tokenizing…</span></span>
+        <p class="status" id="vnote">Encoding English, Hindi, Telugu, and Spanish with the downloaded tokenizer.</p>
+      </div>
+      <ol class="verify-rows" id="verify-rows"></ol>
+      <div class="dlbtns">
+        <a class="btn" id="dl-tok" href="./tokenizer.json" download>↓ tokenizer.json <span class="sz" id="tok-sz"></span></a>
+        <a class="btn btn-ghost" id="dl-txt" href="./tokens.txt" download>↓ tokens.txt · 10,000 tokens</a>
+      </div>
+    </section>
+
+    <!-- how it works -->
+    <section class="how reveal" id="how">
+      <h2>How this works</h2>
+      <p class="how-lead">
+        The trick is not to train one big tokenizer, but to give each writing system its own budget
+        and stitch them together — because scripts that never share characters can never compete for
+        vocabulary.
+      </p>
+      <div class="how-grid">
+        <div class="how-card">
+          <h3>The problem</h3>
+          <p>One joint BPE couples every language through a single 10k budget. Forcing English under
+          <code>1.2</code> steals merges from <span class="k">Telugu</span>, whose tiny page then blows
+          up to ~1.95. That naive tokenizer scores just <b>1,239</b>.</p>
+        </div>
+        <div class="how-card">
+          <h3>Script-disjoint allocation</h3>
+          <p>Train three tokenizers — a <span class="k">Latin</span> one, a <span class="k">Devanagari</span>
+          one (Hindi), a <span class="k">Telugu</span> one — each with its own budget, then
+          <em>union</em> their vocabularies. Because the scripts occupy disjoint code-point ranges,
+          their merge rules never fire on each other's text, so the union is lossless.</p>
+        </div>
+        <div class="how-card">
+          <h3>Why English &amp; Spanish are special</h3>
+          <p>They share the <span class="k">Latin</span> script, so unioning two separate Latin
+          vocabularies lets whichever comes first hijack the other (measured: English-priority pushes
+          Spanish to <code>1.95</code>). The fix: train English and Spanish <em>together</em> as one
+          Latin group — the subtlety the whole result hinges on.</p>
+        </div>
+        <div class="how-card">
+          <h3>Honest by construction</h3>
+          <p>The pre-tokenizer is <code>WhitespaceSplit</code>, so a "word" is exactly <code>\S+</code> —
+          matching the grader. The fertilities on this page are re-computed here in JavaScript, and the
+          in-browser BPE reproduces the reference token counts exactly.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot wrap">
+    <p>Built for <strong>ERA v5 · Session 2</strong> — one 10,000-token BPE tokenizer, re-tokenized in your browser. No precomputed numbers.</p>
+    <p class="foot-meta">Fairness is the spread. Minimize it.</p>
+  </footer>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

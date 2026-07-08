@@ -1,0 +1,39 @@
+{
+  "method": "H3-script-disjoint (joint-Latin + disjoint hi/te)",
+  "langs": [
+    "en",
+    "hi",
+    "te",
+    "es"
+  ],
+  "vocab": 10000,
+  "en_cap": 1.2,
+  "alloc": {
+    "latin_budget": 6300,
+    "en_weight": 4,
+    "hi_budget": 1200,
+    "te_budget": 2600
+  },
+  "words": {
+    "en": 10121,
+    "hi": 8078,
+    "te": 2511,
+    "es": 10532
+  },
+  "fertility": {
+    "en": 1.1799229325165497,
+    "hi": 1.6080713047784105,
+    "te": 1.5770609318996416,
+    "es": 1.6071021648309913
+  },
+  "X1": 1.1799229325165497,
+  "X4": 1.6080713047784105,
+  "gap": 0.42814837226186087,
+  "score": 2335.6389158204893,
+  "page_titles": {
+    "en": "India",
+    "hi": "भारत",
+    "te": "భారతదేశం",
+    "es": "India"
+  }
+}
