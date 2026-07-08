@@ -1,5 +1,5 @@
 {
-  "method": "H3-script-disjoint (joint-Latin + disjoint hi/te)",
+  "method": "H4-reallocation (H3 union + whole-word budget reclamation)",
   "langs": [
     "en",
     "hi",
@@ -11,8 +11,14 @@
   "alloc": {
     "latin_budget": 6300,
     "en_weight": 4,
-    "hi_budget": 1200,
-    "te_budget": 2600
+    "hi_budget": 1100,
+    "te_budget": 2200,
+    "reallocated_slots": 652,
+    "targets": [
+      "es",
+      "hi",
+      "te"
+    ]
   },
   "words": {
     "en": 10121,
@@ -22,14 +28,14 @@
   },
   "fertility": {
     "en": 1.1799229325165497,
-    "hi": 1.6080713047784105,
-    "te": 1.5770609318996416,
-    "es": 1.6071021648309913
+    "hi": 1.5824461500371378,
+    "te": 1.5913978494623655,
+    "es": 1.577383213064945
   },
   "X1": 1.1799229325165497,
-  "X4": 1.6080713047784105,
-  "gap": 0.42814837226186087,
-  "score": 2335.6389158204893,
+  "X4": 1.5913978494623655,
+  "gap": 0.41147491694581584,
+  "score": 2430.2817956013655,
   "page_titles": {
     "en": "India",
     "hi": "भारत",
