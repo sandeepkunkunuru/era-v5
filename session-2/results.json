@@ -1,5 +1,5 @@
 {
-  "method": "H4-reallocation (H3 union + whole-word budget reclamation)",
+  "method": "H5 parity-aware BPE (Foroutan et al. ACL 2026): merge the worst language's pair each step",
   "langs": [
     "en",
     "hi",
@@ -8,18 +8,6 @@
   ],
   "vocab": 10000,
   "en_cap": 1.2,
-  "alloc": {
-    "latin_budget": 6300,
-    "en_weight": 4,
-    "hi_budget": 1100,
-    "te_budget": 2200,
-    "reallocated_slots": 652,
-    "targets": [
-      "es",
-      "hi",
-      "te"
-    ]
-  },
   "words": {
     "en": 10121,
     "hi": 8078,
@@ -27,15 +15,15 @@
     "es": 10532
   },
   "fertility": {
-    "en": 1.1799229325165497,
-    "hi": 1.5824461500371378,
-    "te": 1.5913978494623655,
-    "es": 1.577383213064945
+    "en": 1.1823930441655963,
+    "hi": 1.5804654617479574,
+    "te": 1.5802469135802468,
+    "es": 1.5806114698063045
   },
-  "X1": 1.1799229325165497,
-  "X4": 1.5913978494623655,
-  "gap": 0.41147491694581584,
-  "score": 2430.2817956013655,
+  "X1": 1.1823930441655963,
+  "X4": 1.5806114698063045,
+  "gap": 0.3982184256407082,
+  "score": 2511.184655484144,
   "page_titles": {
     "en": "India",
     "hi": "भारत",

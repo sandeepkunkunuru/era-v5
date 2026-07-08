@@ -1,0 +1,45 @@
+{
+  "method": "H4-reallocation (H3 union + whole-word budget reclamation)",
+  "langs": [
+    "en",
+    "hi",
+    "te",
+    "es"
+  ],
+  "vocab": 10000,
+  "en_cap": 1.2,
+  "alloc": {
+    "latin_budget": 6300,
+    "en_weight": 4,
+    "hi_budget": 1100,
+    "te_budget": 2200,
+    "reallocated_slots": 652,
+    "targets": [
+      "es",
+      "hi",
+      "te"
+    ]
+  },
+  "words": {
+    "en": 10121,
+    "hi": 8078,
+    "te": 2511,
+    "es": 10532
+  },
+  "fertility": {
+    "en": 1.1799229325165497,
+    "hi": 1.5824461500371378,
+    "te": 1.5913978494623655,
+    "es": 1.577383213064945
+  },
+  "X1": 1.1799229325165497,
+  "X4": 1.5913978494623655,
+  "gap": 0.41147491694581584,
+  "score": 2430.2817956013655,
+  "page_titles": {
+    "en": "India",
+    "hi": "भारत",
+    "te": "భారతదేశం",
+    "es": "India"
+  }
+}

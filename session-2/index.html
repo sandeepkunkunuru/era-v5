@@ -73,8 +73,8 @@
       </div>
       <p class="claim">
         Telugu's page is small (2,511 words) and its script is expensive, so a naive joint tokenizer
-        starves it to ~1.95. Giving each script its own budget — then reclaiming wasted slots for whole
-        words — clusters all four between 1.18 and 1.59 instead.
+        starves it to ~1.95. Parity-aware BPE instead holds them in tight balance — English pinned at its
+        1.18 cap, and Hindi, Telugu, and Spanish at a near-identical ~1.58.
       </p>
       <div class="tblwrap"><table class="stats" id="tbl">
         <thead><tr>
@@ -111,44 +111,41 @@
     <section class="how reveal" id="how">
       <h2>How this works</h2>
       <p class="how-lead">
-        The trick is not to train one big tokenizer, but to give each writing system its own budget
-        and stitch them together — because scripts that never share characters can never compete for
-        vocabulary.
+        The trick isn't a bigger vocabulary or a clever budget split — it's changing <em>what BPE
+        optimizes</em>. Standard BPE greedily merges the most frequent pair in the whole corpus, so it
+        serves whichever language dominates. Parity-aware BPE fixes that in one line.
       </p>
       <div class="how-grid">
         <div class="how-card">
           <h3>The problem</h3>
-          <p>One joint BPE couples every language through a single 10k budget. Forcing English under
-          <code>1.2</code> steals merges from <span class="k">Telugu</span>, whose tiny page then blows
-          up to ~1.95. That naive tokenizer scores just <b>1,239</b>.</p>
+          <p>Frequency-greedy BPE spends its 10,000 merges on the busiest language. Low-resource scripts
+          pay a <b>token tax</b> — <span class="k">Telugu</span>'s tiny page blows up to ~1.95 tokens per
+          word in a naive joint tokenizer, while English sits near 1.0.</p>
         </div>
         <div class="how-card">
-          <h3>Script-disjoint allocation</h3>
-          <p>Train three tokenizers — a <span class="k">Latin</span> one, a <span class="k">Devanagari</span>
-          one (Hindi), a <span class="k">Telugu</span> one — each with its own budget, then
-          <em>union</em> their vocabularies. Because the scripts occupy disjoint code-point ranges,
-          their merge rules never fire on each other's text, so the union is lossless.</p>
+          <h3>Parity-aware merges</h3>
+          <p>Change one thing: at every merge step, look at the language that is currently <em>worst
+          compressed</em> and merge <em>its</em> most valuable pair — not the globally most frequent one.
+          Fairness is optimized during training, not patched on afterward. (<span class="k">Foroutan et
+          al., ACL 2026</span>.)</p>
         </div>
         <div class="how-card">
-          <h3>Reclaim the wasted budget</h3>
-          <p>BPE spends ~17% of the 10,000 slots on intermediate merges that never surface as final
-          tokens, while whole-word coverage stays low. Following <span class="k">Picky BPE</span> and
-          <span class="k">BPE-knockout</span>, we train at a smaller budget and spend the freed slots
-          on whole-word tokens for the highest-fertility languages — pulling the max down from
-          <code>1.61</code> to <code>1.59</code>: <b>score 2,336 → 2,430</b>.</p>
+          <h3>What fairness looks like</h3>
+          <p>With no cap, all four languages converge to the <em>same</em> fertility — an identical
+          <code>1.39</code> tokens per word, a gap of <b>zero</b>. Nobody is taxed; every language costs
+          the same to encode. Ordinary BPE never finds this.</p>
         </div>
         <div class="how-card">
-          <h3>Why English &amp; Spanish are special</h3>
-          <p>They share the <span class="k">Latin</span> script, so unioning two separate Latin
-          vocabularies lets whichever comes first hijack the other (measured: English-priority pushes
-          Spanish to <code>1.95</code>). The fix: train English and Spanish <em>together</em> as one
-          Latin group — the subtlety the whole result hinges on.</p>
+          <h3>What the English cap costs</h3>
+          <p>Hold English under <code>1.2</code> and the balance breaks: English is privileged to
+          <code>1.18</code> while the other three settle at an identical <code>1.58</code> — still
+          perfectly balanced <em>with each other</em>. The cap itself is what creates the gap.</p>
         </div>
         <div class="how-card">
           <h3>Honest by construction</h3>
           <p>The pre-tokenizer is <code>WhitespaceSplit</code>, so a "word" is exactly <code>\S+</code> —
-          matching the grader. The fertilities on this page are re-computed here in JavaScript, and the
-          in-browser BPE reproduces the reference token counts exactly.</p>
+          matching the grader. Numbers are verified against HuggingFace <code>tokenizers</code> and
+          re-computed live in your browser below.</p>
         </div>
       </div>
     </section>

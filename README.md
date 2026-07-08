@@ -11,7 +11,7 @@ screenshots. You press a button, the boundary moves, and you check the claim you
 | # | Title | What it proves |
 |---|-------|----------------|
 | [Session 1](./session-1) | Four proofs | activations · depth · embeddings · data — see below |
-| [Session 2](./session-2) | Multilingual BPE | one 10k-vocab tokenizer made *fair* across four scripts — score 2,430 |
+| [Session 2](./session-2) | Multilingual BPE | one 10k-vocab tokenizer made *fair* across four scripts — parity-aware BPE, score 2,511 |
 
 ### Session 2 — cross-lingual fertility parity
 
@@ -21,14 +21,15 @@ possible across **English · Hindi · Telugu · Spanish**, with English held und
 
 | | Result |
 |---|---|
-| **The trick** | script-disjoint allocation — a joint **Latin** group (English + Spanish, since they share a script) unioned with disjoint **Devanagari** and **Telugu** groups |
-| **Then** | reclaim the ~17% of slots BPE wastes on intermediate merges (à la Picky BPE / BPE-knockout) and spend them on whole-word tokens for the worst languages |
-| **Why it wins** | a naive joint tokenizer starves Telugu to ~1.95 (score 1,239); the above clusters all four in 1.18–1.59 → **score 2,430** (2×) |
-| **Honesty** | the page re-tokenizes all four pages live in-browser (a faithful BPE port) and checks the numbers against the reported ones |
+| **The method** | **parity-aware BPE** (Foroutan et al., ACL 2026): at every merge, merge the *worst-compressed* language's most valuable pair — not the globally most frequent one. Fairness optimized during training. |
+| **Fairness ceiling** | with no cap, all four converge to an identical **1.39** tokens/word — gap **0**. The English ≤1.2 cap is what creates the gap (English → 1.18, the other three → an identical 1.58). |
+| **Result** | naive joint BPE starves Telugu to ~1.95 (score 1,239); parity-aware BPE → **score 2,511**. Verified exact against HuggingFace `tokenizers`. |
+| **Honesty** | the page re-tokenizes all four pages live in-browser (a faithful BPE port) and checks against the reported numbers |
 
-The tokenizer is trained in `session-02-multilingual-bpe/`: `train_h3.py` (script-disjoint union,
-2,336) then `train_h4.py` (+ whole-word budget reclamation, 2,430); `build_widget.py` publishes the
-artifacts into `session-2/`. See `experiments/` for the sweeps and the prior-art catalog in
+Trained in `session-02-multilingual-bpe/`. Progression: `train.py` (naive, 1,239) → `train_h3.py`
+(script-disjoint union, 2,336) → `train_h4.py` (+ whole-word reclamation, 2,430) → **`train_h5.py`
+(parity-aware BPE, 2,511)**. `experiments/parity_bpe.py` shows the pure-parity (gap 0) result;
+`build_widget.py` publishes artifacts into `session-2/`. Prior-art catalog:
 `ai_research/topics/01-tokenization/`.
 
 ### Session 1 — the four claims

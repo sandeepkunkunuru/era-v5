@@ -102,14 +102,15 @@ def report(name, fert, hf=None):
     if hf: print(f"    HF re-check: " + " ".join(f"{l}={hf[l]:.3f}" for l in LANGS) +
                  f"  (max Δ {max(abs(hf[l]-fert[l]) for l in LANGS):.4f})")
 
-print("(A) PURE parity-aware BPE — no English cap (the genuinely fair tokenizer)")
-vA, mA, fA = train_parity(cap_en=None, verbose=True)
-hfA, tokA = verify_with_hf(vA, mA)
-report("  pure-parity", fA, hfA)
+if __name__ == "__main__":
+    print("(A) PURE parity-aware BPE — no English cap (the genuinely fair tokenizer)")
+    vA, mA, fA = train_parity(cap_en=None, verbose=True)
+    hfA, tokA = verify_with_hf(vA, mA)
+    report("  pure-parity", fA, hfA)
 
-print("\n(B) parity-aware BPE with English<=1.2 cap (assignment regime)")
-vB, mB, fB = train_parity(cap_en=1.2, verbose=True)
-hfB, tokB = verify_with_hf(vB, mB)
-report("  capped-parity", fB, hfB)
+    print("\n(B) parity-aware BPE with English<=1.2 cap (assignment regime)")
+    vB, mB, fB = train_parity(cap_en=1.2, verbose=True)
+    hfB, tokB = verify_with_hf(vB, mB)
+    report("  capped-parity", fB, hfB)
 
-print("\nfor reference: H4 post-hoc = en1.180 hi1.582 te1.591 es1.577 gap0.411 score2430")
+    print("\nfor reference: H4 post-hoc = en1.180 hi1.582 te1.591 es1.577 gap0.411 score2430")
