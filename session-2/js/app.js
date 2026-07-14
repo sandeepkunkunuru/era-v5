@@ -88,25 +88,32 @@ function renderScore(R) {
     el.innerHTML = html;
     if (cls) el.classList.add(cls);
   };
-  chip("chip-gap", `<b>spread</b>&nbsp; ${R.spread.toFixed(4)}`);
+  chip("chip-gap", `<b>spread</b>&nbsp; ${R.spread.toPrecision(2)}`);
   chip("chip-cap", `<b>all ≤ 1.2</b>&nbsp; ✓`, "good");
   chip("chip-vocab", `<b>vocab</b>&nbsp; ${fmt(R.vocab)}`);
-  chip("chip-base", `<b>faithful</b>&nbsp; round-trips ✓`);
+  chip("chip-base", `<b>vs reference</b>&nbsp; ${(R.score / 6502.56).toFixed(0)}×`);
 }
 
-/* ---------------- render: fertility number-line ---------------- */
+/* ---------------- render: fertility number-line (adaptive zoom) ----------------
+   The four languages collapse to ~0.6116 with a spread of ~4e-4 — on a 0–1.2 scale they are a
+   single point (that IS the result). So we zoom the axis to the data range with padding, show the
+   residual spread as the gold band, and caption the magnification. */
 function renderAxis(R) {
   const F = R.fertility;
   const vals = LANGS.map((l) => F[l]);
-  const lo = 0.5, hi = 0.8;
+  const x1 = Math.min(...vals), x4 = Math.max(...vals), spread = x4 - x1;
+  const pad = Math.max(spread * 0.9, x4 * 3e-4);
+  const lo = x1 - pad, hi = x4 + pad;
+  const zoom = Math.round(1.2 / (hi - lo));      // how many × vs a 0–1.2 scale
   const X = (v) => ((v - lo) / (hi - lo)) * 100;
+  const dec = 5;
   let h = `<div class="lane"></div>`;
-  for (let t = 0.5; t <= 0.8 + 1e-9; t += 0.05) {
-    h += `<div class="tick" style="left:${X(t)}%"><div class="t"></div><div class="l">${t.toFixed(2)}</div></div>`;
+  for (let k = 0; k <= 4; k++) {
+    const t = lo + (k / 4) * (hi - lo);
+    h += `<div class="tick" style="left:${X(t)}%"><div class="t"></div><div class="l">${t.toFixed(dec)}</div></div>`;
   }
-  const x1 = Math.min(...vals), x4 = Math.max(...vals);
-  h += `<div class="span" style="left:${X(x1)}%;width:${X(x4) - X(x1)}%">
-    <span class="glab">spread ${(x4 - x1).toFixed(4)} → score ${fmt(R.score)}</span></div>`;
+  h += `<div class="span" style="left:${X(x1)}%;width:${Math.max(X(x4) - X(x1), 0.5)}%">
+    <span class="glab">spread ${spread.toPrecision(2)} → score ${fmt(R.score)}</span></div>`;
   const order = [...LANGS].sort((a, b) => F[a] - F[b]);
   const LV = [
     { off: -66, stem: "bottom:8px;height:48px" },
@@ -121,8 +128,9 @@ function renderAxis(R) {
       <div class="tag2" style="top:${off}px">
         <div class="scr">${META[l].glyph}</div>
         <div class="code">${l}</div>
-        <div class="val">${F[l].toFixed(4)}</div></div></div>`;
+        <div class="val">${F[l].toFixed(dec)}</div></div></div>`;
   });
+  h += `<div class="axis-zoom">zoomed ≈ ${zoom.toLocaleString()}× — on a 0 – 1.2 scale all four are one point (that is the parity)</div>`;
   document.getElementById("axis").innerHTML = h;
 }
 

@@ -1,0 +1,37 @@
+{
+  "variant": "wiki_faithful_markdown",
+  "languages": {
+    "en": "English",
+    "hi": "Hindi",
+    "te": "Telugu",
+    "mai": "Maithili"
+  },
+  "weights": {
+    "en": 3,
+    "hi": 4,
+    "te": 4,
+    "mai": 2
+  },
+  "vocab_size": 10000,
+  "faithful_units": {
+    "en": 186367,
+    "hi": 88359,
+    "te": 36292,
+    "mai": 5808
+  },
+  "unit_policy": "contiguous L/M/N run = 1 unit; each visible non-space punctuation/symbol = 1 unit",
+  "token_counts": {
+    "en": 111390,
+    "hi": 51190,
+    "te": 24428,
+    "mai": 4258
+  },
+  "ratios": {
+    "en": 0.5976916514189744,
+    "hi": 0.5793410971151779,
+    "te": 0.673095999118263,
+    "mai": 0.7331267217630854
+  },
+  "spread": 0.15378562464790746,
+  "score": 6502.558365188569
+}

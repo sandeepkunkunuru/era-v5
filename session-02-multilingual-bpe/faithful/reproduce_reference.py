@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Train the shared 10k faithful BPE tokenizer (en/hi/te/mai) — the corrected Assignment-2 build.
+"""Reproduce the published reference solution (fixed-weight BPE) as a documented BASELINE.
+
+This is NOT the shipped tokenizer — see train_shipped.py (parity-aware) for that. We keep this to
+show the baseline the parity-aware build improves on, and that our fresh fetch reproduces the
+reference byte-for-byte (score 6502.56). Outputs go to baseline/ so they don't clobber the shipped
+tokenizer.json / metrics.json.
 
 Method (matches the published reference solution exactly):
   - Model      : HuggingFace BPE, unk_token="[UNK]"
@@ -9,13 +14,7 @@ Method (matches the published reference solution exactly):
   - Decoder    : Metaspace(replacement="▁", prepend_scheme="never")   ← this is what makes it faithful
   - Weights    : en:3, hi:4, te:4, mai:2  (each corpus file duplicated N times before training)
 
-Why this is faithful where our old H5 build scored 0: the Metaspace pre-tokenizer/decoder keeps
-every visible character (punctuation, brackets, URL chars, apostrophes, number separators) and
-restores spaces on decode, and min_frequency=1 puts every character seen in the faithful-Markdown
-corpus into the vocab, so nothing becomes [UNK]. (NFKC still rewrites compatibility characters such
-as U+2033 ″ → ′′, which the grader tolerates — it forbids *loss*, not normalization.)
-
-    python train_faithful.py
+    python reproduce_reference.py     # -> baseline/tokenizer.json (byte-identical to reference)
 """
 from __future__ import annotations
 
@@ -33,8 +32,10 @@ from tokenizers.trainers import BpeTrainer
 
 ROOT = Path(__file__).resolve().parent
 CORPUS = ROOT / "corpus"
-OUT_TOKENIZER = ROOT / "tokenizer.json"
-OUT_METRICS = ROOT / "metrics.json"
+OUT = ROOT / "baseline"
+OUT.mkdir(exist_ok=True)
+OUT_TOKENIZER = OUT / "tokenizer.json"
+OUT_METRICS = OUT / "metrics.json"
 
 LANGS = ["en", "hi", "te", "mai"]
 WEIGHTS = {"en": 3, "hi": 4, "te": 4, "mai": 2}

@@ -1,16 +1,11 @@
 {
   "variant": "wiki_faithful_markdown",
+  "method": "parity-aware BPE (Foroutan et al. ACL 2026): each step merges the worst-compressed language's pair",
   "languages": {
     "en": "English",
     "hi": "Hindi",
     "te": "Telugu",
     "mai": "Maithili"
-  },
-  "weights": {
-    "en": 3,
-    "hi": 4,
-    "te": 4,
-    "mai": 2
   },
   "vocab_size": 10000,
   "faithful_units": {
@@ -21,17 +16,18 @@
   },
   "unit_policy": "contiguous L/M/N run = 1 unit; each visible non-space punctuation/symbol = 1 unit",
   "token_counts": {
-    "en": 111390,
-    "hi": 51190,
-    "te": 24428,
-    "mai": 4258
+    "en": 113978,
+    "hi": 54038,
+    "te": 22196,
+    "mai": 3550
   },
   "ratios": {
-    "en": 0.5976916514189744,
-    "hi": 0.5793410971151779,
-    "te": 0.673095999118263,
-    "mai": 0.7331267217630854
+    "en": 0.6115782300514576,
+    "hi": 0.6115732409828087,
+    "te": 0.6115948418384217,
+    "mai": 0.6112258953168044
   },
-  "spread": 0.15378562464790746,
-  "score": 6502.558365188569
+  "spread": 0.00036894652161734154,
+  "score": 2710419.9156461083,
+  "baseline_reference_score": 6502.558365188569
 }

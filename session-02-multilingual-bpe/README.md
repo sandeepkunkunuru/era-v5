@@ -6,8 +6,11 @@
 > 0/1000**. It failed a precondition we never tested: the grader requires a **faithful** tokenizer —
 > `decode(encode(text))` must preserve every visible non-whitespace character of the **faithful-Markdown**
 > input. Our tokenizer emitted `[UNK]` for any character absent from the 4 clean pages (`#`, `_`, `` ` ``,
-> `*`, …) and mangled whitespace, so its fertility numbers were voided. The corrected, reference-matching
-> build lives in **[`faithful/`](faithful/)** and scores **6502.56** with the faithfulness gate passing.
+> `*`, …) and mangled whitespace, so its fertility numbers were voided. The corrected build lives in
+> **[`faithful/`](faithful/)**: a faithful baseline that reproduces the instructor's reference byte-for-byte
+> (**6502.56**), and the **shipped** tokenizer that layers **parity-aware BPE** back on — collapsing the
+> spread to ~4×10⁻⁴ for a score of **2,710,420** (still faithful, deterministic, reproducible). The idea we
+> "ignored" was our own: the parity-aware method was right; it just needed the faithful base.
 > See the **Postmortem** section below and `reference/axiom-reference-solution.md`.
 >
 > Three things also changed vs. what this README describes: the 4th language is **Maithili (mai)**, not

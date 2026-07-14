@@ -1,3 +1,8 @@
 # Raw Wikipedia HTML is bulky (~3.7MB) and fully regenerable via build_faithful_corpus.py.
 # The .faithful.txt / .faithful.md / .meta.json snapshots are the reproducible record and ARE committed.
 corpus/*.raw.html
+
+# The baseline is our reproduction of the instructor's reference tokenizer — byte-identical to
+# third-party course material and regenerable via reproduce_reference.py. Keep the bytes out of git;
+# baseline/metrics.json (the numbers) IS committed as documentation.
+baseline/tokenizer.json

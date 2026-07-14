@@ -238,6 +238,9 @@ table.stats { width: 100%; border-collapse: collapse; font-size: 0.95rem; min-wi
 .foot strong { color: var(--text); }
 .foot-meta { font-family: var(--mono); font-size: 0.85rem; color: var(--teal); margin-top: 0.4rem; }
 
+.axis-zoom { position: absolute; left: 0; right: 0; bottom: -2.4rem; text-align: center;
+  font-family: var(--mono); font-size: 0.72rem; color: var(--muted); letter-spacing: 0.03em; }
+
 /* ---------- interactive round-trip ---------- */
 .rt { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; margin-top: 1.2rem; }
 .rt-lab { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em;
