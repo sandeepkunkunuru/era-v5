@@ -1,0 +1,10 @@
+{
+  "lang": "hi",
+  "title": "भारत",
+  "source_url": "https://hi.wikipedia.org/api/rest_v1/page/html/%E0%A4%AD%E0%A4%BE%E0%A4%B0%E0%A4%A4",
+  "variant": "wiki_faithful_markdown",
+  "generated_at": "2026-07-14T03:03:14Z",
+  "chars": 266728,
+  "faithful_units": 88359,
+  "unit_policy": "contiguous L/M/N run = 1 unit; each visible non-space punctuation/symbol = 1 unit"
+}

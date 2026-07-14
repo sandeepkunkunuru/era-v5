@@ -1,0 +1,3 @@
+# The instructor's downloaded reference package is third-party course material — keep it out of git.
+# axiom-reference-solution.md (our transcription of the published spec) IS tracked as documentation.
+extracted/

@@ -1,0 +1,10 @@
+{
+  "lang": "te",
+  "title": "భారతదేశం",
+  "source_url": "https://te.wikipedia.org/api/rest_v1/page/html/%E0%B0%AD%E0%B0%BE%E0%B0%B0%E0%B0%A4%E0%B0%A6%E0%B1%87%E0%B0%B6%E0%B0%82",
+  "variant": "wiki_faithful_markdown",
+  "generated_at": "2026-07-14T03:03:15Z",
+  "chars": 113835,
+  "faithful_units": 36292,
+  "unit_policy": "contiguous L/M/N run = 1 unit; each visible non-space punctuation/symbol = 1 unit"
+}

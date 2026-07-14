@@ -1,5 +1,44 @@
 # ERA V5 · Session 2 — Multilingual BPE Tokenizer
 
+> ## ⚠️ Graded 0/1000 — corrected build is in [`faithful/`](faithful/)
+>
+> The build described below (`train_h5.py`, "parity-aware BPE", self-score **2,511**) was **graded
+> 0/1000**. It failed a precondition we never tested: the grader requires a **faithful** tokenizer —
+> `decode(encode(text))` must preserve every visible non-whitespace character of the **faithful-Markdown**
+> input. Our tokenizer emitted `[UNK]` for any character absent from the 4 clean pages (`#`, `_`, `` ` ``,
+> `*`, …) and mangled whitespace, so its fertility numbers were voided. The corrected, reference-matching
+> build lives in **[`faithful/`](faithful/)** and scores **6502.56** with the faithfulness gate passing.
+> See the **Postmortem** section below and `reference/axiom-reference-solution.md`.
+>
+> Three things also changed vs. what this README describes: the 4th language is **Maithili (mai)**, not
+> Spanish; the fertility denominator is the **faithful unit** (letter-run *or* single punct/symbol), not
+> the whitespace word; and the corpus is **faithful Markdown**, not clipped prose.
+
+---
+
+## Postmortem — why the parity work scored 0
+
+The fairness objective below was sound but solved for the *wrong metric on the wrong precondition*:
+
+1. **Faithfulness is a hard gate, checked first.** `train_h5.py` built its vocab only from characters seen
+   in 4 clean Wikipedia pages, with a bare `[UNK]` and no byte fallback, and used a `WhitespaceSplit`
+   pre-tokenizer with **no decoder**. Any unseen Markdown character → `[UNK]`; spaces were lost on decode.
+   The grader's own failure sample (`https://hi.wikipedia.org/wiki/भारत#cite_ref-1` → `… [UNK] c ite [UNK]
+   re f - 1`) reproduces exactly in our shipped `tokenizer.json`.
+2. **The fix is Metaspace, not byte-level.** A Metaspace pre-tokenizer + Metaspace decoder preserves all
+   visible characters and restores spaces; `min_frequency=1` on the faithful corpus keeps every character
+   in-vocab. Byte-level BPE would also be faithful but re-triggers the Indic fertility blow-up.
+3. **The metric moved out from under us.** The grader scores `tokens / faithful_unit`, not `tokens / word`,
+   on faithful Markdown — so the entire parity-aware apparatus was optimizing a denominator the grader no
+   longer uses. Under the real metric a *simple* weighted BPE scores 6502.
+4. **Lesson (recorded):** test the acceptance gate before optimizing the objective. A self-reported score
+   from an un-round-tripped tokenizer is not a score. `faithful/evaluate_faithful.py` now enforces the gate
+   and exits non-zero on any visible-character loss.
+
+---
+
+## Original build (below) — superseded, kept for the record
+
 A single 10,000-token BPE tokenizer for the **"India"** Wikipedia article in **English, Hindi, Telugu,
 Spanish**, built so tokens-per-word (**fertility** `Xₗ = tokens/word`) is as *equal* as possible across
 languages, with **English ≤ 1.2**. The assignment scores `1000 / (X₄ − X₁)` — smaller spread, higher score.

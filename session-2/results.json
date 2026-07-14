@@ -1,33 +1,52 @@
 {
-  "method": "H5 parity-aware BPE (Foroutan et al. ACL 2026): merge the worst language's pair each step",
+  "method": "faithful BPE — HF BPE, vocab 10k, NFKC, Metaspace pre-tok+decoder, weights en3/hi4/te4/mai2",
   "langs": [
     "en",
     "hi",
     "te",
-    "es"
+    "mai"
   ],
-  "vocab": 10000,
-  "en_cap": 1.2,
-  "words": {
-    "en": 10121,
-    "hi": 8078,
-    "te": 2511,
-    "es": 10532
+  "names": {
+    "en": "English",
+    "hi": "Hindi",
+    "te": "Telugu",
+    "mai": "Maithili"
   },
-  "fertility": {
-    "en": 1.1823930441655963,
-    "hi": 1.5804654617479574,
-    "te": 1.5802469135802468,
-    "es": 1.5806114698063045
+  "scripts": {
+    "en": "Latin",
+    "hi": "Devanagari",
+    "te": "Telugu",
+    "mai": "Devanagari"
   },
-  "X1": 1.1823930441655963,
-  "X4": 1.5806114698063045,
-  "gap": 0.3982184256407082,
-  "score": 2511.184655484144,
-  "page_titles": {
+  "titles": {
     "en": "India",
     "hi": "भारत",
     "te": "భారతదేశం",
-    "es": "India"
-  }
+    "mai": "भारत"
+  },
+  "vocab": 10000,
+  "faithful_units": {
+    "en": 186367,
+    "hi": 88359,
+    "te": 36292,
+    "mai": 5808
+  },
+  "token_counts": {
+    "en": 111390,
+    "hi": 51190,
+    "te": 24428,
+    "mai": 4258
+  },
+  "fertility": {
+    "en": 0.5976916514189744,
+    "hi": 0.5793410971151779,
+    "te": 0.673095999118263,
+    "mai": 0.7331267217630854
+  },
+  "X1": 0.5793410971151779,
+  "X4": 0.7331267217630854,
+  "spread": 0.15378562464790746,
+  "score": 6502.558365188569,
+  "cap": 1.2,
+  "all_below_cap": true
 }

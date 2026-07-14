@@ -1,0 +1,10 @@
+{
+  "lang": "en",
+  "title": "India",
+  "source_url": "https://en.wikipedia.org/api/rest_v1/page/html/India",
+  "variant": "wiki_faithful_markdown",
+  "generated_at": "2026-07-14T03:03:13Z",
+  "chars": 598265,
+  "faithful_units": 186367,
+  "unit_policy": "contiguous L/M/N run = 1 unit; each visible non-space punctuation/symbol = 1 unit"
+}
