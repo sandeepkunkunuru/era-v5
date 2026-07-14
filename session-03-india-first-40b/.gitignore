@@ -1,0 +1,4 @@
+# Corpus + FLORES download are large, third-party, and fully regenerable via fetch_corpus.py.
+# results.json (the measured fertility sweep) IS committed as the reproducible record.
+data/
+*.tar.gz
