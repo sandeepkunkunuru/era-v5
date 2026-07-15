@@ -39,6 +39,11 @@
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem; }
     @media (max-width: 680px) { .two { grid-template-columns: 1fr; } }
     .pill { display: inline-block; font-family: var(--mono); font-size: 0.72rem; color: var(--coral); border: 1px solid var(--line); border-radius: 999px; padding: 0.1rem 0.6rem; }
+    /* every paper/benchmark reference links to its arXiv abstract (IDs verified against the arXiv API) */
+    a.ref { color: inherit; text-decoration: none; border-bottom: 1px dotted rgba(255,255,255,0.35); }
+    a.ref:hover { color: var(--teal); border-bottom-color: var(--teal); }
+    .foot a.ref { color: var(--muted); }
+    .foot a.ref:hover { color: var(--teal); }
   </style>
 </head>
 <body>
@@ -58,16 +63,16 @@
     <table class="decisions">
       <tr><th>Decision</th><th>Value</th><th>Reason (one line)</th></tr>
       <tr><td>Languages</td><td>en + 12 Indic</td><td>hi bn mr te ta gu kn ml pa or ur as — the scheduled-language speaker mass; grouped by script for shared budget</td></tr>
-      <tr><td>Vocab size</td><td>256k</td><td>measured fertility knee ≈ 200k + Tao law (40B→~200k) + Aya/Gemma-3 precedent (256k/262k); round up for breadth</td></tr>
+      <tr><td>Vocab size</td><td>256k</td><td>measured fertility knee ≈ 200k + <a class="ref" href="https://arxiv.org/abs/2407.13623" target="_blank" rel="noopener">Tao law</a> (40B→~200k) + <a class="ref" href="https://arxiv.org/abs/2405.15032" target="_blank" rel="noopener">Aya</a>/<a class="ref" href="https://arxiv.org/abs/2503.19786" target="_blank" rel="noopener">Gemma-3</a> precedent (256k/262k); round up for breadth</td></tr>
       <tr><td>Pre-train mix</td><td>40/25/18/10/7</td><td>En / Indic / Code / Math+Sci / Other-multiling %. Over-weight Indic ~25× its web share to force transfer</td></tr>
       <tr><td>Tokenizer</td><td>BPE + byte-fallback</td><td>SentencePiece-style, NFKC, digit-split, Indic-<em>atomic</em> (not byte-level) → low Indic fertility, lossless</td></tr>
-      <tr><td>Post-train</td><td>SFT→DPO→RLVR</td><td>Tülu-3 recipe + Constitutional-AI Indian-values constitution + verifier reward for code/math</td></tr>
+      <tr><td>Post-train</td><td>SFT→DPO→RLVR</td><td><a class="ref" href="https://arxiv.org/abs/2411.15124" target="_blank" rel="noopener">Tülu-3</a> recipe + <a class="ref" href="https://arxiv.org/abs/2212.08073" target="_blank" rel="noopener">Constitutional-AI</a> Indian-values constitution + verifier reward for code/math</td></tr>
     </table>
 
     <h2><span class="m">§1</span>Fertility → vocab size <span class="pill">measured</span></h2>
     <p>Trained candidate BPE tokenizers (NFKC + Metaspace, Indic-atomic) at 32k–256k on an Indic-heavy mix,
-      measured fertility (tokens/word) on <b>FLORES-200 devtest</b> — parallel text, so differences are
-      script/tokenizer, not content. Validates against Sarvam-1 (our 64k: indic-mean 2.06 / en 1.41, inside
+      measured fertility (tokens/word) on <b><a class="ref" href="https://arxiv.org/abs/2207.04672" target="_blank" rel="noopener">FLORES-200</a> devtest</b> — parallel text, so differences are
+      script/tokenizer, not content. Validates against <a class="ref" href="https://www.sarvam.ai/blogs/sarvam-1" target="_blank" rel="noopener">Sarvam-1</a> (our 64k: indic-mean 2.06 / en 1.41, inside
       their 1.4–2.1).</p>
 
     <div class="chartwrap">
@@ -123,60 +128,98 @@
       <b>not for Dravidian</b> (ml/kn/te/ta stay 1.8–2.2× at every vocab). The binding constraint is
       <b>morphology, not script</b>: agglutinative words are long, so subword vocab alone can't equalize them
       — that needs morpheme-aware pre-tokenization or a per-script budget boost (stated, not hidden).
-      <b>The number:</b> measured knee (~200k) and Tao-optimal for 40B (~200k) agree; breadth (13 langs, 10
+      <b>The number:</b> measured knee (~200k) and <a class="ref" href="https://arxiv.org/abs/2407.13623" target="_blank" rel="noopener">Tao</a>-optimal for 40B (~200k) agree; breadth (13 langs, 10
       scripts) + negligible embedding cost (256k×~6k hidden ≈ 1.6B, ~4% of 40B) → round up to <b>256k</b>.</p>
 
     <h2><span class="m">§2</span>Data</h2>
     <div class="two">
       <div>
         <h3>Pre-training</h3>
-        <p>Mix set by <b>DoReMi/DSIR</b> (learned domain weights), not hand-tuned. Within Indic, temperature-
+        <p>Mix set by <b><a class="ref" href="https://arxiv.org/abs/2305.10429" target="_blank" rel="noopener">DoReMi</a>/<a class="ref" href="https://arxiv.org/abs/2302.03169" target="_blank" rel="noopener">DSIR</a></b> (learned domain weights), not hand-tuned. Within Indic, temperature-
           smooth (α≈0.3) by <em>verified</em> tokens so Hindi doesn't crowd the tail — but <b>cap synthetic</b>:
-          Sangraha is 251B total yet verified Assamese ≈ 0.3B, so a synthetic-heavy tail teaches translationese.
-          Web = FineWeb-Edu quality filter (retrain classifier for Indic); code = The Stack v2 (license +
-          near-dedup); math = DeepSeekMath recall + OpenMathInstruct-2.</p>
+          <a class="ref" href="https://arxiv.org/abs/2403.06350" target="_blank" rel="noopener">Sangraha</a> is 251B total yet verified Assamese ≈ 0.3B, so a synthetic-heavy tail teaches translationese.
+          Web = <a class="ref" href="https://arxiv.org/abs/2406.17557" target="_blank" rel="noopener">FineWeb-Edu</a> quality filter (retrain classifier for Indic); code = <a class="ref" href="https://arxiv.org/abs/2402.19173" target="_blank" rel="noopener">The Stack v2</a> (license +
+          near-dedup); math = <a class="ref" href="https://arxiv.org/abs/2402.03300" target="_blank" rel="noopener">DeepSeekMath</a> recall + <a class="ref" href="https://arxiv.org/abs/2410.01560" target="_blank" rel="noopener">OpenMathInstruct-2</a>.</p>
       </div>
       <div>
         <h3>Post-training / RL</h3>
-        <p><b>SFT</b> (Tülu-3 mix + Indic instructions, Airavata-style) → <b>DPO</b> (reward-model-free
-          preference) → <b>RLVR</b> (unit-tests for code, answer-check for math). Agentic data = <b>ReAct</b>
-          traces + tool-use trajectories (ToolLLM/Gorilla). <b>Constitutional AI</b> with an explicit
+        <p><b>SFT</b> (<a class="ref" href="https://arxiv.org/abs/2411.15124" target="_blank" rel="noopener">Tülu-3</a> mix + Indic instructions, <a class="ref" href="https://arxiv.org/abs/2401.15006" target="_blank" rel="noopener">Airavata</a>-style) → <b><a class="ref" href="https://arxiv.org/abs/2305.18290" target="_blank" rel="noopener">DPO</a></b> (reward-model-free
+          preference) → <b>RLVR</b> (unit-tests for code, answer-check for math). Agentic data = <b><a class="ref" href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener">ReAct</a></b>
+          traces + tool-use trajectories (<a class="ref" href="https://arxiv.org/abs/2307.16789" target="_blank" rel="noopener">ToolLLM</a>/<a class="ref" href="https://arxiv.org/abs/2305.15334" target="_blank" rel="noopener">Gorilla</a>). <b><a class="ref" href="https://arxiv.org/abs/2212.08073" target="_blank" rel="noopener">Constitutional AI</a></b> with an explicit
           <b>Indian-values constitution</b> (pluralism, Indian legal/social norms, code-mixing) → RLAIF —
           this is the worldview lever, not translation.</p>
       </div>
     </div>
 
     <h2><span class="m">§3</span>Cleaning</h2>
-    <p><code>lang-ID (fastText/CLD3)</code> → <code>CCNet</code> → <code>Gopher quality heuristics</code> →
-      <code>MinHash + exact-substring dedup</code> (~10× less memorization) → <code>n-gram decontam</code> →
+    <p><code>lang-ID (fastText/CLD3)</code> → <a class="ref" href="https://arxiv.org/abs/1911.00359" target="_blank" rel="noopener"><code>CCNet</code></a> → <a class="ref" href="https://arxiv.org/abs/2112.11446" target="_blank" rel="noopener"><code>Gopher quality heuristics</code></a> →
+      <a class="ref" href="https://arxiv.org/abs/2107.06499" target="_blank" rel="noopener"><code>MinHash + exact-substring dedup</code></a> (~10× less memorization) → <code>n-gram decontam</code> →
       <code>PII + toxicity</code>. <b>Indic-specific:</b> Unicode NFC + script/transliteration normalization
-      (indic-nlp-library); an Indic-trained quality classifier (the FineWeb edu-classifier is English-only).
+      (<a class="ref" href="https://github.com/anoopkunchukuttan/indic_nlp_library" target="_blank" rel="noopener">indic-nlp-library</a>); an Indic-trained quality classifier (the <a class="ref" href="https://arxiv.org/abs/2406.17557" target="_blank" rel="noopener">FineWeb</a> edu-classifier is English-only).
       <b>Code:</b> license filter + near-dedup + optional execution filter.</p>
 
     <h2><span class="m">§4</span>Evaluation <span class="pill">decontaminated</span></h2>
     <table>
       <tr><th>Objective</th><th>Benchmarks</th></tr>
-      <tr><td>Indic</td><td>MILU, IndicGenBench, IndicXTREME, Airavata-eval</td></tr>
-      <tr><td>Code / agentic</td><td>HumanEval, MBPP, MultiPL-E, LiveCodeBench, <b>SWE-bench</b></td></tr>
-      <tr><td>Math / science</td><td>GSM8K, MATH, GPQA</td></tr>
-      <tr><td>General / agentic</td><td>MMLU + Indic-MMLU · AgentBench, τ-bench</td></tr>
+      <tr><td>Indic</td><td><a class="ref" href="https://arxiv.org/abs/2411.02538" target="_blank" rel="noopener">MILU</a>, <a class="ref" href="https://arxiv.org/abs/2404.16816" target="_blank" rel="noopener">IndicGenBench</a>, <a class="ref" href="https://arxiv.org/abs/2212.05409" target="_blank" rel="noopener">IndicXTREME</a>, <a class="ref" href="https://arxiv.org/abs/2401.15006" target="_blank" rel="noopener">Airavata-eval</a></td></tr>
+      <tr><td>Code / agentic</td><td><a class="ref" href="https://arxiv.org/abs/2107.03374" target="_blank" rel="noopener">HumanEval</a>, <a class="ref" href="https://arxiv.org/abs/2108.07732" target="_blank" rel="noopener">MBPP</a>, <a class="ref" href="https://arxiv.org/abs/2208.08227" target="_blank" rel="noopener">MultiPL-E</a>, <a class="ref" href="https://arxiv.org/abs/2403.07974" target="_blank" rel="noopener">LiveCodeBench</a>, <b><a class="ref" href="https://arxiv.org/abs/2310.06770" target="_blank" rel="noopener">SWE-bench</a></b></td></tr>
+      <tr><td>Math / science</td><td><a class="ref" href="https://arxiv.org/abs/2110.14168" target="_blank" rel="noopener">GSM8K</a>, <a class="ref" href="https://arxiv.org/abs/2103.03874" target="_blank" rel="noopener">MATH</a>, <a class="ref" href="https://arxiv.org/abs/2311.12022" target="_blank" rel="noopener">GPQA</a></td></tr>
+      <tr><td>General / agentic</td><td><a class="ref" href="https://arxiv.org/abs/2009.03300" target="_blank" rel="noopener">MMLU</a> + Indic-MMLU · <a class="ref" href="https://arxiv.org/abs/2308.03688" target="_blank" rel="noopener">AgentBench</a>, <a class="ref" href="https://arxiv.org/abs/2406.12045" target="_blank" rel="noopener">τ-bench</a></td></tr>
     </table>
     <p><b>Discipline:</b> strip any train doc with ≥13-gram / 50-char overlap vs every eval set before
-      training; prefer <b>time-split live</b> benchmarks (LiveCodeBench) as leakage insurance.</p>
+      training; prefer <b>time-split live</b> benchmarks (<a class="ref" href="https://arxiv.org/abs/2403.07974" target="_blank" rel="noopener">LiveCodeBench</a>) as leakage insurance.</p>
 
     <h2><span class="m">§5</span>Why this is India-first</h2>
     <p>Three levers together: <b>composition</b> (Indic over-weighted ~25× its web share), <b>worldview</b>
       (an Indian-values constitution shapes RLAIF), and <b>efficiency</b> (an Indic-atomic tokenizer so Indian
-      users don't pay the 3–5× token tax; Petrov 2023). The vocab number is the hinge — it converts "supports
+      users don't pay the 3–5× token tax; <a class="ref" href="https://arxiv.org/abs/2305.15425" target="_blank" rel="noopener">Petrov 2023</a>). The vocab number is the hinge — it converts "supports
       Indic" into "cheap in Indic."</p>
   </main>
 
   <footer class="foot wrap">
-    Sources: Gemma&nbsp;3 (2503.19786) · Tao et al. Scaling-Laws-with-Vocabulary (2407.13623) · Petrov et al.
-    tokenizer unfairness (2305.15425) · Sarvam-1 · Sangraha/IndicCorp&nbsp;v2 (2212.05409) · FineWeb
-    (2406.17557) · Tülu&nbsp;3 (2411.15124) · DoReMi (2305.10429) · Constitutional&nbsp;AI (2212.08073) · The
-    Stack&nbsp;v2 (2402.19173) · DeepSeekMath (2402.03300). Fertility measured on FLORES-200; harness +
-    <code>results.json</code> in the Session-3 repo.
+    <b>Sources</b> (all links → arXiv abstracts; IDs verified against the arXiv API):
+    <a class="ref" href="https://arxiv.org/abs/2503.19786" target="_blank" rel="noopener">Gemma&nbsp;3 · 2503.19786</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2407.13623" target="_blank" rel="noopener">Tao, Scaling-Laws-with-Vocabulary · 2407.13623</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2305.15425" target="_blank" rel="noopener">Petrov, tokenizer unfairness · 2305.15425</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2012.15613" target="_blank" rel="noopener">Rust, How Good is Your Tokenizer? · 2012.15613</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2310.08754" target="_blank" rel="noopener">Ali, Tokenizer Choice · 2310.08754</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2405.15032" target="_blank" rel="noopener">Aya&nbsp;23 · 2405.15032</a> ·
+    <a class="ref" href="https://www.sarvam.ai/blogs/sarvam-1" target="_blank" rel="noopener">Sarvam-1 (blog)</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2403.06350" target="_blank" rel="noopener">Sangraha/IndicLLMSuite · 2403.06350</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2212.05409" target="_blank" rel="noopener">IndicCorp&nbsp;v2 / IndicXTREME · 2212.05409</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2401.15006" target="_blank" rel="noopener">Airavata · 2401.15006</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2103.10730" target="_blank" rel="noopener">MuRIL · 2103.10730</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2207.04672" target="_blank" rel="noopener">NLLB / FLORES-200 · 2207.04672</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2406.17557" target="_blank" rel="noopener">FineWeb · 2406.17557</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2402.00159" target="_blank" rel="noopener">Dolma · 2402.00159</a> ·
+    <a class="ref" href="https://arxiv.org/abs/1911.00359" target="_blank" rel="noopener">CCNet · 1911.00359</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2112.11446" target="_blank" rel="noopener">Gopher · 2112.11446</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2107.06499" target="_blank" rel="noopener">Lee, dedup · 2107.06499</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2305.10429" target="_blank" rel="noopener">DoReMi · 2305.10429</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2302.03169" target="_blank" rel="noopener">DSIR · 2302.03169</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2402.19173" target="_blank" rel="noopener">StarCoder2 / The Stack&nbsp;v2 · 2402.19173</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2402.03300" target="_blank" rel="noopener">DeepSeekMath · 2402.03300</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2410.01560" target="_blank" rel="noopener">OpenMathInstruct-2 · 2410.01560</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2411.15124" target="_blank" rel="noopener">Tülu&nbsp;3 · 2411.15124</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2305.18290" target="_blank" rel="noopener">DPO · 2305.18290</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2212.08073" target="_blank" rel="noopener">Constitutional&nbsp;AI · 2212.08073</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener">ReAct · 2210.03629</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2307.16789" target="_blank" rel="noopener">ToolLLM · 2307.16789</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2305.15334" target="_blank" rel="noopener">Gorilla · 2305.15334</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2411.02538" target="_blank" rel="noopener">MILU · 2411.02538</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2404.16816" target="_blank" rel="noopener">IndicGenBench · 2404.16816</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2107.03374" target="_blank" rel="noopener">HumanEval · 2107.03374</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2108.07732" target="_blank" rel="noopener">MBPP · 2108.07732</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2208.08227" target="_blank" rel="noopener">MultiPL-E · 2208.08227</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2403.07974" target="_blank" rel="noopener">LiveCodeBench · 2403.07974</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2310.06770" target="_blank" rel="noopener">SWE-bench · 2310.06770</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2110.14168" target="_blank" rel="noopener">GSM8K · 2110.14168</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2103.03874" target="_blank" rel="noopener">MATH · 2103.03874</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2311.12022" target="_blank" rel="noopener">GPQA · 2311.12022</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2009.03300" target="_blank" rel="noopener">MMLU · 2009.03300</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2308.03688" target="_blank" rel="noopener">AgentBench · 2308.03688</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2406.12045" target="_blank" rel="noopener">τ-bench · 2406.12045</a>.
+    Fertility measured on FLORES-200; harness + <code>results.json</code> in the Session-3 repo.
   </footer>
 </body>
 </html>
