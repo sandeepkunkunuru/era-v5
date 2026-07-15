@@ -19,9 +19,9 @@
       <p class="eyebrow">The School of AI · ERA v5</p>
       <h1 class="hub-title">Don't take the claim.<br /><span class="accent">Run the proof.</span></h1>
       <p class="hub-sub">
-        Every session in this course makes a claim about how neural networks learn. Instead of
-        asserting them, each one ships as an interactive page where the model trains live in your
-        browser — so you watch the boundary move and check the claim yourself.
+        Every session in this course makes a claim about how models learn. Instead of asserting them,
+        each one ships as a page you can check yourself — a network that trains live in your browser,
+        a tokenizer you re-run on the real corpus, a number that came from a measurement.
       </p>
     </div>
   </header>
@@ -50,21 +50,36 @@
           <span class="marker">S2</span>
           <h2>Multilingual BPE</h2>
         </div>
-        <p>One 10,000-token BPE tokenizer made fair across four scripts — English, Hindi, Telugu, Spanish — by giving each writing system its own vocabulary budget.</p>
+        <p>One 10,000-token BPE tokenizer made fair across four languages — English, Hindi, Telugu, Maithili — and <em>faithful</em>: it round-trips every visible character of real Markdown.</p>
         <ul class="card-proofs">
-          <li><b>fairness</b> minimize the tokens-per-word spread across languages</li>
-          <li><b>constraint</b> English held under 1.2 tokens per word</li>
-          <li><b>trick</b> parity-aware BPE — merge the worst-off language's pair at each step (score 2,511)</li>
+          <li><b>fairness</b><span>minimize the tokens-per-<em>faithful-unit</em> spread across languages</span></li>
+          <li><b>gate</b><span><code>decode(encode(text))</code> must lose nothing — the first build scored 0 for failing it</span></li>
+          <li><b>trick</b> parity-aware BPE — merge the worst-off language's pair at each step (spread 4×10⁻⁴)</li>
           <li><b>honest</b> every page re-tokenized live in your browser</li>
         </ul>
         <span class="card-cta">Enter Session 2 →</span>
+      </a>
+
+      <a class="session-card" href="./session-3/">
+        <div class="row">
+          <span class="marker">S3</span>
+          <h2>India-first 40B</h2>
+        </div>
+        <p>Design a 40B model — Gemma-3-class, strong at coding, agentic work and Indic — where the tokenizer vocab size is <em>measured</em>, not asserted.</p>
+        <ul class="card-proofs">
+          <li><b>vocab</b> 256k — from a measured fertility knee (~200k), Tao's law, and Gemma/Aya breadth</li>
+          <li><b>measured</b> fertility swept 32k→256k over English + 12 Indic on FLORES-200</li>
+          <li><b>finding</b> morphology, not script, binds — Dravidian stays 1.8–2.2× at every vocab</li>
+          <li><b>design</b> data mix, cleaning, eval, and an Indian-values constitution</li>
+        </ul>
+        <span class="card-cta">Enter Session 3 →</span>
       </a>
 
     </div>
   </main>
 
   <footer class="hub-foot wrap">
-    <p>The School of AI · <strong>ERA v5</strong> — interactive proofs, trained client-side with TensorFlow.js.</p>
+    <p>The School of AI · <strong>ERA v5</strong> — proofs you can run: trained client-side, re-tokenized in-browser, measured on real corpora.</p>
     <p class="foot-meta">Data is everything. So is the activation.</p>
   </footer>
 </body>
