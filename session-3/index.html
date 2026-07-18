@@ -152,11 +152,11 @@
     </div>
 
     <h2><span class="m">§3</span>Cleaning</h2>
-    <p><code>lang-ID (fastText/CLD3)</code> → <a class="ref" href="https://arxiv.org/abs/1911.00359" target="_blank" rel="noopener"><code>CCNet</code></a> → <a class="ref" href="https://arxiv.org/abs/2112.11446" target="_blank" rel="noopener"><code>Gopher quality heuristics</code></a> →
+    <p><b>Eight stages, in order:</b> <code>extract</code> (boilerplate/HTML strip) → <code>lang-ID (fastText/CLD3)</code> → <a class="ref" href="https://arxiv.org/abs/1911.00359" target="_blank" rel="noopener"><code>CCNet</code></a> normalize → <a class="ref" href="https://arxiv.org/abs/2112.11446" target="_blank" rel="noopener"><code>Gopher quality heuristics</code></a> →
       <a class="ref" href="https://arxiv.org/abs/2107.06499" target="_blank" rel="noopener"><code>MinHash + exact-substring dedup</code></a> (~10× less memorization) → <code>n-gram decontam</code> →
-      <code>PII + toxicity</code>. <b>Indic-specific:</b> Unicode NFC + script/transliteration normalization
-      (<a class="ref" href="https://github.com/anoopkunchukuttan/indic_nlp_library" target="_blank" rel="noopener">indic-nlp-library</a>); an Indic-trained quality classifier (the <a class="ref" href="https://arxiv.org/abs/2406.17557" target="_blank" rel="noopener">FineWeb</a> edu-classifier is English-only).
-      <b>Code:</b> license filter + near-dedup + optional execution filter.</p>
+      <code>PII + toxicity</code> → <code>manifest</code> (per-shard provenance + hash → <em>reproducible</em>: same input+script → same output). <b>Indic-specific:</b> Unicode NFC + script/transliteration normalization
+      (<a class="ref" href="https://github.com/anoopkunchukuttan/indic_nlp_library" target="_blank" rel="noopener">indic-nlp-library</a>), Brahmic ZWJ/ZWNJ preserved (the V4 46-garbage-token bug); an Indic-trained quality classifier (the <a class="ref" href="https://arxiv.org/abs/2406.17557" target="_blank" rel="noopener">FineWeb</a> edu-classifier is English-only).
+      <b>Code:</b> license filter + near-dedup + optional execution filter. <b><a class="ref" href="../session-4/">Run for real in Session 4 →</a></b></p>
 
     <h2><span class="m">§4</span>Evaluation <span class="pill">decontaminated</span></h2>
     <table>
