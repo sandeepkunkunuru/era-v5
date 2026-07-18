@@ -1,0 +1,135 @@
+{
+  "config": {
+    "source": "open-thoughts/OpenThoughts-114k",
+    "n_rows_loaded": 8000,
+    "tokenizer": "cl100k_base"
+  },
+  "extract": {
+    "rows_in": 8000,
+    "identical_system_boilerplate_rows": 8000,
+    "boilerplate_tokens_per_row": 242,
+    "boilerplate_tokens_removed_total": 1936000,
+    "ghost_markers_stripped": 32000,
+    "malformed_trace_rows_flagged": 0
+  },
+  "normalize": {
+    "docs_changed": 8000,
+    "chars_removed": 6217185,
+    "whitespace_collapsed": 8000,
+    "zero_width_removed": 206,
+    "control_char_removed": 1507,
+    "html_entities_unescaped": 24
+  },
+  "langid": {
+    "kept": 8000,
+    "dropped": 0,
+    "dropped_by_lang": {},
+    "language_dist": {
+      "en": 8000
+    }
+  },
+  "quality": {
+    "kept": 7793,
+    "dropped": 207,
+    "dropped_by_reason": {
+      "repeated_lines": 207
+    }
+  },
+  "dedup": {
+    "kept": 7792,
+    "near_dupes_removed": 1,
+    "duplicate_clusters": 1,
+    "params": {
+      "num_perm": 128,
+      "bands": 32,
+      "rows_per_band": 4,
+      "shingle_words": 5
+    },
+    "example": {
+      "kept_id": 7138,
+      "removed_id": 7343,
+      "kept_head": "Generate an executable Python function generated from the given prompt. The function should take stdin as input and print the output. Simply call the function after the definition.Given an Integer N, write a program to reverse it.\n\n-----Inp",
+      "removed_head": "Generate an executable Python function generated from the given prompt. The function should take stdin as input and print the output. Simply call the function after the definition.You're given an integer N. Write a program to calculate the "
+    }
+  },
+  "pii": {
+    "docs_redacted": 95,
+    "redactions_by_type": {
+      "handle": 194,
+      "phone": 61,
+      "ipv4": 207,
+      "email": 79
+    },
+    "policy": "redact contact PII (email/phone/ip/handle); keep public names",
+    "example": {
+      "kind": "email",
+      "before": "s valid else \u201cNO\u201d\n\nConstraint:\n\n1 \u2264 n \u2264 100\n\nSAMPLE INPUT\n3\ncoder@mastroes.com\n999@111.blah\n1_1@h-",
+      "after": "s valid else \u201cNO\u201d\n\nConstraint:\n\n1 \u2264 n \u2264 100\n\nSAMPLE INPUT\n3\n[EMAIL]\n[EMAIL]\n[EMAIL]\n\nSAMPL"
+    }
+  },
+  "decontam": {
+    "kept": 7792,
+    "contaminated_removed": 0,
+    "by_benchmark": {},
+    "benchmarks": {
+      "gsm8k": 1319,
+      "math500": 500,
+      "humaneval": 164
+    },
+    "rule": "drop if \u22652 shared 13-grams with a benchmark test item",
+    "example": null
+  },
+  "manifest": {
+    "output_sha256": "d252013f98305236",
+    "final_rows": 7792,
+    "final_tokens": 66759058,
+    "wrote": "report/manifest.json"
+  },
+  "timeline": [
+    {
+      "stage": "extract",
+      "rows": 8000,
+      "tokens": 69397276
+    },
+    {
+      "stage": "normalize",
+      "rows": 8000,
+      "tokens": 68504892
+    },
+    {
+      "stage": "langid",
+      "rows": 8000,
+      "tokens": 68504892
+    },
+    {
+      "stage": "quality",
+      "rows": 7793,
+      "tokens": 66762456
+    },
+    {
+      "stage": "dedup",
+      "rows": 7792,
+      "tokens": 66760489
+    },
+    {
+      "stage": "pii",
+      "rows": 7792,
+      "tokens": 66759058
+    },
+    {
+      "stage": "decontam",
+      "rows": 7792,
+      "tokens": 66759058
+    }
+  ],
+  "summary": {
+    "rows_in": 8000,
+    "rows_out": 7792,
+    "rows_removed": 208,
+    "rows_removed_pct": 2.6,
+    "tokens_in": 69397276,
+    "tokens_out": 66759058,
+    "tokens_removed_pct": 3.8,
+    "elapsed_sec": 165.6
+  }
+}

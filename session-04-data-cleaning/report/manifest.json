@@ -1,0 +1,30 @@
+{
+  "shard_id": "openthoughts-s0-clean",
+  "source": {
+    "repo": "open-thoughts/OpenThoughts-114k",
+    "commit": "bd093c3994fd54d2390985b66988ddf282a55eb6",
+    "license": "apache-2.0",
+    "contributor": "open-thoughts",
+    "downloaded_via": "huggingface_hub hf_hub_download"
+  },
+  "script_sha256": "6ab7ee167b8924dddb9066e6e1b9ee7ef3dd7d6c4151610c645565286787f49e",
+  "input_sha256": "11c37cde12bed21dff55e71ebeea3fa1616cf86432575926992129087bf75848",
+  "output_sha256": "d252013f98305236a90d9abe3492acaf518b9043f438b9eb078a0bda7d8c3bb4",
+  "rows": 7792,
+  "tokens": 66759058,
+  "tokenizer": "cl100k_base (tiktoken)",
+  "languages": {
+    "en": 7792
+  },
+  "pipeline": [
+    "extract",
+    "normalize",
+    "langid",
+    "quality",
+    "dedup",
+    "pii",
+    "decontam"
+  ],
+  "reproducible": "same input_sha256 + script_sha256 -> same output_sha256",
+  "built_unix": 1784387866
+}

@@ -1,0 +1,28 @@
+{
+  "extract": {
+    "before": "<|begin_of_thought|>\n\nOkay, let's see. I need to solve this problem where three people (Chef, head server, sous-chef) have transceivers that can communicate directly if within R meters. If not, but th  \u2026",
+    "after": "Okay, let's see. I need to solve this problem where three people (Chef, head server, sous-chef) have transceivers that c \u2026",
+    "note": "system boilerplate (242 tok/row) + 4 ghost markers/row stripped; thought/solution pulled out as clean training text"
+  },
+  "normalize": {
+    "codepoints_removed": [
+      "U+200B"
+    ],
+    "counts": {
+      "zero_width_removed": 6,
+      "whitespace_collapsed": 1
+    },
+    "note": "invisible zero-width / control / BOM chars removed; HTML entities unescaped; Brahmic ZWJ/ZWNJ preserved"
+  },
+  "dedup": {
+    "kept_id": 7138,
+    "removed_id": 7343,
+    "kept_head": "Generate an executable Python function generated from the given prompt. The function should take stdin as input and print the output. Simply call the function after the definition.Given an Integer N, write a program to reverse it.\n\n-----Inp",
+    "removed_head": "Generate an executable Python function generated from the given prompt. The function should take stdin as input and print the output. Simply call the function after the definition.You're given an integer N. Write a program to calculate the "
+  },
+  "pii": {
+    "kind": "email",
+    "before": "s valid else \u201cNO\u201d\n\nConstraint:\n\n1 \u2264 n \u2264 100\n\nSAMPLE INPUT\n3\ncoder@mastroes.com\n999@111.blah\n1_1@h-",
+    "after": "s valid else \u201cNO\u201d\n\nConstraint:\n\n1 \u2264 n \u2264 100\n\nSAMPLE INPUT\n3\n[EMAIL]\n[EMAIL]\n[EMAIL]\n\nSAMPL"
+  }
+}

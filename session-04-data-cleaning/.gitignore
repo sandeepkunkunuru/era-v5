@@ -1,0 +1,5 @@
+# Raw dataset shard (250MB) + benchmark test sets are large, third-party, and
+# regenerable (hf_hub_download + datasets). report/stats.json etc. ARE committed
+# as the reproducible record, and are also copied into ../session-4/data/.
+data/
+report/run.log

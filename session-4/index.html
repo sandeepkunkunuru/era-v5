@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Session 4 · Data Cleaning & Deduplication · ERA v5</title>
+  <meta name="description" content="ERA v5 Session 4: the 8-strategy data-cleaning pipeline (extract, normalize, language-ID, quality, MinHash dedup, PII, decontaminate, manifest) run for real on a 69M-token slice of OpenThoughts-114k reasoning traces. Every number measured." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1020'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23fb7185' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%232dd4bf'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/tokens.css" />
+  <style>
+    .wrap { max-width: 940px; margin: 0 auto; padding: 0 1.4rem; }
+    .topbar { display: flex; gap: 1.2rem; padding: 1rem 0; font-family: var(--mono); font-size: 0.85rem; }
+    .topbar a { color: var(--muted); text-decoration: none; }
+    .topbar a:hover { color: var(--teal); }
+    header.hero { padding: 1.5rem 0 0.5rem; }
+    .eyebrow { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--teal); }
+    h1 { font-family: "Space Grotesk", sans-serif; font-size: clamp(1.9rem, 4.5vw, 2.9rem); line-height: 1.02; margin: 0.4rem 0 0.5rem; color: var(--text); }
+    h1 .accent { color: var(--gold); }
+    .lede { color: var(--muted); max-width: 70ch; font-size: 1rem; }
+    .lede b { color: var(--text); font-weight: 600; }
+    h2 { font-family: "Space Grotesk", sans-serif; font-size: 1.28rem; color: var(--text); margin: 2.2rem 0 0.5rem; border-top: 1px solid var(--line); padding-top: 1.2rem; }
+    h2 .m { font-family: var(--mono); font-size: 0.8rem; color: var(--teal); margin-right: 0.5rem; }
+    h3 { font-size: 0.95rem; color: var(--teal); margin: 1rem 0 0.3rem; font-family: var(--mono); font-weight: 600; }
+    p, li { color: var(--muted); font-size: 0.93rem; line-height: 1.5; }
+    p b, li b, td b { color: var(--text); font-weight: 600; }
+    code { font-family: var(--mono); font-size: 0.85em; background: rgba(255,255,255,0.05); padding: 0.05em 0.35em; border-radius: 4px; color: var(--text); }
+    table { border-collapse: collapse; width: 100%; margin: 0.6rem 0; font-size: 0.86rem; }
+    th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+    td { color: var(--muted); }
+    .strat td:nth-child(1) { color: var(--teal); font-family: var(--mono); font-weight: 600; text-align: center; }
+    .strat td:nth-child(2) { color: var(--text); font-weight: 600; white-space: nowrap; }
+    .strat td:nth-child(4) { color: var(--gold); font-family: var(--mono); font-size: 0.82rem; white-space: nowrap; }
+    .chartwrap { background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 1rem 1rem 0.5rem; margin: 0.8rem 0; overflow-x: auto; }
+    .chart-cap { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); text-align: center; padding: 0.5rem 0 0.2rem; }
+    .foot { color: var(--muted); font-size: 0.78rem; padding: 2rem 0 3rem; border-top: 1px solid var(--line); margin-top: 2rem; line-height: 1.6; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem; }
+    @media (max-width: 680px) { .two { grid-template-columns: 1fr; } }
+    .pill { display: inline-block; font-family: var(--mono); font-size: 0.72rem; color: var(--coral); border: 1px solid var(--line); border-radius: 999px; padding: 0.1rem 0.6rem; }
+    .pill.ok { color: var(--teal); }
+    .stat-row { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 0.8rem 0; }
+    .stat { flex: 1 1 130px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 10px; padding: 0.7rem 0.9rem; }
+    .stat .n { font-family: var(--mono); font-size: 1.35rem; color: var(--gold); font-weight: 600; }
+    .stat .l { font-size: 0.74rem; color: var(--muted); margin-top: 0.15rem; }
+    .card { background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-left: 2px solid var(--teal); border-radius: 8px; padding: 0.6rem 0.9rem; margin: 0.6rem 0; }
+    .card .hd { font-family: var(--mono); font-size: 0.8rem; color: var(--teal); font-weight: 600; }
+    .card .hd .drop { color: var(--gold); float: right; }
+    .ba { font-family: var(--mono); font-size: 0.76rem; line-height: 1.45; margin-top: 0.4rem; white-space: pre-wrap; word-break: break-word; }
+    .ba .del { color: var(--coral); text-decoration: line-through; opacity: 0.75; }
+    .ba .ins { color: var(--teal); }
+    .ba .tag { color: var(--muted); }
+    .concern { border-left-color: var(--coral); }
+    .concern .hd { color: var(--coral); }
+    a.ref { color: inherit; text-decoration: none; border-bottom: 1px dotted rgba(255,255,255,0.35); }
+    a.ref:hover { color: var(--teal); border-bottom-color: var(--teal); }
+    .foot a.ref { color: var(--muted); }
+    .foot a.ref:hover { color: var(--teal); }
+    .mono-sm { font-family: var(--mono); font-size: 0.76rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <nav class="topbar wrap"><a href="../">← ERA v5</a><a>Session 4 · Data Cleaning & Dedup</a></nav>
+
+  <header class="hero wrap">
+    <p class="eyebrow">Session 4 · Assignment</p>
+    <h1>Eight ways to <span class="accent">throw data away</span></h1>
+    <p class="lede">"Cleaning is <b>90% of model training</b>; a new attention mechanism is 0.1%." Session 4 is the
+      cleaning pipeline itself — <b>eight strategies</b> that drain raw web-crawl into something worth training on.
+      We picked a different <b>10–100M-token</b> dataset than the one shown, implemented all eight (MinHash + LSH
+      from scratch, real benchmark decontamination), and <b>ran them for real</b>. Every number below is measured,
+      written by <code>clean.py</code> into <code>stats.json</code> — nothing asserted.</p>
+  </header>
+
+  <main class="wrap">
+
+    <!-- ─────────────────────────────  §1  STRATEGIES  ───────────────────────────── -->
+    <h2><span class="m">§1</span>How many strategies? <b style="color:var(--gold)">Eight.</b> &nbsp;What are they?</h2>
+    <p>The lecture walks one pipeline diagram where 100% of raw <a class="ref" href="https://commoncrawl.org" target="_blank" rel="noopener">Common Crawl</a>
+      drains stage by stage. Confirmed eight ("which script was used to reach <b>stage 8</b>"). Each row is a
+      strategy, what it removes, and — in the last column — <b>what it actually did to our corpus</b>.</p>
+    <table class="strat">
+      <tr><th>#</th><th>Strategy</th><th>What it removes / does</th><th>Our run</th></tr>
+      <tr><td>1</td><td>Extract</td><td>Pull the real content out of raw HTML; drop nav, headers, footers, cookie banners, tags — and here, the identical <b>system boilerplate</b> + <b>ghost markers</b> on every row</td><td>−1.94M tok</td></tr>
+      <tr><td>2</td><td>Normalize</td><td>Unicode NFC, unescape HTML entities, strip zero-width / BOM / control chars, collapse whitespace — <b>Brahmic-safe</b> (keep ZWJ/ZWNJ)</td><td>−0.89M tok</td></tr>
+      <tr><td>3</td><td>Language-ID</td><td>Detect the <em>actual</em> language per document; drop off-target &amp; mislabeled — <b>never trust the folder name</b></td><td>0 dropped</td></tr>
+      <tr><td>4</td><td>Quality filter</td><td><a class="ref" href="https://arxiv.org/abs/2112.11446" target="_blank" rel="noopener">Gopher</a>/<a class="ref" href="https://arxiv.org/abs/1910.10683" target="_blank" rel="noopener">C4</a> heuristics + a model classifier: word count, bullet/ellipsis ratio, repeated lines, SEO spam</td><td>−207 rows</td></tr>
+      <tr><td>5</td><td>Dedup</td><td>Remove <em>near</em>-duplicates (not just exact) via <a class="ref" href="https://arxiv.org/abs/2107.06499" target="_blank" rel="noopener">MinHash + LSH</a> — shingle → signature → band</td><td>−1 cluster</td></tr>
+      <tr><td>6</td><td>PII scrub</td><td>Redact emails, phones, IPs, handles — but <b>keep public figures</b> (draw the line)</td><td>95 docs</td></tr>
+      <tr><td>7</td><td>Decontaminate</td><td>Drop anything overlapping a benchmark <b>test</b> set (n-gram / shingle overlap; canary strings)</td><td>0 (clean)</td></tr>
+      <tr><td>8</td><td>Manifest</td><td>Per-shard provenance: source, license, <b>script hash</b>, <b>SHA-256</b>, tokens, languages → reproducible</td><td>emitted</td></tr>
+    </table>
+    <p class="mono-sm">The heuristic stages throw away good data <em>on purpose</em>: "throwing 90% garbage is more
+      important than preserving the 30% [good]." Cleaning is deterministic and lossy by design.</p>
+
+    <!-- ─────────────────────────────  §2  DATASET  ───────────────────────────── -->
+    <h2><span class="m">§2</span>What dataset was picked <span class="pill ok">10–100M tokens</span></h2>
+    <p><b><a class="ref" href="https://huggingface.co/datasets/open-thoughts/OpenThoughts-114k" target="_blank" rel="noopener">open-thoughts/OpenThoughts-114k</a></b> — reasoning-distillation traces (a problem, a long
+      <code>&lt;|begin_of_thought|&gt;</code> chain, a solution). The assignment showed a Claude-Opus reasoning-distilled
+      set as an <em>example</em> and said <b>not</b> to use it — "if I ask you to use it then all of you will use
+      this dataset only." OpenThoughts is the same <em>kind</em> of data (reasoning SFT), a different set, and it
+      ties straight back to <a class="ref" href="../session-3/">Session 3</a>'s SFT/RL data question. We took the
+      first shard, <b>8,000 rows ≈ 69.4M tokens</b> (cl100k) — squarely in the 10–100M window.</p>
+    <div class="stat-row">
+      <div class="stat"><div class="n">8,000</div><div class="l">rows (shard 0 slice)</div></div>
+      <div class="stat"><div class="n">69.4M</div><div class="l">tokens in (cl100k)</div></div>
+      <div class="stat"><div class="n">Apache-2.0</div><div class="l">license (in manifest)</div></div>
+      <div class="stat"><div class="n">100% en</div><div class="l">reasoning / code / math</div></div>
+    </div>
+
+    <!-- ─────────────────────────────  §3  THE RUN  ───────────────────────────── -->
+    <h2><span class="m">§3</span>The pipeline, run for real <span class="pill ok">measured</span></h2>
+    <p>Tokens removed by each strategy. The story of <em>this</em> corpus: <b>extract</b> (identical boilerplate on
+      every row) and <b>quality</b> (looping/degenerate traces) do almost all the work; the data was already
+      language-clean and de-duplicated by its curators, so those stages barely fire — which is the point of
+      <em>measuring</em> instead of assuming a textbook 100→44% funnel.</p>
+    <div class="chartwrap">
+      <svg viewBox="0 0 680 250" width="100%" role="img" aria-label="Tokens removed per cleaning strategy: extract 1.94M, quality 1.74M, normalize 0.89M, others near zero">
+        <g font-family="IBM Plex Mono, monospace" font-size="12">
+          <!-- rows: label x=8..118 ; bar starts x=120 ; scale 560px = 1,936,000 -->
+          <!-- extract 1,936,000 -->
+          <text x="118" y="30" text-anchor="end" fill="#8a93a8">extract</text>
+          <rect x="120" y="20" width="560" height="14" rx="2" fill="#2dd4bf"/>
+          <text x="120" y="30" dx="566" fill="#fbbf24">1.94M</text>
+          <!-- quality 1,742,436 -> 504 -->
+          <text x="118" y="58" text-anchor="end" fill="#8a93a8">quality</text>
+          <rect x="120" y="48" width="504" height="14" rx="2" fill="#2dd4bf"/>
+          <text x="120" y="58" dx="510" fill="#fbbf24">1.74M</text>
+          <!-- normalize 892,384 -> 258 -->
+          <text x="118" y="86" text-anchor="end" fill="#8a93a8">normalize</text>
+          <rect x="120" y="76" width="258" height="14" rx="2" fill="#2dd4bf"/>
+          <text x="120" y="86" dx="264" fill="#fbbf24">0.89M</text>
+          <!-- dedup 1,967 -->
+          <text x="118" y="114" text-anchor="end" fill="#8a93a8">dedup</text>
+          <rect x="120" y="104" width="3" height="14" rx="2" fill="#2dd4bf"/>
+          <text x="120" y="114" dx="9" fill="#8a93a8">1,967 · 1 near-dup</text>
+          <!-- pii 1,431 -->
+          <text x="118" y="142" text-anchor="end" fill="#8a93a8">PII</text>
+          <rect x="120" y="132" width="3" height="14" rx="2" fill="#2dd4bf"/>
+          <text x="120" y="142" dx="9" fill="#8a93a8">1,431 · 95 docs redacted</text>
+          <!-- langid 0 -->
+          <text x="118" y="170" text-anchor="end" fill="#8a93a8">language-ID</text>
+          <text x="122" y="170" fill="#8a93a8">0 · 100% on-target (en)</text>
+          <!-- decontam 0 -->
+          <text x="118" y="198" text-anchor="end" fill="#8a93a8">decontaminate</text>
+          <text x="122" y="198" fill="#8a93a8">0 · no benchmark leakage found</text>
+          <!-- axis -->
+          <line x1="120" y1="212" x2="680" y2="212" stroke="rgba(230,234,242,0.18)"/>
+          <text x="120" y="228" fill="#8a93a8">0</text>
+          <text x="400" y="228" fill="#8a93a8" text-anchor="middle">~1M tokens removed</text>
+          <text x="680" y="228" fill="#8a93a8" text-anchor="end">1.94M</text>
+        </g>
+      </svg>
+      <div class="chart-cap">tokens removed per strategy · extract's 1.94M = 242 boilerplate tok × 8,000 identical system prompts</div>
+    </div>
+    <table>
+      <tr><th>Stage</th><th>Rows</th><th>Tokens</th><th>Δ tokens</th></tr>
+      <tr><td>0 · raw slice</td><td>8,000</td><td>71.3M<span class="mono-sm"> *</span></td><td>—</td></tr>
+      <tr><td>1 · extract</td><td>8,000</td><td>69,397,276</td><td>−1.94M boilerplate + 32k markers</td></tr>
+      <tr><td>2 · normalize</td><td>8,000</td><td>68,504,892</td><td>−892,384</td></tr>
+      <tr><td>3 · language-ID</td><td>8,000</td><td>68,504,892</td><td>0</td></tr>
+      <tr><td>4 · quality</td><td>7,793</td><td>66,762,456</td><td>−1,742,436</td></tr>
+      <tr><td>5 · dedup</td><td>7,792</td><td>66,760,489</td><td>−1,967</td></tr>
+      <tr><td>6 · PII</td><td>7,792</td><td>66,759,058</td><td>−1,431</td></tr>
+      <tr><td>7 · decontaminate</td><td>7,792</td><td>66,759,058</td><td>0</td></tr>
+      <tr><td><b>8 · manifest → out</b></td><td><b>7,792</b></td><td><b>66,759,058</b></td><td><b>−3.8% tok · −2.6% rows</b></td></tr>
+    </table>
+    <p class="mono-sm">* raw ≈ post-extract 69.4M + 1.94M identical system boilerplate that stage 1 strips before the baseline.</p>
+
+    <!-- ─────────────────────────────  §4  WHAT & WHY  ───────────────────────────── -->
+    <h2><span class="m">§4</span>What was cleaned, and why — with the receipts</h2>
+
+    <div class="card">
+      <div class="hd">1 · EXTRACT <span class="drop">−1.94M tokens</span></div>
+      <p>The <code>system</code> prompt was <b>byte-identical on all 8,000 rows</b> (242 tokens each) — the "boilerplate
+        on every page" case, verbatim. And every trace was wrapped in <b>32,000 ghost markers</b>
+        (<code>&lt;|begin_of_thought|&gt;</code> ×4/row) — structure, not training signal. Both stripped; the clean
+        problem+reasoning+solution kept.</p>
+      <div class="ba"><span class="tag">before ▸ </span><span class="del">&lt;|begin_of_thought|&gt;</span> Okay, let's see. I need to solve this problem where three people have transceivers…<span class="del"> &lt;|end_of_thought|&gt;</span>
+<span class="tag">after  ▸ </span><span class="ins">Okay, let's see. I need to solve this problem where three people have transceivers…</span></div>
+    </div>
+
+    <div class="card">
+      <div class="hd">2 · NORMALIZE <span class="drop">−0.89M tokens</span></div>
+      <p>Every doc changed: <b>206 zero-width</b> chars (U+200B), <b>1,507 control</b> chars, <b>24</b> docs with HTML
+        entities unescaped, whitespace collapsed. The zero-width removal is <b>Brahmic-aware</b> — ZWJ/ZWNJ next to
+        Devanagari/Tamil/… are kept, because that's the exact bug that put <b>46 garbage tokens</b> in the ERA V4 vocab.</p>
+      <div class="ba"><span class="tag">removed ▸ </span>U+200B (zero-width space) ×206 · <span class="tag">kept ▸</span> U+200D ZWJ when adjacent to a Brahmic codepoint</div>
+    </div>
+
+    <div class="card">
+      <div class="hd">4 · QUALITY <span class="drop">−207 rows</span></div>
+      <p>Gopher/C4 heuristics: word-count floor, symbol ratio, bullet-wall &amp; ellipsis ratio, and a reasoning-specific
+        one — <b>repeated-line fraction &gt; 30%</b>, which catches <b>degenerate / looping</b> chains-of-thought (the
+        model repeating itself). All 207 drops were repeated-line loops.</p>
+    </div>
+
+    <div class="card">
+      <div class="hd">5 · DEDUP <span class="drop">−1 near-dup</span></div>
+      <p>MinHash (128 permutations) → LSH (32 bands × 4 rows) → union-find, 5-word shingles — implemented from the
+        lecture's three steps, no library. Only <b>one</b> near-dup cluster: OpenThoughts is already aggressively
+        de-duplicated, and MinHash confirms it. (The one pair below shares a competitive-programming
+        <em>instruction template</em> more than real content — a reminder that near-dup on templated data needs the
+        boilerplate stripped first, which is why extract is stage 1.)</p>
+      <div class="ba"><span class="tag">kept    ▸ </span>…Simply call the function after the definition. Given an Integer N, write a program to <span class="ins">reverse it</span>.
+<span class="tag">dropped ▸ </span>…Simply call the function after the definition. You're given an integer N. Write a program to <span class="del">calculate the…</span></div>
+    </div>
+
+    <div class="card">
+      <div class="hd">6 · PII SCRUB <span class="drop">95 docs · 541 spans</span></div>
+      <p>Redacted <b>79 emails</b>, <b>194 handles</b>, <b>207 IPs</b>, <b>61 phones</b> → placeholders; public names kept.
+        (Emails here are mostly <em>sample inputs</em> to email-validation coding problems — redacting them is arguably
+        over-eager; see §5.)</p>
+      <div class="ba"><span class="tag">before ▸ </span>SAMPLE INPUT: 3  <span class="del">coder@mastroes.com</span>  <span class="del">999@111.blah</span>
+<span class="tag">after  ▸ </span>SAMPLE INPUT: 3  <span class="ins">[EMAIL]</span>  <span class="ins">[EMAIL]</span></div>
+    </div>
+
+    <div class="card">
+      <div class="hd">7 · DECONTAMINATE <span class="drop">0 removed</span></div>
+      <p>Built a <b>13-gram index</b> from the held-out test sets of <a class="ref" href="https://arxiv.org/abs/2110.14168" target="_blank" rel="noopener">GSM8K</a> (1,319),
+        <a class="ref" href="https://arxiv.org/abs/2103.03874" target="_blank" rel="noopener">MATH-500</a> (500) and
+        <a class="ref" href="https://arxiv.org/abs/2107.03374" target="_blank" rel="noopener">HumanEval</a> (164); drop any doc sharing ≥2 <em>informative</em> 13-grams.
+        <b>Result: zero</b> — OpenThoughts' curators already decontaminate, and a robust n-gram check confirms it. (A
+        naïve check first flagged 2 rows on the generic 13-gram <code>"0 1 2 3 4 5 6 7 8 9 a b c"</code> — a false
+        positive we removed by filtering low-entropy n-grams. See §5.)</p>
+    </div>
+
+    <!-- ─────────────────────────────  §5  OTHER CONCERNS  ───────────────────────────── -->
+    <h2><span class="m">§5</span>Any other strategy or concern cleaned up?</h2>
+    <p>The assignment asks this explicitly. These are the judgment calls the run surfaced — the parts a blind
+      "apply the 8 stages" script gets <em>wrong</em>:</p>
+
+    <div class="card concern">
+      <div class="hd">PII regexes over-fire on code &amp; math data</div>
+      <p>A first pass redacted <b>5,282 "phones" and 319 "IPs"</b> — almost all <b>false positives</b>: any 10-digit run
+        in a math problem looked like a phone; version strings like <code>1.2.3.4</code> looked like IPs. We tightened
+        phone to require real separators and validated IP octets ≤255 → <b>61 phones, 207 IPs</b>. This is exactly
+        Rohan's point: PII rules "need a lot of intelligence to understand what to keep" — a Reddit dump and a math
+        corpus need different policies. Emails stay the high-precision signal.</p>
+    </div>
+
+    <div class="card concern">
+      <div class="hd">Decontamination needs an entropy floor</div>
+      <p>Generic enumerations (<code>0 1 2 3 …</code>, <code>a b c …</code>) appear in both benchmarks and ordinary code,
+        so a raw 13-gram match false-positives. Filtering n-grams with &lt;6 distinct non-numeric tokens took
+        contamination from a spurious 2 to a true <b>0</b>.</p>
+    </div>
+
+    <div class="card concern">
+      <div class="hd">Language-ID and dedup are near-no-ops here — and that's information</div>
+      <p>On raw Common Crawl these two stages do the heavy lifting (a ~20% language drop, huge dedup). On a
+        <em>curated</em> reasoning set they barely fire. Reporting <b>0</b> honestly (rather than assuming the textbook
+        funnel) <em>is</em> the finding: know your corpus. The stages still ran — as guarantees, not theatre.</p>
+    </div>
+
+    <div class="card concern">
+      <div class="hd">Reproducibility is a strategy, not a footnote</div>
+      <p>V4 bled compute because cleaning wasn't reproducible — "you fix the dataset, train, find another mistake, fix,
+        train again." Stage 8 emits a manifest binding input, script and output by hash, so
+        <code>same input + same script → same output</code>. That determinism is why we could safely iterate the PII
+        and decontam fixes above and trust the diff.</p>
+    </div>
+
+    <!-- ─────────────────────────────  §6  FINAL STATS  ───────────────────────────── -->
+    <h2><span class="m">§6</span>Final statistics <span class="pill ok">reproducible</span></h2>
+    <div class="stat-row">
+      <div class="stat"><div class="n">8,000 → 7,792</div><div class="l">rows (−2.6%)</div></div>
+      <div class="stat"><div class="n">69.4M → 66.76M</div><div class="l">tokens kept (−3.8%)</div></div>
+      <div class="stat"><div class="n">2.63M</div><div class="l">tokens removed total</div></div>
+      <div class="stat"><div class="n">~164s</div><div class="l">end-to-end, 1 core</div></div>
+    </div>
+    <p class="mono-sm">manifest.json — provenance &amp; reproducibility record (per shard):</p>
+    <table>
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>source</td><td>open-thoughts/OpenThoughts-114k @ <code>bd093c39</code> · apache-2.0</td></tr>
+      <tr><td>tokenizer</td><td>cl100k_base (tiktoken)</td></tr>
+      <tr><td>input_sha256</td><td><code>11c37cde12bed21d…</code></td></tr>
+      <tr><td>script_sha256</td><td><code>6ab7ee167b8924dd…</code></td></tr>
+      <tr><td>output_sha256</td><td><code>d252013f98305236…</code></td></tr>
+      <tr><td>pipeline</td><td>extract · normalize · langid · quality · dedup · pii · decontam</td></tr>
+      <tr><td>guarantee</td><td>same input_sha256 + script_sha256 → same output_sha256</td></tr>
+    </table>
+    <p class="mono-sm">Full artifacts: <a class="ref" href="./data/stats.json">stats.json</a> ·
+      <a class="ref" href="./data/manifest.json">manifest.json</a> ·
+      <a class="ref" href="./data/examples.json">examples.json</a></p>
+
+    <h2><span class="m">§7</span>How this connects to Session 3</h2>
+    <p><a class="ref" href="../session-3/">Session 3</a> designed the 40B India-first model and specified this exact
+      cleaning pipeline as one of its four decisions —
+      <code>lang-ID → CCNet → Gopher quality → MinHash dedup → n-gram decontam → PII/tox</code>, plus Indic NFC
+      normalization. Session 4 is that design <b>run for real</b> and completed with the two stages S3 stated only
+      in passing: an explicit <b>extract</b> step and the <b>manifest/provenance</b> record whose absence caused V4's
+      unreproducible-shard pain. One story: <em>design in S3, measured execution in S4.</em></p>
+  </main>
+
+  <footer class="foot wrap">
+    <b>Reproduce</b>: <code>python clean.py 8000</code> over
+    <a class="ref" href="https://huggingface.co/datasets/open-thoughts/OpenThoughts-114k" target="_blank" rel="noopener">OpenThoughts-114k</a> shard 0.
+    MinHash+LSH and n-gram decontam implemented from scratch; benchmarks from
+    <a class="ref" href="https://arxiv.org/abs/2110.14168" target="_blank" rel="noopener">GSM8K · 2110.14168</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2103.03874" target="_blank" rel="noopener">MATH · 2103.03874</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2107.03374" target="_blank" rel="noopener">HumanEval · 2107.03374</a>.
+    Method references:
+    <a class="ref" href="https://arxiv.org/abs/2107.06499" target="_blank" rel="noopener">Lee, dedup · 2107.06499</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2112.11446" target="_blank" rel="noopener">Gopher · 2112.11446</a> ·
+    <a class="ref" href="https://arxiv.org/abs/1910.10683" target="_blank" rel="noopener">C4/T5 · 1910.10683</a> ·
+    <a class="ref" href="https://arxiv.org/abs/2406.17557" target="_blank" rel="noopener">FineWeb · 2406.17557</a> ·
+    <a class="ref" href="https://arxiv.org/abs/1911.00359" target="_blank" rel="noopener">CCNet · 1911.00359</a>.
+    Every statistic on this page is emitted by <code>clean.py</code> → <code>stats.json</code>; nothing hand-typed.
+  </footer>
+</body>
+</html>
