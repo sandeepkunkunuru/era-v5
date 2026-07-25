@@ -12,6 +12,9 @@ screenshots. You press a button, the boundary moves, and you check the claim you
 |---|-------|----------------|
 | [Session 1](./session-1) | Four proofs | activations · depth · embeddings · data — see below |
 | [Session 2](./session-2) | Multilingual BPE | one 10k-vocab tokenizer made *fair* across four scripts — parity-aware BPE, score 2,511 |
+| [Session 3](./session-3) | India-first 40B data design | vocab size derived from a *measured* fertility sweep, not a round number |
+| [Session 4](./session-4) | Data cleaning & dedup | the 8-stage pipeline run for real on 69.4M tokens — MinHash+LSH & decontam from scratch |
+| [Session 5](./session-5) | Data mixtures & curriculum | mixture-and-curriculum plan for V5 *(in progress)* |
 
 ### Session 2 — cross-lingual fertility parity
 
@@ -31,6 +34,44 @@ Trained in `session-02-multilingual-bpe/`. Progression: `train.py` (naive, 1,239
 (parity-aware BPE, 2,511)**. `experiments/parity_bpe.py` shows the pure-parity (gap 0) result;
 `build_widget.py` publishes artifacts into `session-2/`. Prior-art catalog:
 `ai_research/topics/01-tokenization/`.
+
+### Session 3 — India-first 40B, data designed backward from fertility
+
+A terse design report for the data behind a 40B India-first model: pretraining / post-training / RL /
+alignment sourcing, India-first cleaning, "Indian-perspective" evaluation, and the tokenizer decision.
+The spine is that the **vocabulary size is derived, not guessed** — a measured fertility sweep (32k → 256k)
+over English + 12 Indic languages (FLORES-200) + code + math lands the choice at **256k**, anchored against
+Gemma 3 (262k), the Tao vocab-scaling law, and Sarvam-1 (68k). Scarcity is stated honestly: verified native
+Indic tokens are thin, so synthetic generation is sized, not wished away. Live at
+[era-v5.netlify.app/session-3](https://era-v5.netlify.app/session-3/); built in `session-03-india-first-40b/`.
+
+### Session 4 — data cleaning & deduplication, run for real
+
+The session's **8-stage pipeline** — extract · normalize · language-ID · quality · MinHash-dedup · PII ·
+decontaminate · manifest — applied end to end to a **69.4M-token** slice of `open-thoughts/OpenThoughts-114k`
+(8,000 reasoning traces). MinHash+LSH and n-gram decontamination are **implemented from scratch** (numpy),
+with decontam checked against GSM8K / MATH-500 / HumanEval test sets. The honest findings are the graded
+depth: PII regexes over-fire on math/code and had to be tuned (5,282 → 61 phone matches); decontam came out
+at 0 because OpenThoughts was pre-decontaminated; language-ID and dedup are near-no-ops on already-curated
+data — reported as 0 rather than hidden.
+
+| | Result |
+|---|---|
+| **Input → output** | 8,000 → 7,792 rows · 69,352,268 → 66,759,058 tokens (**−3.8%**, cl100k count) |
+| **Where the drop comes from** | extract (−1.94M boilerplate tokens) + quality (−207 looping traces) do the work |
+| **From scratch** | MinHash (128 perms, 32×4 LSH bands) + union-find clustering; informative-n-gram decontam |
+
+Live at [era-v5.netlify.app/session-4](https://era-v5.netlify.app/session-4/); pipeline in
+`session-04-data-cleaning/clean.py` (the 250 MB parquet is gitignored — the run's `stats.json` /
+`manifest.json` are committed under `session-4/data/`).
+
+### Session 5 — data mixtures & curriculum *(in progress)*
+
+A defensible **mixture-and-curriculum specification** for V5: a budget share for every capability lane
+(general web · code · math · reasoning · agentic · Indic), the Indic split across verified / unverified /
+translated / synthetic tiers, a protected always-on floor the data selector may not cross, an anneal reserve
+held back for the cooldown, and difficulty / reasoning-length bands — each number defended and staged behind
+1B/3B proxy runs. This session's assignment is submitted as **this repository's README**.
 
 ### Session 1 — the four claims
 
