@@ -1,0 +1,124 @@
+{
+  "model": "V5 ~40B India-first (dense or MoE), ~75 tok/param past Chinchilla for inference efficiency",
+  "main_budget_T": 3.0,
+  "anneal_fraction": 0.025,
+  "main_mix_pct": {
+    "general_web": 40,
+    "code": 18,
+    "math_stem": 14,
+    "reasoning": 6,
+    "agentic": 4,
+    "indic": 13,
+    "long_context": 5
+  },
+  "anneal_mix_pct": {
+    "general_web": 12,
+    "code": 20,
+    "math_stem": 12,
+    "reasoning": 14,
+    "agentic": 18,
+    "indic": 22,
+    "long_context": 2
+  },
+  "always_on_floor_pct": {
+    "indic": 8,
+    "agentic": 3,
+    "reasoning": 3
+  },
+  "benchmarks": {
+    "general_web": "MMLU, MMLU-Pro, GPQA(gen), HellaSwag",
+    "code": "SWE-bench Verified/Live/Pro, LiveCodeBench, BFCL",
+    "math_stem": "AIME, MATH, GSM8K, FrontierMath",
+    "reasoning": "AIME@high, GPQA@high, ARC-AGI",
+    "agentic": "SWE-bench(multistep), tau-bench, WebArena, GAIA, BrowseComp, terminal-bench",
+    "indic": "MILU, IndicGenBench, IndicQA, FLORES (MT)",
+    "long_context": "RULER, LongBench, needle-in-haystack, InfiniteBench"
+  },
+  "experiment_a_supply": {
+    "general_web": {
+      "share_pct": 40,
+      "target_B": 1200,
+      "unique_B": 4800,
+      "rep_factor": 0.25,
+      "verdict": "unique-covered"
+    },
+    "code": {
+      "share_pct": 18,
+      "target_B": 540,
+      "unique_B": 960,
+      "rep_factor": 0.56,
+      "verdict": "unique-covered"
+    },
+    "math_stem": {
+      "share_pct": 14,
+      "target_B": 420,
+      "unique_B": 142,
+      "rep_factor": 2.96,
+      "verdict": "repeat x3.0 (<= x3 ok)"
+    },
+    "reasoning": {
+      "share_pct": 6,
+      "target_B": 180,
+      "unique_B": 6.0,
+      "rep_factor": 30.0,
+      "verdict": "repeat x4 then SYNTHESISE 156B (87% of lane)"
+    },
+    "agentic": {
+      "share_pct": 4,
+      "target_B": 120,
+      "unique_B": 7.6,
+      "rep_factor": 15.83,
+      "verdict": "repeat x4 then SYNTHESISE 90B (75% of lane)"
+    },
+    "indic": {
+      "share_pct": 13,
+      "target_B": 390,
+      "unique_B": 394,
+      "rep_factor": 0.99,
+      "verdict": "unique-covered"
+    },
+    "long_context": {
+      "share_pct": 5,
+      "target_B": 150,
+      "unique_B": 70,
+      "rep_factor": 2.14,
+      "verdict": "repeat x2 then SYNTHESISE 10B (7% of lane)"
+    }
+  },
+  "indic_tier_plan_B": {
+    "verified_native": 168,
+    "unverified": 60,
+    "translated": 120,
+    "synthetic": 42
+  },
+  "indic_target_B": 390,
+  "experiment_b_floor": {
+    "candidate_supply_pct": {
+      "general_web": 60,
+      "code": 16,
+      "math_stem": 7,
+      "reasoning": 4,
+      "agentic": 3,
+      "indic": 7,
+      "long_context": 3
+    },
+    "retained_floor_off_pct": {
+      "general_web": 56.4,
+      "code": 27.0,
+      "math_stem": 10.8,
+      "reasoning": 4.7,
+      "agentic": 0.0,
+      "indic": 0.0,
+      "long_context": 1.1
+    },
+    "retained_floor_on_pct": {
+      "general_web": 46.2,
+      "code": 25.2,
+      "math_stem": 9.8,
+      "reasoning": 7.1,
+      "agentic": 3.0,
+      "indic": 8.0,
+      "long_context": 0.8
+    }
+  }
+}

@@ -14,7 +14,7 @@ screenshots. You press a button, the boundary moves, and you check the claim you
 | [Session 2](./session-2) | Multilingual BPE | one 10k-vocab tokenizer made *fair* across four scripts — parity-aware BPE, score 2,511 |
 | [Session 3](./session-3) | India-first 40B data design | vocab size derived from a *measured* fertility sweep, not a round number |
 | [Session 4](./session-4) | Data cleaning & dedup | the 8-stage pipeline run for real on 69.4M tokens — MinHash+LSH & decontam from scratch |
-| [Session 5](./session-5) | Data mixtures & curriculum | mixture-and-curriculum plan for V5 *(in progress)* |
+| [Session 5](./session-05-data-mixture) | Data mixtures & curriculum | a defended V5 mixture-and-curriculum plan, with a proxy experiment that was actually run |
 
 ### Session 2 — cross-lingual fertility parity
 
@@ -65,13 +65,26 @@ Live at [era-v5.netlify.app/session-4](https://era-v5.netlify.app/session-4/); p
 `session-04-data-cleaning/clean.py` (the 250 MB parquet is gitignored — the run's `stats.json` /
 `manifest.json` are committed under `session-4/data/`).
 
-### Session 5 — data mixtures & curriculum *(in progress)*
+### Session 5 — data mixtures & curriculum
 
-A defensible **mixture-and-curriculum specification** for V5: a budget share for every capability lane
-(general web · code · math · reasoning · agentic · Indic), the Indic split across verified / unverified /
-translated / synthetic tiers, a protected always-on floor the data selector may not cross, an anneal reserve
-held back for the cooldown, and difficulty / reasoning-length bands — each number defended and staged behind
-1B/3B proxy runs. This session's assignment is submitted as **this repository's README**.
+A defended **mixture-and-curriculum specification** for V5 (~40B, India-first) over a fixed **3.0T-token**
+budget: a share for every capability lane (general web · code · math · reasoning · agentic · Indic ·
+long-context), the **Indic split across verified / unverified / translated / synthetic** tiers, a protected
+**always-on floor** the data selector may not cross, an **anneal reserve** held back for the cooldown, and
+**difficulty / reasoning-length bands** with a concrete example each. Every number is tied to the benchmark it
+is meant to win and sized against real supply.
+
+Because "a data decision is a hypothesis until a cheap experiment has tested it," the plan ships with a proxy —
+[`mixture_plan.py`](./session-05-data-mixture/mixture_plan.py) — that **was actually run**, and it makes two of
+the plan's load-bearing claims measurable:
+
+| | Result |
+|---|---|
+| **Supply is real or honestly synthetic** | math sits at its ×3 repetition ceiling; **reasoning (87%) and agentic (75%) are flagged majority-synthetic** — the two capabilities the project exists for are the two with almost no natural data; Indic (390B) closes *only* across four provenance tiers |
+| **The always-on floor works** | an English/code-driven selector starves **Indic → 0.0%** and **agentic → 0.0%** with the floor OFF; the floor ON holds them at **8% / 3%** — the session's central lesson, reproduced numerically |
+
+**→ Full plan: [`session-05-data-mixture/README.md`](./session-05-data-mixture/README.md)** — this is the
+Session 5 submission. Unlike S1–S4 (Netlify widgets), S5 is submitted as a **GitHub README link**.
 
 ### Session 1 — the four claims
 
