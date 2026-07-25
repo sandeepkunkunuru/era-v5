@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ERA v5 · Session 5 — Data Mixtures &amp; Curriculum</title>
+  <meta name="description" content="A defended V5 data-mixture and curriculum plan over a fixed 3.0T-token budget — with a cheap proxy experiment that was actually run: reasoning and agentic data are mostly synthetic, and an always-on floor stops the selector starving Indic." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1020'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23fb7185' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%232dd4bf'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/tokens.css" />
+  <style>
+    .s5-hero { padding: 3.4rem 0 2rem; border-bottom: 1px solid var(--line); }
+    .eyebrow { font-family: var(--mono); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--teal); margin: 0 0 .7rem; }
+    .s5-hero h1 { font-family: var(--display); font-size: clamp(1.9rem, 4.4vw, 3rem); line-height: 1.05; margin: 0 0 1rem; }
+    .s5-hero h1 .accent { color: var(--coral); }
+    .s5-sub { color: var(--muted); max-width: 62ch; font-size: 1.05rem; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.6rem; }
+    .btn { display: inline-flex; align-items: center; gap: .5rem; padding: .6rem 1rem; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: .92rem; border: 1px solid var(--line-strong); color: var(--text); background: var(--surface); transition: border-color .15s, transform .1s; }
+    .btn:hover { border-color: var(--teal); transform: translateY(-1px); }
+    .btn.primary { background: linear-gradient(135deg, rgba(45,212,191,.16), rgba(251,113,133,.14)); border-color: var(--teal); }
+    .btn small { color: var(--muted); font-weight: 500; }
+    section.block { padding: 2.4rem 0; border-bottom: 1px solid var(--line); }
+    section.block > h2 { font-family: var(--display); font-size: 1.5rem; margin: 0 0 .4rem; }
+    section.block > h2 .n { color: var(--teal); font-family: var(--mono); font-size: 1rem; margin-right: .5rem; }
+    section.block > p.lead { color: var(--muted); max-width: 74ch; margin: 0 0 1.3rem; }
+    .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 560px; }
+    th, td { text-align: left; padding: .6rem .8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+    thead th { font-family: var(--mono); font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--ink-2); position: sticky; top: 0; }
+    tbody tr:last-child td { border-bottom: none; }
+    td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    td b { color: var(--text); }
+    .tag { font-family: var(--mono); font-size: .74rem; padding: .12rem .45rem; border-radius: 6px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap; }
+    .tag.warn { color: var(--gold); border-color: rgba(251,191,36,.4); }
+    .tag.bad { color: var(--coral); border-color: rgba(251,113,133,.45); }
+    .tag.ok { color: var(--teal); border-color: rgba(45,212,191,.4); }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.3rem; }
+    @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+    .callout { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--coral); border-radius: 10px; padding: 1rem 1.1rem; margin: 1.2rem 0 0; }
+    .callout.teal { border-left-color: var(--teal); }
+    .callout p { margin: .3rem 0; font-size: .93rem; }
+    .callout strong { color: var(--text); }
+    .zero { color: var(--coral); font-weight: 700; }
+    .prot { color: var(--teal); font-weight: 700; }
+    .kv { font-family: var(--mono); font-size: .82rem; color: var(--muted); }
+    ul.bands { list-style: none; padding: 0; margin: .6rem 0 0; }
+    ul.bands li { padding: .5rem 0; border-bottom: 1px solid var(--line); font-size: .92rem; }
+    ul.bands li:last-child { border-bottom: none; }
+    ul.bands b { color: var(--teal); font-family: var(--mono); margin-right: .5rem; }
+    footer.s5-foot { padding: 2.2rem 0 3rem; color: var(--muted); font-size: .88rem; }
+    footer.s5-foot a { color: var(--teal); }
+    .back { font-family: var(--mono); font-size: .82rem; color: var(--muted); text-decoration: none; }
+    .back:hover { color: var(--teal); }
+  </style>
+</head>
+<body>
+  <header class="s5-hero">
+    <div class="wrap">
+      <a class="back" href="../">← ERA v5 hub</a>
+      <p class="eyebrow" style="margin-top:1rem;">The School of AI · ERA v5 · Session 5</p>
+      <h1>The mixture <span class="accent">is</span> the model.</h1>
+      <p class="s5-sub">
+        A corpus doesn't decide what a model becomes — the <strong>data mixture</strong> does: how much of each
+        capability it sees, and in what order. This is the V5 plan over a fixed <b>3.0T-token</b> budget, composed
+        backward from the benchmarks it must win. And because a data decision is only a hypothesis until a cheap
+        experiment tests it, the plan ships with a proxy that <em>was actually run</em>.
+      </p>
+      <div class="cta-row">
+        <a class="btn primary" href="https://github.com/sandeepkunkunuru/era-v5/blob/main/session-05-data-mixture/README.md">Full plan on GitHub <small>· the submission</small></a>
+        <a class="btn" href="https://github.com/sandeepkunkunuru/era-v5/blob/main/session-05-data-mixture/mixture_plan.py">The proxy <small>· mixture_plan.py</small></a>
+      </div>
+      <p class="kv" style="margin-top:1.1rem;">Model: V5 ~40B India-first (dense or small-active MoE) · ~75 tok/param · anneal = last 2.5% (~75B tok)</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <section class="block">
+      <h2><span class="n">01</span>The main pretraining mixture</h2>
+      <p class="lead">Seven lanes over 3.0T tokens. Each is tied to the benchmark it should win and sized against
+        real supply — and where unique tokens don't cover the target, the plan says so instead of hiding it.</p>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Lane</th><th class="num">Share</th><th class="num">≈ Tokens</th><th>Wins</th><th>Supply (measured)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><b>General web</b></td><td class="num">40%</td><td class="num">1,200B</td><td>MMLU, GPQA, HellaSwag</td><td><span class="tag ok">unique-covered</span></td></tr>
+            <tr><td><b>Code</b></td><td class="num">18%</td><td class="num">540B</td><td>SWE-bench, LiveCodeBench, BFCL</td><td><span class="tag ok">unique-covered</span></td></tr>
+            <tr><td><b>Math / STEM</b></td><td class="num">14%</td><td class="num">420B</td><td>AIME, MATH, FrontierMath</td><td><span class="tag warn">repeat ×3 — at ceiling</span></td></tr>
+            <tr><td><b>Reasoning</b></td><td class="num">6%</td><td class="num">180B</td><td>AIME@high, GPQA@high, ARC-AGI</td><td><span class="tag bad">87% synthesised</span></td></tr>
+            <tr><td><b>Agentic</b></td><td class="num">4%</td><td class="num">120B</td><td>tau-bench, WebArena, GAIA, SWE multistep</td><td><span class="tag bad">75% synthesised</span></td></tr>
+            <tr><td><b>Indic</b></td><td class="num">13%</td><td class="num">390B</td><td>MILU, IndicGenBench, FLORES</td><td><span class="tag warn">only across 4 tiers →</span></td></tr>
+            <tr><td><b>Long context</b></td><td class="num">5%</td><td class="num">150B</td><td>RULER, LongBench, needle</td><td><span class="tag warn">repeat ×2 + 7% synth</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <p><strong>The thing to notice first.</strong> The two capabilities this project exists for — agentic and
+          deep reasoning — are exactly the two with almost no natural supply. <span class="zero">87%</span> of the
+          reasoning lane and <span class="zero">75%</span> of the agentic lane must be <strong>built</strong>
+          (distilled traces; harvested Cursor/Claude-Code trajectories). That's a budgeted synthesis programme,
+          not wishful accounting.</p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="n">02</span>The Indic lane, across four provenance tiers</h2>
+      <p class="lead">Verified native Indic is thin — a 390B target <em>cannot</em> be met from verified sources
+        alone, exactly as the session warns. That doesn't invalidate the target; it defines how much must be
+        translated and synthesised.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Tier</th><th class="num">Contributes</th><th class="num">Unique</th><th>How</th></tr></thead>
+          <tbody>
+            <tr><td><b>Verified native</b></td><td class="num">168B</td><td class="num">84B</td><td>Sangraha + IndicCorp/Sarvam verified, ≤2 epochs</td></tr>
+            <tr><td><b>Unverified</b></td><td class="num">60B</td><td class="num">60B</td><td>Sangraha-unverified + crawl, quality-gated, 1 epoch</td></tr>
+            <tr><td><b>Translated</b></td><td class="num">120B</td><td class="num">120B</td><td>EN→Indic high-quality pivot (built), 1 epoch</td></tr>
+            <tr><td><b>Synthetic</b></td><td class="num">42B</td><td class="num">130B</td><td>generated Indic reasoning/instruct/convo, capped ×3</td></tr>
+            <tr><td><b>Total</b></td><td class="num"><b>390B</b></td><td class="num">—</td><td>shortfall 0 · headroom left in the synthetic tier</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="n">03</span>The always-on floor — and proof it's needed</h2>
+      <p class="lead">An OPUS-style selector (the session cites ~8× efficiency) improves compute use, but its proxy
+        is English/code-benchmark-driven, so it undervalues Indic (off-benchmark) and agentic (looks like logs).
+        The floor reserves <b>8% Indic · 3% agentic · 3% reasoning</b> of every batch, outside the selector.</p>
+      <p class="lead">Experiment B simulates one selection round (100k candidate batches, keep the top 50% by proxy
+        score). The result is the session's central lesson, measured:</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Lane</th><th class="num">Candidate supply</th><th class="num">Floor OFF</th><th class="num">Floor ON</th></tr></thead>
+          <tbody>
+            <tr><td>General web</td><td class="num">60%</td><td class="num">56.4%</td><td class="num">46.2%</td></tr>
+            <tr><td>Code</td><td class="num">16%</td><td class="num">27.0%</td><td class="num">25.2%</td></tr>
+            <tr><td>Math / STEM</td><td class="num">7%</td><td class="num">10.8%</td><td class="num">9.8%</td></tr>
+            <tr><td>Reasoning</td><td class="num">4%</td><td class="num">4.7%</td><td class="num">7.1%</td></tr>
+            <tr><td><b>Agentic</b></td><td class="num">3%</td><td class="num"><span class="zero">0.0%</span></td><td class="num"><span class="prot">3.0%</span></td></tr>
+            <tr><td><b>Indic</b></td><td class="num">7%</td><td class="num"><span class="zero">0.0%</span></td><td class="num"><span class="prot">8.0%</span></td></tr>
+            <tr><td>Long context</td><td class="num">3%</td><td class="num">1.1%</td><td class="num">0.8%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout teal">
+        <p>Floor <strong>off</strong>, the two lanes the project is for collapse to <span class="zero">zero</span>.
+          Floor <strong>on</strong>, they hold at 8% and 3%. Asserted in the lecture; <strong>measured</strong> here.</p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="n">04</span>The anneal — a separate preset, and a reserve</h2>
+      <div class="grid2">
+        <div>
+          <p class="lead">The final 2.5% (~75B tokens) runs a <em>different</em> mixture on the hardest, cleanest
+            data with the learning rate decayed. General web falls sharply; scarce lanes are upsampled.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Lane</th><th class="num">Main</th><th class="num">Anneal</th></tr></thead>
+              <tbody>
+                <tr><td>General web</td><td class="num">40%</td><td class="num">12%</td></tr>
+                <tr><td>Code</td><td class="num">18%</td><td class="num">20%</td></tr>
+                <tr><td>Math / STEM</td><td class="num">14%</td><td class="num">12%</td></tr>
+                <tr><td>Reasoning (long)</td><td class="num">6%</td><td class="num">14%</td></tr>
+                <tr><td>Agentic (Tier-A)</td><td class="num">4%</td><td class="num">18%</td></tr>
+                <tr><td>Indic</td><td class="num">13%</td><td class="num">22%</td></tr>
+                <tr><td>Long context</td><td class="num">5%</td><td class="num">2%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="callout">
+            <p><strong>Anneal reserve — declared now, spent only at the end.</strong> ~40B tokens held out of the
+              main run entirely: the best 30% of agentic trajectories, the longest verified reasoning traces, the
+              highest-quality verified Indic, and the hardest verified code patches.</p>
+            <p>This reserve is the reason the anneal can exist. If the selector spends the best data early, there
+              is nothing special left to cool down on.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="n">05</span>Curriculum — order, length, difficulty</h2>
+      <p class="lead">Five stages; general text first, long sequences last, difficulty rising within each. Every
+        transition is a warm-up band (~5–10B tokens of diffusion) so the gradient norm stays ~0.2 and never spikes.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Stage</th><th class="num">~Share</th><th class="num">Seq len</th><th>Mixture shift</th><th>Difficulty</th></tr></thead>
+          <tbody>
+            <tr><td><b>0 Seed</b></td><td class="num">5%</td><td class="num">4k</td><td>broad general web</td><td>L0–L1</td></tr>
+            <tr><td><b>1 General</b></td><td class="num">55%</td><td class="num">4k→8k</td><td>web-heavy, code/math ramping in</td><td>L1–L2</td></tr>
+            <tr><td><b>2 Reasoning</b></td><td class="num">25%</td><td class="num">8k→16k</td><td>code/math/science + reasoning + agentic</td><td>L2–L3</td></tr>
+            <tr><td><b>3 Long-context</b></td><td class="num">12%</td><td class="num">16k→128k</td><td>long docs + long agentic trajectories</td><td>L3</td></tr>
+            <tr><td><b>4 Anneal</b></td><td class="num">3%</td><td class="num">32k</td><td>§04 preset + reserve, LR decayed</td><td>L3–L4</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid2" style="margin-top:1.3rem;">
+        <div>
+          <p class="kv">Difficulty bands — one concrete example each</p>
+          <ul class="bands">
+            <li><b>L0</b> "A for apple"; single-fact sentences; 1-step arithmetic</li>
+            <li><b>L1</b> a GSM8K word problem; a single function call</li>
+            <li><b>L2</b> MATH level 1–3; a self-contained one-file program</li>
+            <li><b>L3</b> MATH level 4–5; LeetCode-medium; a multi-file edit</li>
+            <li><b>L4</b> FrontierMath; a SWE-bench-Verified multi-step agentic fix</li>
+          </ul>
+        </div>
+        <div>
+          <p class="kv">Reasoning-length bands — the effort dial</p>
+          <ul class="bands">
+            <li><b>low</b> ≤256 tok · "capital of France?" → direct answer</li>
+            <li><b>medium</b> 256–2k · a GSM8K problem with a short chain</li>
+            <li><b>high</b> 2k–8k · an AIME problem exploring 2–3 approaches</li>
+            <li><b>ultra</b> 8k–32k+ · olympiad problem with verification &amp; backtracking</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="n">06</span>The experiment, and what a reviewer should push on</h2>
+      <p class="lead">Two load-bearing claims are already tested cheaply and deterministically in
+        <code>mixture_plan.py</code>. A real 1B/3B proxy replaces the modelled assumptions with measured numbers.</p>
+      <div class="grid2">
+        <div class="callout teal">
+          <p><strong>A — supply is real or honestly synthetic.</strong> ✓ Math at its ×3 rep ceiling; reasoning
+            &amp; agentic flagged majority-synthetic; Indic closes only across 4 tiers. No lane quietly over-allocated.</p>
+          <p><strong>B — the floor stops starvation.</strong> ✓ Indic/agentic 0.0% → 8%/3% when the floor is switched on.</p>
+        </div>
+        <div class="callout">
+          <p><strong>What a hostile reviewer should attack (stated, not hidden):</strong></p>
+          <p>· inventory numbers are order-of-magnitude — pin exact dedup'd counts before the run.</p>
+          <p>· the synthesis programme (87% / 75%) is the real bet — it needs a quality gate and a ~70:30 real:synthetic ceiling.</p>
+          <p>· OPUS proxy-alignment is modelled, not measured — the 1B proxy fixes that.</p>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:1.3rem;">
+        <p><strong>Metric — capability parity, not average.</strong> Score = <span class="kv">min over lanes of
+          (benchmark / target)</span>, so you can't win by starving a lane. <strong>Confirm</strong> if no lane
+          regresses below its floor and Indic rises without &gt;2 pt MMLU loss; <strong>refute</strong> if Indic
+          gains cost &gt;2 pt general knowledge, or agentic fails to move (a supply problem, not a share problem).</p>
+      </div>
+    </section>
+
+    <footer class="s5-foot">
+      <p>Submission is a <strong>GitHub README</strong>, not a widget — this page summarises it. Canonical plan:
+        <a href="https://github.com/sandeepkunkunuru/era-v5/blob/main/session-05-data-mixture/README.md">session-05-data-mixture/README.md</a>.
+        The traceable lecture report it's grounded in lives in the private coordination repo.</p>
+      <p class="kv">Numbers on this page are emitted by <code>mixture_plan.py</code> → <code>mixture_plan.json</code>. Reproduce: <code>python3 mixture_plan.py</code>.</p>
+    </footer>
+  </main>
+</body>
+</html>
