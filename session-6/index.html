@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ERA v5 · Session 6 — Data Execution</title>
+  <meta name="description" content="A deterministic training-data execution system: shards, manifests, packing, ledgers, checkpoint, crash, resume, replay, fork — every batch a pure function of its state, so recovery is proved by hash, not asserted." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1020'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23fb7185' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%232dd4bf'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/tokens.css" />
+  <style>
+    .s6-hero { padding: 3.4rem 0 2rem; border-bottom: 1px solid var(--line); }
+    .eyebrow { font-family: var(--mono); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--teal); margin: 0 0 .7rem; }
+    .s6-hero h1 { font-family: var(--display); font-size: clamp(1.9rem, 4.4vw, 3rem); line-height: 1.05; margin: 0 0 1rem; }
+    .s6-hero h1 .accent { color: var(--coral); }
+    .s6-sub { color: var(--muted); max-width: 64ch; font-size: 1.05rem; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.6rem; }
+    .btn { display: inline-flex; align-items: center; gap: .5rem; padding: .6rem 1rem; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: .92rem; border: 1px solid var(--line-strong); color: var(--text); background: var(--surface); transition: border-color .15s, transform .1s; }
+    .btn:hover { border-color: var(--teal); transform: translateY(-1px); }
+    .btn.primary { background: linear-gradient(135deg, rgba(45,212,191,.16), rgba(251,113,133,.14)); border-color: var(--teal); }
+    .btn small { color: var(--muted); font-weight: 500; }
+    section.block { padding: 2.4rem 0; border-bottom: 1px solid var(--line); }
+    section.block > h2 { font-family: var(--display); font-size: 1.5rem; margin: 0 0 .4rem; }
+    section.block > h2 .n { color: var(--teal); font-family: var(--mono); font-size: 1rem; margin-right: .5rem; }
+    section.block > p.lead { color: var(--muted); max-width: 74ch; margin: 0 0 1.3rem; }
+    /* KPI row — a headline number is the right form here, not a chart */
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: .9rem; margin: 1.4rem 0 0; }
+    @media (max-width: 780px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+    .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: .9rem 1rem; }
+    .kpi .v { font-family: var(--display); font-size: 1.55rem; font-weight: 600; letter-spacing: -.01em; }
+    .kpi .v.ok { color: var(--teal); }
+    .kpi .k { font-family: var(--mono); font-size: .72rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-top: .25rem; }
+    .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 560px; }
+    th, td { text-align: left; padding: .58rem .8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+    thead th { font-family: var(--mono); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--ink-2); }
+    tbody tr:last-child td { border-bottom: none; }
+    td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    code, .mono { font-family: var(--mono); font-size: .84em; }
+    .pass { color: var(--teal); font-weight: 700; font-family: var(--mono); font-size: .8rem; }
+    .zero { color: var(--coral); font-weight: 700; }
+    .callout { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--coral); border-radius: 10px; padding: 1rem 1.1rem; margin: 1.2rem 0 0; }
+    .callout.teal { border-left-color: var(--teal); }
+    .callout p { margin: .3rem 0; font-size: .93rem; }
+    .callout strong { color: var(--text); }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.3rem; }
+    @media (max-width: 820px) { .grid2 { grid-template-columns: 1fr; } }
+    /* pipeline path */
+    .path { display: flex; flex-wrap: wrap; gap: .4rem; margin: .2rem 0 0; }
+    .path span { font-family: var(--mono); font-size: .78rem; padding: .3rem .55rem; border-radius: 7px; border: 1px solid var(--line-strong); color: var(--muted); background: var(--ink-2); }
+    .path span.hot { color: var(--teal); border-color: rgba(45,212,191,.45); }
+    /* token mask strip: 2-slot categorical (loss vs context) + outlined pad.
+       Colours validated for CVD separation; counts are labelled so identity is
+       never colour-alone. */
+    .strip { display: flex; height: 30px; border-radius: 7px; overflow: hidden; border: 1px solid var(--line-strong); margin: .7rem 0 .5rem; }
+    .strip i { display: block; height: 100%; }
+    .strip i.loss { background: var(--teal); }
+    .strip i.ctx { background: var(--muted); opacity: .55; }
+    .strip i.pad { background: repeating-linear-gradient(45deg, rgba(230,234,242,.06) 0 5px, transparent 5px 10px); }
+    .legend { display: flex; flex-wrap: wrap; gap: 1rem; font-size: .82rem; color: var(--muted); }
+    .legend b { display: inline-flex; align-items: center; gap: .4rem; font-weight: 500; }
+    .sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+    .sw.loss { background: var(--teal); }
+    .sw.ctx { background: var(--muted); opacity: .55; }
+    .sw.pad { border: 1px solid var(--line-strong); background: repeating-linear-gradient(45deg, rgba(230,234,242,.10) 0 4px, transparent 4px 8px); }
+    footer.s6-foot { padding: 2.2rem 0 3rem; color: var(--muted); font-size: .88rem; }
+    footer.s6-foot a { color: var(--teal); }
+    .back { font-family: var(--mono); font-size: .82rem; color: var(--muted); text-decoration: none; }
+    .back:hover { color: var(--teal); }
+  </style>
+</head>
+<body>
+  <header class="s6-hero">
+    <div class="wrap">
+      <a class="back" href="../">← ERA v5 hub</a>
+      <p class="eyebrow" style="margin-top:1rem;">The School of AI · ERA v5 · Session 6</p>
+      <h1>Prove what you trained on.<br /><span class="accent">Down to the batch.</span></h1>
+      <p class="s6-sub">
+        Session 5 wrote the recipe. Session 6 builds the machine that executes it — and the accounting that
+        makes a 45-day run <strong>correct, reproducible and auditable</strong>. On day 50 a folder of shards
+        can't tell you what you trained on day 40. A <strong>ledger</strong> can.
+      </p>
+      <div class="cta-row">
+        <a class="btn primary" href="https://github.com/sandeepkunkunuru/era-v5/tree/main/session-06-data-execution">The system on GitHub <small>· the submission</small></a>
+        <a class="btn" href="https://github.com/sandeepkunkunuru/era-v5/blob/main/session-06-data-execution/submission_artifacts/evidence.md">evidence.md</a>
+        <a class="btn" href="https://github.com/sandeepkunkunuru/era-v5/blob/main/session-06-data-execution/submission_artifacts/run.log">run.log</a>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="v ok">13 / 13</div><div class="k">evidence rows pass</div></div>
+        <div class="kpi"><div class="v ok">identical</div><div class="k">stream after crash</div></div>
+        <div class="kpi"><div class="v">85.6%</div><div class="k">packing utilization</div></div>
+        <div class="kpi"><div class="v">11</div><div class="k">invariant tests</div></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <section class="block">
+      <h2><span class="n">01</span>The path, end to end — one command</h2>
+      <p class="lead">A small but complete data-execution system. <code>python run_demo.py</code> runs all of it
+        without manual intervention and writes a machine-readable evidence bundle that the code generates —
+        nothing hardcoded.</p>
+      <div class="path">
+        <span>documents</span><span>tokenized shards</span><span>manifests</span><span>mixture schedule</span>
+        <span>packing</span><span>batches</span><span>training</span><span>consumption ledger</span>
+        <span>learning ledger</span><span class="hot">checkpoint</span><span class="hot">crash</span>
+        <span class="hot">resume</span><span class="hot">replay</span><span class="hot">fork</span><span>audit</span>
+      </div>
+      <div class="callout teal">
+        <p><strong>The one idea everything rests on.</strong> Every batch <span class="mono">B(t)</span> is a
+          <strong>pure, reconstructable function</strong> of
+          <span class="mono">(master_seed, compiled_schedule, shard_set, sampler_state@t)</span>.</p>
+        <p>The sampler state is tiny and serialisable, so a checkpoint captures the exact stream position. That
+          is what makes resume, replay and fork <em>provable</em> instead of asserted — restore the state,
+          recompute the batch, compare its content hash. The batch payload is <strong>integer-only</strong>
+          (token ids + masks), so hashes are identical across machines; the only float math lives in a
+          throwaway model that no proof depends on.</p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="n">02</span>Crash, resume, replay, fork — the proofs</h2>
+      <p class="lead">The run deliberately crashes mid-flight, resumes from the last checkpoint, replays a
+        historical interval, and forks a branch. Each claim is checked against a hash, not a log message.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Operation</th><th>What was proved</th><th>Evidence from the run</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>Crash → resume</b></td>
+              <td>the next batch is <em>exactly</em> the expected batch — nothing skipped, nothing repeated</td>
+              <td class="mono">crash@25 → ckpt 20 · expected <span style="color:var(--teal)">3977dcdb05dc</span> = actual <span style="color:var(--teal)">3977dcdb05dc</span> · <b>entire</b> resumed stream identical to a clean run</td>
+              <td><span class="pass">PASS</span></td>
+            </tr>
+            <tr>
+              <td><b>Replay</b></td>
+              <td>an earlier interval reconstructs with matching batch ids, token spans and hashes</td>
+              <td class="mono">interval [12, 18) · 6/6 hashes matched · replayed with <em>no model at all</em></td>
+              <td><span class="pass">PASS</span></td>
+            </tr>
+            <tr>
+              <td><b>Fork</b></td>
+              <td>branching from an earlier checkpoint yields a divergent but self-consistent stream</td>
+              <td class="mono">from step 20, seed 99 · diverged = true · own ledger chain verifies</td>
+              <td><span class="pass">PASS</span></td>
+            </tr>
+            <tr>
+              <td><b>Ledger integrity</b></td>
+              <td>consumption + learning ledgers are append-only and hash-chained (tamper-evident)</td>
+              <td class="mono">40 entries · chain verified · checkpoints tied to ledger offsets</td>
+              <td><span class="pass">PASS</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout teal">
+        <p><strong>Why replay needs no model.</strong> The data stream never depends on the weights, the wall
+          clock, or a global RNG — so a past interval is rebuilt from the recorded state alone. This is the
+          lecture's rule made literal: on replay you <em>read and send</em> the recorded order, you don't
+          recalculate it.</p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="n">03</span>Packing, masks and the loss rule</h2>
+      <p class="lead">Two packing policies, chosen by data type: <b>concat</b> for pretraining lanes (high
+        utilization), <b>structure-preserving</b> for SFT/agentic traces (one trajectory per sequence, never
+        leaking unrelated examples together). Every packed sequence carries a loss mask, segment ids
+        (block-diagonal attention — no attention across a boundary) and per-document position ids.</p>
+      <div class="grid2">
+        <div>
+          <p class="mono" style="color:var(--muted); font-size:.82rem;">A real agentic sequence from the run — <code>agentic-007</code>, step 30</p>
+          <div class="strip" role="img" aria-label="40 real tokens: 22 loss-bearing, 18 masked context, followed by 88 padding positions">
+            <i class="loss" style="width:17.2%"></i><i class="ctx" style="width:14.1%"></i><i class="pad" style="width:68.7%"></i>
+          </div>
+          <div class="legend">
+            <b><span class="sw loss"></span> 22 loss-bearing</b>
+            <b><span class="sw ctx"></span> 18 masked context</b>
+            <b><span class="sw pad"></span> 88 pad</b>
+          </div>
+          <p style="font-size:.9rem; color:var(--muted); margin-top:.8rem;">
+            The user request and the <em>tool observation</em> are context — read, never trained on. Applying
+            loss there would teach the model to invent tool results instead of calling the tool. Only the
+            assistant's plan and final answer bear loss.
+          </p>
+        </div>
+        <div>
+          <div class="callout">
+            <p><strong>An honest trade, visible in the numbers.</strong> Structure-preserving packing leaves
+              that sequence 69% padded — it refuses to fill the gap with an unrelated document. Concat packing
+              on pretraining lanes runs far denser, and the run averages <b>85.6%</b> utilization overall with
+              <b>80.9%</b> of capacity loss-bearing.</p>
+            <p>Correctness first, density second — and the cost is reported rather than hidden.</p>
+          </div>
+          <div class="scroll" style="margin-top:1rem;">
+            <table>
+              <thead><tr><th>Checked invariant</th><th>Result</th></tr></thead>
+              <tbody>
+                <tr><td>no loss across a segment boundary</td><td><span class="pass">0 violations</span></td></tr>
+                <tr><td>no loss on a pad target</td><td><span class="pass">0 violations</span></td></tr>
+                <tr><td>position ids reset &amp; increment per document</td><td><span class="pass">0 violations</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="n">04</span>OPUS decisions — and the finding</h2>
+      <p class="lead">Every candidate is scored on its token prefix and recorded as accept / reject / defer,
+        with a protected-floor override when a scarce lane would otherwise be starved. 2,287 decisions were
+        logged across the run.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Lane</th><th class="num">accept (on merit)</th><th class="num">reject</th><th class="num">defer</th><th class="num">floor override</th></tr></thead>
+          <tbody>
+            <tr><td>general_web</td><td class="num">825</td><td class="num">0</td><td class="num">0</td><td class="num">—</td></tr>
+            <tr><td>math</td><td class="num">588</td><td class="num">0</td><td class="num">0</td><td class="num">—</td></tr>
+            <tr><td>code</td><td class="num">495</td><td class="num">0</td><td class="num">0</td><td class="num">—</td></tr>
+            <tr><td>reasoning</td><td class="num">47</td><td class="num">6</td><td class="num">27</td><td class="num">33</td></tr>
+            <tr><td><b>agentic</b></td><td class="num"><span class="zero">0</span></td><td class="num">40</td><td class="num">20</td><td class="num">60</td></tr>
+            <tr><td><b>indic</b></td><td class="num"><span class="zero">0</span></td><td class="num">152</td><td class="num">87</td><td class="num">239</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <p><strong>Indic and agentic were accepted on merit exactly zero times.</strong> Every single one that
+          entered a batch did so through the <em>protected-floor override</em> — 239 and 60 of them.</p>
+        <p>This is Session 5's warning reproduced by a running system rather than argued: a selector whose proxy
+          is English- and code-benchmark-driven does not merely under-weight the scarce lanes, it takes
+          <b>all</b> of them to zero. The floor is not a safety margin — without it, the two capabilities this
+          project exists for would never be trained at all. Mixture compliance held anyway: planned and actual
+          lane shares match, and every stage floor was met at every step.</p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="n">05</span>Shards, manifests and the evaluation firewall</h2>
+      <div class="grid2">
+        <div>
+          <p class="lead" style="margin-bottom:.8rem;">Shards are immutable binary token arrays. Each manifest
+            carries the frozen tokenizer hash, a content hash, provenance, the cleaning-pipeline code hash, and
+            dedup / contamination / eval-overlap status — the gate that decides whether a shard may be trained
+            on at all. Both hashes are re-verified on load; a test flips one token and confirms the check fails.</p>
+        </div>
+        <div>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Check</th><th class="num">Count</th><th>Result</th></tr></thead>
+              <tbody>
+                <tr><td>shards verified (tokenizer + content hash)</td><td class="num">24</td><td><span class="pass">PASS</span></td></tr>
+                <tr><td>eval shards withheld from training</td><td class="num">6</td><td><span class="pass">PASS</span></td></tr>
+                <tr><td>eval documents found in a loss-bearing batch</td><td class="num">0</td><td><span class="pass">PASS</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="font-size:.88rem; color:var(--muted); margin-top:.8rem;">The firewall is enforced twice —
+            eval shards are never marked trainable, and an independent audit scans every consumed batch for a
+            leaked eval document.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="n">06</span>The learning ledger, and a loss that starts where theory says</h2>
+      <p class="lead">The ledger is two-layer: what was <em>sent</em> (batch id, hash, shards, lanes, policies)
+        and what came <em>back</em> (loss per sequence and per token, linked to its source document).</p>
+      <div class="grid2">
+        <div>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Quantity</th><th class="num">Value</th></tr></thead>
+              <tbody>
+                <tr><td>theoretical initial loss <span class="mono">−ln(1/V) = ln(V)</span></td><td class="num">6.491</td></tr>
+                <tr><td>measured loss, step 0</td><td class="num">6.4907</td></tr>
+                <tr><td>measured loss, step 39</td><td class="num">6.4188</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="font-size:.88rem; color:var(--muted); margin-top:.8rem;">
+            A zero-initialised model must start at exactly <span class="mono">ln(V)</span> — the lecture's
+            <span class="mono">−ln(1/vocab)</span>. It does, to four decimals. A free correctness check on the
+            whole loss path.
+          </p>
+        </div>
+        <div>
+          <p class="mono" style="color:var(--muted); font-size:.82rem;">Token-level trace, step 30 — loss linked to source</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>token</th><th class="num">loss</th><th>source</th></tr></thead>
+              <tbody>
+                <tr><td class="mono">" plus"</td><td class="num">6.4899</td><td class="mono">reasoning.train.01 / reason-013</td></tr>
+                <tr><td class="mono">"5"</td><td class="num">6.4899</td><td class="mono">reasoning.train.00 / reason-005</td></tr>
+                <tr><td class="mono">" 6"</td><td class="num">6.4899</td><td class="mono">reasoning.train.00 / reason-005</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="font-size:.88rem; color:var(--muted); margin-top:.8rem;">Every loss-bearing token traces
+            back to the shard and document it came from — the basis for scheduling shards by measured
+            perplexity on a later run.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="n">07</span>Throughput — measured, not asserted</h2>
+      <p class="lead">Reported numbers must be reconstructable from the run, so they are computed from the same
+        ledger the proofs use.</p>
+      <div class="kpis">
+        <div class="kpi"><div class="v">62.2</div><div class="k">batches / sec</div></div>
+        <div class="kpi"><div class="v">103.0k</div><div class="k">useful loss-bearing tok/s</div></div>
+        <div class="kpi"><div class="v">1.8 ms</div><div class="k">resume latency</div></div>
+        <div class="kpi"><div class="v">6.6 ms</div><div class="k">replay latency</div></div>
+      </div>
+      <p style="font-size:.88rem; color:var(--muted); margin-top:1rem;">40 steps · 70,144 real tokens ·
+        66,254 loss-bearing · 85.6% packing utilization. The model is deliberately trivial — "training is just
+        fake training" — because the artifact under test is the <em>data system</em>.</p>
+    </section>
+
+    <footer class="s6-foot">
+      <p>Submission is a <strong>GitHub repository</strong> plus the generated
+        <code>run.log</code>, <code>evidence.json</code> and <code>evidence.md</code> — this page summarises it.
+        Everything above is emitted by
+        <a href="https://github.com/sandeepkunkunuru/era-v5/tree/main/session-06-data-execution">the implementation</a>;
+        reproduce with <code>python run_demo.py</code> (numpy only), and
+        <code>python -m unittest discover -s tests</code> for the 11 invariant tests.</p>
+      <p class="mono">Determinism verified across separate process invocations: every batch hash identical, run to run.</p>
+    </footer>
+  </main>
+</body>
+</html>
