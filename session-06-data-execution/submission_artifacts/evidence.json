@@ -165,8 +165,8 @@
       "result": "PASS",
       "evidence": "performance.json",
       "detail": {
-        "batches_per_sec": 54.84,
-        "useful_tok_per_sec": 90826.2,
+        "batches_per_sec": 62.2,
+        "useful_tok_per_sec": 103024.5,
         "avg_packing_utilization": 0.8562
       }
     },
