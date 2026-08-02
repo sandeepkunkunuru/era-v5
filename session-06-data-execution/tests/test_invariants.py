@@ -127,6 +127,44 @@ class TestPacking(unittest.TestCase):
         self.assertLess(int(loss.sum()), int((seg >= 0).sum()))
 
 
+class TestAttentionMask(unittest.TestCase):
+    def test_causal_block_diagonal(self):
+        from tdes.packing import attention_mask
+        seg = np.array([[0, 0, 0, 1, 1, -1, -1]], dtype=np.int32)
+        a = attention_mask(seg)[0]
+        self.assertTrue(a[2, 0] and a[2, 2])          # within doc 0, causal
+        self.assertFalse(a[0, 2])                      # not future
+        self.assertFalse(a[3, 2])                      # never across a doc boundary
+        self.assertTrue(a[4, 3])                       # within doc 1
+        self.assertFalse(a[5].any())                   # pad attends to nothing
+        self.assertFalse(a[:, 5].any())                # nothing attends to pad
+
+    def test_on_a_real_batch(self):
+        from tdes.audit import check_packing
+        _, tok, shards, sched = _fixture()
+        from tdes.opus import Opus
+        s = Stream(shards, sched, Opus(SEED), tok.eos_id, tok.pad_id, SEED)
+        st = s.initial_state()
+        for _ in range(30):
+            batch, st, _, _ = s.next_batch(st)
+        res = check_packing(batch, tok.pad_id)
+        self.assertEqual(res["attention_violations"], [])
+        self.assertGreater(res["attention_pairs_allowed"], 0)
+
+
+class TestValidationFirewall(unittest.TestCase):
+    def test_both_held_out_splits_blocked(self):
+        from tdes.corpus import HELD_OUT_SPLITS
+        docs, tok, shards, _ = _fixture()
+        splits = {d["split"] for d in docs}
+        self.assertIn("validation", splits)                # a validation split exists
+        trainable = {s.shard_id for s in shards.trainable()}
+        for sp in HELD_OUT_SPLITS:
+            held = {s.shard_id for s in shards.shards if s.split == sp}
+            self.assertTrue(held, f"no {sp} shards built")
+            self.assertFalse(held & trainable, f"{sp} shard is trainable")
+
+
 class TestOpus(unittest.TestCase):
     def test_protected_override_and_rejections(self):
         _, tok, shards, sched = _fixture()
@@ -172,9 +210,39 @@ class TestEngineReplayFork(unittest.TestCase):
         eng.run(20, checkpoint_every=10)
         rep = eng.replay_interval(5, 12)
         self.assertTrue(rep["all_match"])                            # replay reproduces
+        # the spec requires batch ids AND token spans AND hashes to match
+        self.assertEqual(set(rep["proved"]), {"batch_id", "token_spans", "batch_sha256"})
+        self.assertGreater(rep["total_token_spans_compared"], 0)
+        for s in rep["steps"]:
+            self.assertTrue(s["batch_id_match"] and s["hash_match"]
+                            and s["token_spans_match"])
         fork = eng.fork_from(10, new_seed=123, n_steps=4)
         self.assertTrue(fork["diverged"])                            # fork branches away
         self.assertTrue(fork["self_consistent"])
+
+    def test_replay_detects_a_tampered_span(self):
+        """Replay must FAIL if the recorded token spans are altered — proving the
+        span comparison is real and not decorative."""
+        _, tok, shards, sched = _fixture()
+        eng = TrainingEngine(shards, sched, tok, tempfile.mkdtemp(), SEED)
+        eng.run(12, checkpoint_every=100)
+        entry = eng.consumption.find_step(6)
+        entry["sequences"][0]["members"][0]["n_tokens"] += 1          # tamper
+        rep = eng.replay_interval(5, 8)
+        self.assertFalse(rep["all_match"])
+
+    def test_opus_trail_joins_to_consumption(self):
+        """'Why did it consume this?' — every consumed doc must have a decision
+        record, joinable directly by doc_id."""
+        _, tok, shards, sched = _fixture()
+        eng = TrainingEngine(shards, sched, tok, tempfile.mkdtemp(), SEED)
+        eng.run(6, checkpoint_every=100)
+        for e in eng.consumption.entries:
+            decided = {r["doc_id"] for r in eng.opus_trail if r["step"] == e["step"]}
+            consumed = {m["doc_id"] for s in e["sequences"] for m in s["members"]}
+            self.assertTrue(consumed <= decided,
+                            f"step {e['step']}: consumed docs with no OPUS record: "
+                            f"{consumed - decided}")
 
 
 if __name__ == "__main__":

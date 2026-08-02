@@ -154,21 +154,44 @@ class TrainingEngine:
         return meta
 
     # ---- replay -------------------------------------------------------------
+    @staticmethod
+    def _token_spans(sequences: List[dict]) -> list:
+        """The (shard, doc, token-count) spans that make up each packed sequence —
+        the 'token spans' the spec requires replay to match, independent of hashes."""
+        return [[[m["shard_id"], m["doc_id"], m["n_tokens"]] for m in s["members"]]
+                for s in sequences]
+
     def replay_interval(self, t0: int, t1: int) -> dict:
         """Reconstruct batches for [t0, t1) from the recorded state_before at t0 and
-        compare their hashes to the consumption ledger. No model involved."""
+        prove that **batch ids, token spans and hashes** all match the original run.
+        No model is involved — the data stream does not depend on the weights."""
         entry = self.consumption.find_step(t0)
         state = SamplerState.from_dict(entry["state_before"])
         results = []
         ok = True
         for t in range(t0, t1):
             batch, state, crec, _ = self.stream.next_batch(state)
-            recorded = self.consumption.find_step(t)["batch_sha256"]
-            match = (batch["batch_sha256"] == recorded)
-            ok = ok and match
-            results.append({"step": t, "recomputed": batch["batch_sha256"][:12],
-                            "recorded": recorded[:12], "match": match})
-        return {"interval": [t0, t1], "all_match": ok, "steps": results}
+            rec = self.consumption.find_step(t)
+            id_match = batch["batch_id"] == rec["batch_id"]
+            hash_match = batch["batch_sha256"] == rec["batch_sha256"]
+            spans_new = self._token_spans(crec["sequences"])
+            spans_old = self._token_spans(rec["sequences"])
+            span_match = spans_new == spans_old
+            n_spans = sum(len(s) for s in spans_new)
+            ok = ok and id_match and hash_match and span_match
+            results.append({"step": t,
+                            "batch_id": rec["batch_id"], "batch_id_match": id_match,
+                            "recomputed": batch["batch_sha256"][:12],
+                            "recorded": rec["batch_sha256"][:12],
+                            "hash_match": hash_match,
+                            "token_spans_compared": n_spans,
+                            "token_spans_match": span_match,
+                            "match": id_match and hash_match and span_match})
+        return {"interval": [t0, t1], "all_match": ok,
+                "proved": ["batch_id", "token_spans", "batch_sha256"],
+                "total_token_spans_compared": sum(r["token_spans_compared"]
+                                                  for r in results),
+                "steps": results}
 
     # ---- fork ---------------------------------------------------------------
     def fork_from(self, step: int, new_seed: int, n_steps: int, log=None) -> dict:

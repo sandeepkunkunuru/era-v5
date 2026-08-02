@@ -12,7 +12,10 @@ from .corpus import LANES
 
 
 def check_packing(batch: dict, pad_id: int) -> dict:
-    """Structural invariants on a real consumed batch: masks, positions, boundaries."""
+    """Structural invariants on a real consumed batch: loss mask, ATTENTION mask,
+    position ids, and document boundaries."""
+    from .packing import attention_mask
+
     tokens, loss, seg, pos = (batch["tokens"], batch["loss_mask"],
                               batch["segment_ids"], batch["position_ids"])
     B, T = tokens.shape
@@ -31,9 +34,32 @@ def check_packing(batch: dict, pad_id: int) -> dict:
             if seg[b, i] >= 0 and seg[b, i] == seg[b, i - 1]:
                 if pos[b, i] != pos[b, i - 1] + 1:
                     fails.append((b, i, "position id not contiguous"))
+
+    # ---- attention mask: causal, block-diagonal, pad attends to nothing ----
+    attn = attention_mask(seg)
+    attn_fails = []
+    upper = np.triu(np.ones((T, T), dtype=bool), k=1)
+    if attn[:, upper].any():
+        attn_fails.append("attention above the causal diagonal")
+    q = seg[:, :, None]
+    k = seg[:, None, :]
+    if (attn & (q != k)).any():
+        attn_fails.append("attention across a document boundary")
+    if (attn & ((q < 0) | (k < 0))).any():
+        attn_fails.append("attention to/from a pad position")
+    # every real token must at least attend to itself
+    real = seg >= 0
+    self_attn = np.diagonal(attn, axis1=1, axis2=2)
+    if not (self_attn[real]).all():
+        attn_fails.append("a real token cannot attend to itself")
+
     return {"n_sequences": int(B), "seq_len": int(T),
-            "loss_tokens": int(loss.sum()), "violations": fails[:10],
-            "ok": len(fails) == 0}
+            "loss_tokens": int(loss.sum()),
+            "attention_pairs_checked": int(attn.size),
+            "attention_pairs_allowed": int(attn.sum()),
+            "attention_violations": attn_fails,
+            "violations": fails[:10],
+            "ok": len(fails) == 0 and not attn_fails}
 
 
 def mixture_compliance(consumption_entries: List[dict], schedule, tol: float = 0.03) -> dict:
@@ -61,15 +87,23 @@ def mixture_compliance(consumption_entries: List[dict], schedule, tol: float = 0
             "ok": all(within.values()) and floors_ok}
 
 
-def firewall_scan(consumption_entries: List[dict], eval_doc_ids: set) -> dict:
-    """No eval document may appear in any consumed (loss-bearing) batch."""
-    leaked = []
+def firewall_scan(consumption_entries: List[dict], held_out: Dict[str, set]) -> dict:
+    """No eval OR validation document may appear in any consumed batch.
+    `held_out` maps split name -> set of doc_ids."""
+    leaked = {split: [] for split in held_out}
+    consumed = 0
     for e in consumption_entries:
         for s in e["sequences"]:
             for m in s["members"]:
-                if m["doc_id"] in eval_doc_ids:
-                    leaked.append((e["step"], m["doc_id"]))
-    return {"eval_docs": len(eval_doc_ids), "leaked": leaked, "ok": not leaked}
+                consumed += 1
+                for split, ids in held_out.items():
+                    if m["doc_id"] in ids:
+                        leaked[split].append((e["step"], m["doc_id"]))
+    total_leaked = sum(len(v) for v in leaked.values())
+    return {"held_out_docs": {k: len(v) for k, v in held_out.items()},
+            "consumed_doc_instances": consumed,
+            "leaked": {k: v for k, v in leaked.items() if v},
+            "ok": total_leaked == 0}
 
 
 def build_evidence(ctx: Dict) -> Dict:
@@ -90,13 +124,23 @@ def build_evidence(ctx: Dict) -> Dict:
         "manifests/*.json content_sha256", {"shards_checked": len(v)})
 
     fw = ctx["firewall"]
-    add("eval_validation_firewall", "Evaluation firewall", fw["ok"] and ctx["blocked_ok"],
+    add("eval_validation_firewall", "Evaluation & validation firewall",
+        fw["ok"] and ctx["blocked_ok"],
         "run.log eval_shard_blocked + firewall scan",
-        {"eval_shards_blocked": ctx["n_eval_blocked"], "leaked": fw["leaked"]})
+        {"held_out_shards_blocked": ctx["n_eval_blocked"],
+         "held_out_docs": fw["held_out_docs"],
+         "consumed_doc_instances_scanned": fw["consumed_doc_instances"],
+         "leaked": fw["leaked"]})
 
     pk = ctx["packing"]
-    add("packing_masks_batch", "Packing / masks / positions correctness", pk["ok"],
+    add("packing_masks_batch", "Packing / loss mask / position ids", pk["ok"],
         "consumption ledger + packed-batch check", {"violations": pk["violations"]})
+    add("packing_masks_batch", "Attention mask (causal, block-diagonal)",
+        not pk["attention_violations"],
+        "attention mask derived from segment ids + checked",
+        {"pairs_checked": pk["attention_pairs_checked"],
+         "pairs_allowed": pk["attention_pairs_allowed"],
+         "violations": pk["attention_violations"]})
 
     mc = ctx["mixture"]
     add("mixture_floors_opus", "Mixture compliance", mc["ok"],
@@ -122,8 +166,11 @@ def build_evidence(ctx: Dict) -> Dict:
         {"resume_from_step": ctx["resume_step"],
          "next_expected": ctx["resume_next_expected"][:12],
          "next_actual": ctx["resume_next_actual"][:12]})
-    add("checkpoint_crash_resume_replay_fork", "Replay", ctx["replay"]["all_match"],
-        "original vs replay hashes", {"interval": ctx["replay"]["interval"]})
+    add("checkpoint_crash_resume_replay_fork", "Replay (batch ids, token spans, hashes)",
+        ctx["replay"]["all_match"],
+        "original vs replay batch ids + token spans + hashes",
+        {"interval": ctx["replay"]["interval"], "proved": ctx["replay"]["proved"],
+         "token_spans_compared": ctx["replay"]["total_token_spans_compared"]})
     add("checkpoint_crash_resume_replay_fork", "Fork from earlier checkpoint",
         ctx["fork"]["diverged"] and ctx["fork"]["self_consistent"],
         "original vs fork hashes", {"from_step": ctx["fork"]["from_step"],

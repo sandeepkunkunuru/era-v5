@@ -8,7 +8,7 @@
       "result": "PASS",
       "evidence": "manifests/*.json tokenizer_hash",
       "detail": {
-        "shards_checked": 24
+        "shards_checked": 29
       }
     },
     {
@@ -17,25 +17,41 @@
       "result": "PASS",
       "evidence": "manifests/*.json content_sha256",
       "detail": {
-        "shards_checked": 24
+        "shards_checked": 29
       }
     },
     {
       "area": "eval_validation_firewall",
-      "requirement": "Evaluation firewall",
+      "requirement": "Evaluation & validation firewall",
       "result": "PASS",
       "evidence": "run.log eval_shard_blocked + firewall scan",
       "detail": {
-        "eval_shards_blocked": 6,
-        "leaked": []
+        "held_out_shards_blocked": 12,
+        "held_out_docs": {
+          "eval": 20,
+          "validation": 19
+        },
+        "consumed_doc_instances_scanned": 1962,
+        "leaked": {}
       }
     },
     {
       "area": "packing_masks_batch",
-      "requirement": "Packing / masks / positions correctness",
+      "requirement": "Packing / loss mask / position ids",
       "result": "PASS",
       "evidence": "consumption ledger + packed-batch check",
       "detail": {
+        "violations": []
+      }
+    },
+    {
+      "area": "packing_masks_batch",
+      "requirement": "Attention mask (causal, block-diagonal)",
+      "result": "PASS",
+      "evidence": "attention mask derived from segment ids + checked",
+      "detail": {
+        "pairs_checked": 262144,
+        "pairs_allowed": 42462,
         "violations": []
       }
     },
@@ -70,38 +86,38 @@
       "result": "PASS",
       "evidence": "ledgers/opus_trail.jsonl",
       "detail": {
-        "total": 2287,
+        "total": 2245,
         "by_decision": {
-          "reject": 198,
-          "accept": 1955,
-          "defer": 134
+          "reject": 225,
+          "accept": 1906,
+          "defer": 114
         },
-        "protected_overrides": 332,
+        "protected_overrides": 305,
         "by_lane": {
           "agentic": {
-            "reject": 40,
+            "reject": 37,
             "override": 60,
-            "defer": 20
+            "defer": 23
           },
           "code": {
-            "accept": 495
+            "accept": 454
           },
           "general_web": {
-            "accept": 825
+            "accept": 819
           },
           "indic": {
-            "reject": 152,
-            "override": 239,
-            "defer": 87
+            "reject": 188,
+            "override": 226,
+            "defer": 38
           },
           "math": {
-            "accept": 588
+            "accept": 572,
+            "defer": 34
           },
           "reasoning": {
-            "defer": 27,
-            "override": 33,
-            "accept": 47,
-            "reject": 6
+            "defer": 19,
+            "override": 19,
+            "accept": 61
           }
         }
       }
@@ -122,7 +138,7 @@
       "evidence": "ledgers/learning.jsonl",
       "detail": {
         "loss_start": 6.49072,
-        "loss_end": 6.41882,
+        "loss_end": 6.41671,
         "initial_loss_theory": 6.491
       }
     },
@@ -133,20 +149,26 @@
       "evidence": "expected vs resumed batch hashes",
       "detail": {
         "resume_from_step": 20,
-        "next_expected": "3977dcdb05dc",
-        "next_actual": "3977dcdb05dc"
+        "next_expected": "bfbbb74b39ec",
+        "next_actual": "bfbbb74b39ec"
       }
     },
     {
       "area": "checkpoint_crash_resume_replay_fork",
-      "requirement": "Replay",
+      "requirement": "Replay (batch ids, token spans, hashes)",
       "result": "PASS",
-      "evidence": "original vs replay hashes",
+      "evidence": "original vs replay batch ids + token spans + hashes",
       "detail": {
         "interval": [
           12,
           18
-        ]
+        ],
+        "proved": [
+          "batch_id",
+          "token_spans",
+          "batch_sha256"
+        ],
+        "token_spans_compared": 295
       }
     },
     {
@@ -165,9 +187,9 @@
       "result": "PASS",
       "evidence": "performance.json",
       "detail": {
-        "batches_per_sec": 62.2,
-        "useful_tok_per_sec": 103024.5,
-        "avg_packing_utilization": 0.8562
+        "batches_per_sec": 62.85,
+        "useful_tok_per_sec": 104219.0,
+        "avg_packing_utilization": 0.8563
       }
     },
     {

@@ -14,7 +14,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from .corpus import Document
+from .corpus import HELD_OUT_SPLITS, Document
 from .hashing import sha256_bytes, sha256_ints, sha256_json, short
 from .tokenizer import FrozenTokenizer
 
@@ -86,8 +86,11 @@ class ShardSet:
 
         # seen content hashes -> dedup detection across the whole corpus
         seen_doc_hash: Dict[str, str] = {}
+        # BOTH held-out splits are contamination sources: a train shard overlapping
+        # either one is quarantined.
         eval_doc_hashes = {
-            sha256_ints(_doc_tokens(tok, d)[0]) for d in docs if d["split"] == "eval"
+            sha256_ints(_doc_tokens(tok, d)[0]) for d in docs
+            if d["split"] in HELD_OUT_SPLITS
         }
         clean_hash = cleaning_pipeline_hash()
         shards: List[Shard] = []
@@ -178,3 +181,7 @@ class ShardSet:
 
     def eval_shards(self) -> List[Shard]:
         return [s for s in self.shards if s.split == "eval"]
+
+    def held_out_shards(self) -> List[Shard]:
+        """Eval AND validation — everything the firewalls must block."""
+        return [s for s in self.shards if s.split in HELD_OUT_SPLITS]

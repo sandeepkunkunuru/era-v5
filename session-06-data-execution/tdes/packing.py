@@ -101,6 +101,27 @@ def fill_sequence(provider: DocProvider, seq_len: int, policy: str,
     return out
 
 
+def attention_mask(segment_ids: np.ndarray) -> np.ndarray:
+    """Materialise the block-diagonal causal attention mask from segment ids.
+
+    `attn[b, i, j] == True` iff query position i may attend to key position j:
+      * causal:        j <= i
+      * same document: segment_ids[i] == segment_ids[j]
+      * real tokens:   both positions are non-pad (segment id >= 0)
+
+    This is the mask the model would consume. It is a pure function of
+    `segment_ids` (which IS part of the hashed batch payload), so it is derived
+    rather than stored — the hash already pins it.
+    """
+    seg = np.atleast_2d(segment_ids)
+    B, T = seg.shape
+    q = seg[:, :, None]                       # (B,T,1) query segment
+    k = seg[:, None, :]                       # (B,1,T) key segment
+    same = (q == k) & (q >= 0) & (k >= 0)     # same real document
+    causal = np.tril(np.ones((T, T), dtype=bool))[None, :, :]
+    return same & causal
+
+
 def policy_for_lane(lane: str) -> str:
     return "structured" if lane in ("agentic", "reasoning") else "concat"
 

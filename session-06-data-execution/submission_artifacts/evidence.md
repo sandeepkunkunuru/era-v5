@@ -6,14 +6,15 @@
 |---|---|---|
 | Tokenizer integrity | PASS | `manifests/*.json tokenizer_hash` |
 | Shard & manifest content hashes | PASS | `manifests/*.json content_sha256` |
-| Evaluation firewall | PASS | `run.log eval_shard_blocked + firewall scan` |
-| Packing / masks / positions correctness | PASS | `consumption ledger + packed-batch check` |
+| Evaluation & validation firewall | PASS | `run.log eval_shard_blocked + firewall scan` |
+| Packing / loss mask / position ids | PASS | `consumption ledger + packed-batch check` |
+| Attention mask (causal, block-diagonal) | PASS | `attention mask derived from segment ids + checked` |
 | Mixture compliance | PASS | `planned vs actual shares` |
 | OPUS audit trail | PASS | `ledgers/opus_trail.jsonl` |
 | Consumption ledger integrity | PASS | `ledgers/consumption.jsonl (hash chain)` |
 | Learning trace (loss linked to source) | PASS | `ledgers/learning.jsonl` |
 | Crash recovery (resume next batch) | PASS | `expected vs resumed batch hashes` |
-| Replay | PASS | `original vs replay hashes` |
+| Replay (batch ids, token spans, hashes) | PASS | `original vs replay batch ids + token spans + hashes` |
 | Fork from earlier checkpoint | PASS | `original vs fork hashes` |
 | Throughput | PASS | `performance.json` |
 | End-to-end run completed | PASS | `run.log completed` |

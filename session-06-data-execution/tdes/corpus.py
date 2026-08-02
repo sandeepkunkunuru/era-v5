@@ -7,8 +7,10 @@ Two lanes are *structured* (reasoning, agentic): each carries context spans (mas
 no loss) and answer spans (loss-bearing) — so loss masks are real, not cosmetic
 (`[00:54:39]`, agentic tool observations are context, `[01:23:54]`).
 
-Some documents are marked split="eval": the evaluation firewall must keep them out
-of every loss-bearing batch (`[02:24:06]`).
+Documents are split three ways: "train", "eval", and "validation". BOTH held-out
+splits must be kept out of every loss-bearing batch — the evaluation *and*
+validation firewalls (`[02:24:06]`, `[00:22:16]` "reject test and evaluation …
+both the side").
 """
 from __future__ import annotations
 
@@ -23,10 +25,13 @@ class Segment(TypedDict):
     loss: bool          # do answer tokens in this segment bear loss?
 
 
+HELD_OUT_SPLITS = ("eval", "validation")   # never trainable
+
+
 class Document(TypedDict):
     doc_id: str
     lane: str
-    split: str                       # "train" | "eval"
+    split: str                       # "train" | "eval" | "validation"
     text: str                        # flat text (for unstructured lanes / hashing)
     segments: Optional[List[Segment]]  # set for structured lanes, else None
 
@@ -53,13 +58,17 @@ def _mk(doc_id, lane, split, text, segments=None) -> Document:
             "segments": segments}
 
 
-def build_corpus(seed: int = 6006, eval_fraction: float = 0.12) -> List[Document]:
+def build_corpus(seed: int = 6006) -> List[Document]:
     rng = random.Random(seed)
     docs: List[Document] = []
 
     def maybe_eval(i: int) -> str:
-        # deterministic: every ~1/eval_fraction-th doc is held out for evaluation
-        return "eval" if (i % max(2, round(1 / eval_fraction)) == 0) else "train"
+        # deterministic 3-way split: 1-in-8 eval, a different 1-in-8 validation
+        if i % 8 == 0:
+            return "eval"
+        if i % 8 == 4:
+            return "validation"
+        return "train"
 
     # ---- unstructured pretraining lanes ----
     for i in range(46):

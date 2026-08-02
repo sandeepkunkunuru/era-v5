@@ -18,7 +18,7 @@ import time
 
 from tdes.audit import (build_evidence, check_packing, evidence_markdown,
                         firewall_scan, mixture_compliance)
-from tdes.corpus import build_corpus, corpus_stats
+from tdes.corpus import HELD_OUT_SPLITS, build_corpus, corpus_stats
 from tdes.engine import CrashSignal, TrainingEngine
 from tdes.hashing import canonical
 from tdes.model import BigramLM
@@ -85,16 +85,20 @@ def main():
     if all(r["content_hash_ok"] for r in verify):
         log(f"manifests validated: {len(verify)} shards, content hashes OK")
 
-    # 3) evaluation firewall --------------------------------------------------
-    eval_shards = shardset.eval_shards()
+    # 3) evaluation + validation firewalls ------------------------------------
+    held_out_shards = shardset.held_out_shards()
     trainable_ids = {s.shard_id for s in shardset.trainable()}
-    blocked = [s.shard_id for s in eval_shards if s.shard_id not in trainable_ids]
+    blocked = [s.shard_id for s in held_out_shards if s.shard_id not in trainable_ids]
     for sid in blocked:
         log(f"evaluation data blocked: shard {sid} withheld from training")
-    eval_doc_ids = {d["doc_id"] for d in docs if d["split"] == "eval"}
-    blocked_ok = len(blocked) == len(eval_shards) and len(blocked) > 0
+    held_out = {sp: {d["doc_id"] for d in docs if d["split"] == sp}
+                for sp in HELD_OUT_SPLITS}
+    blocked_ok = len(blocked) == len(held_out_shards) and len(blocked) > 0
     if blocked_ok:
-        log(f"[PASS] eval_shard_blocked ({len(blocked)} eval shards withheld)")
+        n_eval = sum(1 for s in held_out_shards if s.split == "eval")
+        n_val = len(held_out_shards) - n_eval
+        log(f"[PASS] eval_shard_blocked ({n_eval} eval + {n_val} validation shards "
+            f"withheld, {len(blocked)} total)")
 
     # 4) mixture schedule -----------------------------------------------------
     schedule = compile_schedule(DEFAULT_STAGES, MASTER_SEED, BATCH_SIZE)
@@ -155,7 +159,7 @@ def main():
     batch30, _, _, _ = eng.stream.next_batch(st30)
     packing = check_packing(batch30, tok.pad_id)
     mixture = mixture_compliance(eng.consumption.entries, schedule)
-    firewall = firewall_scan(eng.consumption.entries, eval_doc_ids)
+    firewall = firewall_scan(eng.consumption.entries, held_out)
 
     avg_util = sum(p["real_tokens"] for p in eng.perf) / max(
         1, sum(p["n_seq"] for p in eng.perf) * schedule.stages[0]["seq_len"])

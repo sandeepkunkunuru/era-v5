@@ -42,11 +42,11 @@ recalculate `[02:37:15]`).
 |---|---|
 | `hashing.py` | canonical JSON + SHA-256; `derive_seed` makes per-step/per-lane RNGs a pure function of position |
 | `tokenizer.py` | frozen byte-level BPE (self-contained, no network); identity = a content hash |
-| `corpus.py` | tiny deterministic multi-lane corpus; structured (context/answer) docs + an eval split |
+| `corpus.py` | tiny deterministic multi-lane corpus; structured (context/answer) docs + **eval and validation** splits |
 | `shards.py` | immutable binary token shards + manifests (content hash, provenance, cleaning-pipeline hash, dedup/contamination/eval-overlap status); verified on load |
 | `schedule.py` | curriculum stages, lane weights, **protected floors**; `lane_alloc(t)` is pure; feasibility check |
 | `opus.py` | in-training selection — accept / reject / **defer**, scored on the token prefix; the stream applies the **protected-floor override** |
-| `packing.py` | two policies by data type — **concat** (pretraining) and **structure-preserving** (SFT/agentic); loss mask, segment ids (block-diagonal attention), position ids |
+| `packing.py` | two policies by data type — **concat** (pretraining) and **structure-preserving** (SFT/agentic); loss mask, segment ids, **materialised causal block-diagonal attention mask**, position ids |
 | `stream.py` | the deterministic batch stream; `SamplerState` + `next_batch(state)` |
 | `model.py` | tiny bigram LM — real per-token cross-entropy; zero-init ⇒ initial loss = **ln(V)** (the lecture's −ln(1/vocab)) |
 | `ledgers.py` | append-only, **hash-chained** consumption + learning ledgers; `offset` / `truncate_to` |
@@ -79,11 +79,11 @@ recalculate `[02:37:15]`).
 | Area | Proof in the run |
 |---|---|
 | Shards / manifests / tokenizer | every shard's content + tokenizer hash re-verifies; tamper is caught (test) |
-| Packing / masks / batch | no loss across a segment boundary or onto a pad target; position ids reset per doc |
+| Packing / masks / batch | no loss across a segment boundary or onto a pad target; position ids reset per doc; the **attention mask** is causal, block-diagonal, and never touches pad (262,144 pairs checked) |
 | Mixture / floors / OPUS | planned vs actual lane shares within tolerance; floors always met; OPUS accept/reject/defer with **protected-floor overrides** on Indic/agentic/reasoning |
 | Consumption + learning ledgers | hash-chained; loss linked to source shard/doc; loss falls from **ln(V)** |
-| Checkpoint / crash / resume / replay / fork | crash at step 25 → resume from ckpt 20 → **the full resumed stream is hash-identical** to a clean run; replay of an interval matches recorded hashes; a fork with a new seed **diverges** yet stays self-consistent |
-| Evaluation firewall | eval shards withheld; a scan confirms **no eval document** enters any loss-bearing batch |
+| Checkpoint / crash / resume / replay / fork | crash at step 25 → resume from ckpt 20 → **the full resumed stream is hash-identical** to a clean run; replay matches **batch ids, token spans and hashes**; a fork with a new seed **diverges** yet stays self-consistent |
+| Evaluation & validation firewall | both held-out splits withheld; a scan of every consumed document instance confirms **no held-out document** enters any loss-bearing batch |
 | Throughput / packing efficiency | batches/s, useful-loss-bearing tokens/s, packing utilisation — measured, not stated |
 
 ## `submission_artifacts/` (generated)
@@ -98,6 +98,18 @@ submission_artifacts/
   ledgers/             # consumption.jsonl, learning.jsonl, opus_trail.jsonl
   checkpoints/         # ckpt_*.json metadata (weight *.bin regenerate on run — gitignored)
 ```
+
+## The completion bar
+
+> *"The assignment is complete only when the system can prove what it consumed, why it consumed it, what the
+> model learned from it and how the run can be reconstructed."*
+
+| Must prove | Mechanism | Evidence |
+|---|---|---|
+| **what it consumed** | consumption ledger, append-only + hash-chained | 40 entries, chain verified, 1,962 consumed document instances |
+| **why it consumed it** | mixture-schedule allocation + OPUS decision record (score, reason, override flag), joined to the ledger by `doc_id` | 2,245 decisions; a test asserts every consumed doc has a decision record |
+| **what the model learned** | learning ledger — per-sequence *and* per-token loss, each linked to its source shard/document | loss 6.4907 → 6.4167, starting exactly at ln(V) |
+| **how it can be reconstructed** | checkpoint → resume → replay → fork, each verified by hash | resumed stream identical; replay matches batch ids + 295 token spans + hashes |
 
 Scope note (per the brief `[02:26:07]`): the real service, dashboard, UI, and throughput
 engineering are out of scope; the model is deliberately trivial ("training is just fake

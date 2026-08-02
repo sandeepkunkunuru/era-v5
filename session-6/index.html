@@ -88,15 +88,37 @@
         <a class="btn" href="https://github.com/sandeepkunkunuru/era-v5/blob/main/session-06-data-execution/submission_artifacts/run.log">run.log</a>
       </div>
       <div class="kpis">
-        <div class="kpi"><div class="v ok">13 / 13</div><div class="k">evidence rows pass</div></div>
+        <div class="kpi"><div class="v ok">14 / 14</div><div class="k">evidence rows pass</div></div>
         <div class="kpi"><div class="v ok">identical</div><div class="k">stream after crash</div></div>
         <div class="kpi"><div class="v">85.6%</div><div class="k">packing utilization</div></div>
-        <div class="kpi"><div class="v">11</div><div class="k">invariant tests</div></div>
+        <div class="kpi"><div class="v">16</div><div class="k">invariant tests</div></div>
       </div>
     </div>
   </header>
 
   <main class="wrap">
+
+    <section class="block">
+      <h2><span class="n">00</span>The completion bar</h2>
+      <p class="lead">The assignment sets one: <em>"the system can prove what it consumed, why it consumed it,
+        what the model learned from it, and how the run can be reconstructed."</em> Four clauses — here is where
+        each one is discharged.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Must prove…</th><th>Mechanism</th><th>Evidence from this run</th></tr></thead>
+          <tbody>
+            <tr><td><b>what it consumed</b></td><td>consumption ledger — append-only, hash-chained</td>
+                <td class="mono">40 entries · chain verified · 1,962 consumed document instances scanned</td></tr>
+            <tr><td><b>why it consumed it</b></td><td>mixture schedule allocation + OPUS decision record, joined by <code>doc_id</code></td>
+                <td class="mono">2,245 decisions · every consumed doc has a record with score + reason + override flag</td></tr>
+            <tr><td><b>what the model learned</b></td><td>learning ledger — per-sequence and per-token loss, linked to source</td>
+                <td class="mono">loss 6.4907 → 6.4167 · every loss-bearing token traced to its shard + document</td></tr>
+            <tr><td><b>how it can be reconstructed</b></td><td>checkpoint → resume → replay → fork, verified by hash</td>
+                <td class="mono">resumed stream identical · replay matches batch ids, 295 token spans, hashes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
     <section class="block">
       <h2><span class="n">01</span>The path, end to end — one command</h2>
@@ -132,13 +154,13 @@
             <tr>
               <td><b>Crash → resume</b></td>
               <td>the next batch is <em>exactly</em> the expected batch — nothing skipped, nothing repeated</td>
-              <td class="mono">crash@25 → ckpt 20 · expected <span style="color:var(--teal)">3977dcdb05dc</span> = actual <span style="color:var(--teal)">3977dcdb05dc</span> · <b>entire</b> resumed stream identical to a clean run</td>
+              <td class="mono">crash@25 → ckpt 20 · expected <span style="color:var(--teal)">bfbbb74b39ec</span> = actual <span style="color:var(--teal)">bfbbb74b39ec</span> · <b>entire</b> resumed stream identical to a clean run</td>
               <td><span class="pass">PASS</span></td>
             </tr>
             <tr>
               <td><b>Replay</b></td>
-              <td>an earlier interval reconstructs with matching batch ids, token spans and hashes</td>
-              <td class="mono">interval [12, 18) · 6/6 hashes matched · replayed with <em>no model at all</em></td>
+              <td>an earlier interval reconstructs with matching <b>batch ids, token spans and hashes</b></td>
+              <td class="mono">interval [12, 18) · 6/6 batch ids + <b>295 token spans</b> + 6/6 hashes matched · replayed with <em>no model at all</em></td>
               <td><span class="pass">PASS</span></td>
             </tr>
             <tr>
@@ -172,14 +194,14 @@
         (block-diagonal attention — no attention across a boundary) and per-document position ids.</p>
       <div class="grid2">
         <div>
-          <p class="mono" style="color:var(--muted); font-size:.82rem;">A real agentic sequence from the run — <code>agentic-007</code>, step 30</p>
-          <div class="strip" role="img" aria-label="40 real tokens: 22 loss-bearing, 18 masked context, followed by 88 padding positions">
-            <i class="loss" style="width:17.2%"></i><i class="ctx" style="width:14.1%"></i><i class="pad" style="width:68.7%"></i>
+          <p class="mono" style="color:var(--muted); font-size:.82rem;">A real agentic sequence from the run — <code>agentic-009</code>, step 30</p>
+          <div class="strip" role="img" aria-label="39 real tokens: 22 loss-bearing, 17 masked context, followed by 89 padding positions">
+            <i class="loss" style="width:17.2%"></i><i class="ctx" style="width:13.3%"></i><i class="pad" style="width:69.5%"></i>
           </div>
           <div class="legend">
             <b><span class="sw loss"></span> 22 loss-bearing</b>
-            <b><span class="sw ctx"></span> 18 masked context</b>
-            <b><span class="sw pad"></span> 88 pad</b>
+            <b><span class="sw ctx"></span> 17 masked context</b>
+            <b><span class="sw pad"></span> 89 pad</b>
           </div>
           <p style="font-size:.9rem; color:var(--muted); margin-top:.8rem;">
             The user request and the <em>tool observation</em> are context — read, never trained on. Applying
@@ -190,9 +212,9 @@
         <div>
           <div class="callout">
             <p><strong>An honest trade, visible in the numbers.</strong> Structure-preserving packing leaves
-              that sequence 69% padded — it refuses to fill the gap with an unrelated document. Concat packing
+              that sequence 70% padded — it refuses to fill the gap with an unrelated document. Concat packing
               on pretraining lanes runs far denser, and the run averages <b>85.6%</b> utilization overall with
-              <b>80.9%</b> of capacity loss-bearing.</p>
+              <b>81.0%</b> of capacity loss-bearing.</p>
             <p>Correctness first, density second — and the cost is reported rather than hidden.</p>
           </div>
           <div class="scroll" style="margin-top:1rem;">
@@ -202,6 +224,7 @@
                 <tr><td>no loss across a segment boundary</td><td><span class="pass">0 violations</span></td></tr>
                 <tr><td>no loss on a pad target</td><td><span class="pass">0 violations</span></td></tr>
                 <tr><td>position ids reset &amp; increment per document</td><td><span class="pass">0 violations</span></td></tr>
+                <tr><td><b>attention mask</b> causal &amp; block-diagonal — 262,144 query/key pairs checked, 42,462 allowed</td><td><span class="pass">0 violations</span></td></tr>
               </tbody>
             </table>
           </div>
@@ -212,24 +235,24 @@
     <section class="block">
       <h2><span class="n">04</span>OPUS decisions — and the finding</h2>
       <p class="lead">Every candidate is scored on its token prefix and recorded as accept / reject / defer,
-        with a protected-floor override when a scarce lane would otherwise be starved. 2,287 decisions were
+        with a protected-floor override when a scarce lane would otherwise be starved. 2,245 decisions were
         logged across the run.</p>
       <div class="scroll">
         <table>
           <thead><tr><th>Lane</th><th class="num">accept (on merit)</th><th class="num">reject</th><th class="num">defer</th><th class="num">floor override</th></tr></thead>
           <tbody>
-            <tr><td>general_web</td><td class="num">825</td><td class="num">0</td><td class="num">0</td><td class="num">—</td></tr>
-            <tr><td>math</td><td class="num">588</td><td class="num">0</td><td class="num">0</td><td class="num">—</td></tr>
-            <tr><td>code</td><td class="num">495</td><td class="num">0</td><td class="num">0</td><td class="num">—</td></tr>
-            <tr><td>reasoning</td><td class="num">47</td><td class="num">6</td><td class="num">27</td><td class="num">33</td></tr>
-            <tr><td><b>agentic</b></td><td class="num"><span class="zero">0</span></td><td class="num">40</td><td class="num">20</td><td class="num">60</td></tr>
-            <tr><td><b>indic</b></td><td class="num"><span class="zero">0</span></td><td class="num">152</td><td class="num">87</td><td class="num">239</td></tr>
+            <tr><td>general_web</td><td class="num">819</td><td class="num">0</td><td class="num">0</td><td class="num">—</td></tr>
+            <tr><td>math</td><td class="num">572</td><td class="num">0</td><td class="num">34</td><td class="num">—</td></tr>
+            <tr><td>code</td><td class="num">454</td><td class="num">0</td><td class="num">0</td><td class="num">—</td></tr>
+            <tr><td>reasoning</td><td class="num">61</td><td class="num">0</td><td class="num">19</td><td class="num">19</td></tr>
+            <tr><td><b>agentic</b></td><td class="num"><span class="zero">0</span></td><td class="num">37</td><td class="num">23</td><td class="num">60</td></tr>
+            <tr><td><b>indic</b></td><td class="num"><span class="zero">0</span></td><td class="num">188</td><td class="num">38</td><td class="num">226</td></tr>
           </tbody>
         </table>
       </div>
       <div class="callout">
         <p><strong>Indic and agentic were accepted on merit exactly zero times.</strong> Every single one that
-          entered a batch did so through the <em>protected-floor override</em> — 239 and 60 of them.</p>
+          entered a batch did so through the <em>protected-floor override</em> — 226 and 60 of them.</p>
         <p>This is Session 5's warning reproduced by a running system rather than argued: a selector whose proxy
           is English- and code-benchmark-driven does not merely under-weight the scarce lanes, it takes
           <b>all</b> of them to zero. The floor is not a safety margin — without it, the two capabilities this
@@ -252,15 +275,16 @@
             <table>
               <thead><tr><th>Check</th><th class="num">Count</th><th>Result</th></tr></thead>
               <tbody>
-                <tr><td>shards verified (tokenizer + content hash)</td><td class="num">24</td><td><span class="pass">PASS</span></td></tr>
-                <tr><td>eval shards withheld from training</td><td class="num">6</td><td><span class="pass">PASS</span></td></tr>
-                <tr><td>eval documents found in a loss-bearing batch</td><td class="num">0</td><td><span class="pass">PASS</span></td></tr>
+                <tr><td>shards verified (tokenizer + content hash)</td><td class="num">29</td><td><span class="pass">PASS</span></td></tr>
+                <tr><td>eval + validation shards withheld</td><td class="num">12</td><td><span class="pass">PASS</span></td></tr>
+                <tr><td>held-out documents found in a loss-bearing batch</td><td class="num">0</td><td><span class="pass">PASS</span></td></tr>
               </tbody>
             </table>
           </div>
-          <p style="font-size:.88rem; color:var(--muted); margin-top:.8rem;">The firewall is enforced twice —
-            eval shards are never marked trainable, and an independent audit scans every consumed batch for a
-            leaked eval document.</p>
+          <p style="font-size:.88rem; color:var(--muted); margin-top:.8rem;">Two held-out splits
+            (<b>20 eval</b> + <b>19 validation</b> documents) and two enforcement points: held-out shards are
+            never marked trainable, and an independent audit scans all <b>1,962</b> consumed document instances
+            for a leak. A train shard that overlaps either split is quarantined as contaminated.</p>
         </div>
       </div>
     </section>
@@ -277,7 +301,7 @@
               <tbody>
                 <tr><td>theoretical initial loss <span class="mono">−ln(1/V) = ln(V)</span></td><td class="num">6.491</td></tr>
                 <tr><td>measured loss, step 0</td><td class="num">6.4907</td></tr>
-                <tr><td>measured loss, step 39</td><td class="num">6.4188</td></tr>
+                <tr><td>measured loss, step 39</td><td class="num">6.4167</td></tr>
               </tbody>
             </table>
           </div>
@@ -293,9 +317,9 @@
             <table>
               <thead><tr><th>token</th><th class="num">loss</th><th>source</th></tr></thead>
               <tbody>
-                <tr><td class="mono">" plus"</td><td class="num">6.4899</td><td class="mono">reasoning.train.01 / reason-013</td></tr>
-                <tr><td class="mono">"5"</td><td class="num">6.4899</td><td class="mono">reasoning.train.00 / reason-005</td></tr>
-                <tr><td class="mono">" 6"</td><td class="num">6.4899</td><td class="mono">reasoning.train.00 / reason-005</td></tr>
+                <tr><td class="mono">"9"</td><td class="num">6.4899</td><td class="mono">reasoning.train.01 / reason-014</td></tr>
+                <tr><td class="mono">"5"</td><td class="num">6.4899</td><td class="mono">reasoning.train.01 / reason-014</td></tr>
+                <tr><td class="mono">" "</td><td class="num">6.4899</td><td class="mono">reasoning.train.01 / reason-014</td></tr>
               </tbody>
             </table>
           </div>
@@ -311,13 +335,13 @@
       <p class="lead">Reported numbers must be reconstructable from the run, so they are computed from the same
         ledger the proofs use.</p>
       <div class="kpis">
-        <div class="kpi"><div class="v">62.2</div><div class="k">batches / sec</div></div>
-        <div class="kpi"><div class="v">103.0k</div><div class="k">useful loss-bearing tok/s</div></div>
-        <div class="kpi"><div class="v">1.8 ms</div><div class="k">resume latency</div></div>
-        <div class="kpi"><div class="v">6.6 ms</div><div class="k">replay latency</div></div>
+        <div class="kpi"><div class="v">62.4</div><div class="k">batches / sec</div></div>
+        <div class="kpi"><div class="v">103.5k</div><div class="k">useful loss-bearing tok/s</div></div>
+        <div class="kpi"><div class="v">1.4 ms</div><div class="k">resume latency</div></div>
+        <div class="kpi"><div class="v">6.7 ms</div><div class="k">replay latency</div></div>
       </div>
-      <p style="font-size:.88rem; color:var(--muted); margin-top:1rem;">40 steps · 70,144 real tokens ·
-        66,254 loss-bearing · 85.6% packing utilization. The model is deliberately trivial — "training is just
+      <p style="font-size:.88rem; color:var(--muted); margin-top:1rem;">40 steps · 70,145 real tokens ·
+        66,326 loss-bearing · 85.6% packing utilization. The model is deliberately trivial — "training is just
         fake training" — because the artifact under test is the <em>data system</em>.</p>
     </section>
 
@@ -327,7 +351,7 @@
         Everything above is emitted by
         <a href="https://github.com/sandeepkunkunuru/era-v5/tree/main/session-06-data-execution">the implementation</a>;
         reproduce with <code>python run_demo.py</code> (numpy only), and
-        <code>python -m unittest discover -s tests</code> for the 11 invariant tests.</p>
+        <code>python -m unittest discover -s tests</code> for the 16 invariant tests.</p>
       <p class="mono">Determinism verified across separate process invocations: every batch hash identical, run to run.</p>
     </footer>
   </main>

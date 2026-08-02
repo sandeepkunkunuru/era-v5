@@ -125,7 +125,8 @@ class Stream:
                     doc = self._load(shard_id, doc_idx)
                     cand_id = f"{t}:{shard_id}:{doc_idx}"
                     rec = self.opus.decide(cand_id, shard_id, doc_idx,
-                                           doc["ids"], stage["name"], t)
+                                           doc["ids"], stage["name"], t,
+                                           doc_id=doc["doc_id"])
                     if rec["decision"] == "accept":
                         opus_records.append(rec)
                         return doc

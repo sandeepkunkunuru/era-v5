@@ -45,7 +45,7 @@ class Opus:
         return max(0.0, min(1.0, base + noise))
 
     def decide(self, candidate_id: str, shard_id: str, doc_idx: int,
-               prefix_ids, stage: str, step: int) -> dict:
+               prefix_ids, stage: str, step: int, doc_id: str = None) -> dict:
         sc = self.score(shard_id, doc_idx, prefix_ids)
         if sc >= self.cfg.accept_at:
             decision = "accept"
@@ -53,8 +53,10 @@ class Opus:
             decision = "defer"
         else:
             decision = "reject"
+        # doc_id is carried so the trail joins DIRECTLY to the consumption ledger's
+        # sequence members — i.e. "why was this document consumed?" is answerable.
         return {"candidate_id": candidate_id, "shard_id": shard_id,
-                "doc_idx": doc_idx, "lane": shard_id.split(".")[0],
+                "doc_idx": doc_idx, "doc_id": doc_id, "lane": shard_id.split(".")[0],
                 "stage": stage, "step": step, "score": round(sc, 4),
                 "decision": decision, "protected_override": False,
                 "reason": f"score {sc:.3f} vs accept {self.cfg.accept_at}"}
