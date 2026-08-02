@@ -1,0 +1,183 @@
+{
+  "overall": "PASS",
+  "generated_by": "tdes.audit.build_evidence",
+  "requirements": [
+    {
+      "area": "shards_manifests_tokenizer",
+      "requirement": "Tokenizer integrity",
+      "result": "PASS",
+      "evidence": "manifests/*.json tokenizer_hash",
+      "detail": {
+        "shards_checked": 24
+      }
+    },
+    {
+      "area": "shards_manifests_tokenizer",
+      "requirement": "Shard & manifest content hashes",
+      "result": "PASS",
+      "evidence": "manifests/*.json content_sha256",
+      "detail": {
+        "shards_checked": 24
+      }
+    },
+    {
+      "area": "eval_validation_firewall",
+      "requirement": "Evaluation firewall",
+      "result": "PASS",
+      "evidence": "run.log eval_shard_blocked + firewall scan",
+      "detail": {
+        "eval_shards_blocked": 6,
+        "leaked": []
+      }
+    },
+    {
+      "area": "packing_masks_batch",
+      "requirement": "Packing / masks / positions correctness",
+      "result": "PASS",
+      "evidence": "consumption ledger + packed-batch check",
+      "detail": {
+        "violations": []
+      }
+    },
+    {
+      "area": "mixture_floors_opus",
+      "requirement": "Mixture compliance",
+      "result": "PASS",
+      "evidence": "planned vs actual shares",
+      "detail": {
+        "planned": {
+          "general_web": 0.3516,
+          "code": 0.1719,
+          "math": 0.1328,
+          "reasoning": 0.1094,
+          "agentic": 0.0859,
+          "indic": 0.1484
+        },
+        "actual": {
+          "general_web": 0.3516,
+          "code": 0.1719,
+          "math": 0.1328,
+          "reasoning": 0.1094,
+          "agentic": 0.0859,
+          "indic": 0.1484
+        },
+        "floors_always_met": true
+      }
+    },
+    {
+      "area": "mixture_floors_opus",
+      "requirement": "OPUS audit trail",
+      "result": "PASS",
+      "evidence": "ledgers/opus_trail.jsonl",
+      "detail": {
+        "total": 2287,
+        "by_decision": {
+          "reject": 198,
+          "accept": 1955,
+          "defer": 134
+        },
+        "protected_overrides": 332,
+        "by_lane": {
+          "agentic": {
+            "reject": 40,
+            "override": 60,
+            "defer": 20
+          },
+          "code": {
+            "accept": 495
+          },
+          "general_web": {
+            "accept": 825
+          },
+          "indic": {
+            "reject": 152,
+            "override": 239,
+            "defer": 87
+          },
+          "math": {
+            "accept": 588
+          },
+          "reasoning": {
+            "defer": 27,
+            "override": 33,
+            "accept": 47,
+            "reject": 6
+          }
+        }
+      }
+    },
+    {
+      "area": "consumption_learning_ledgers",
+      "requirement": "Consumption ledger integrity",
+      "result": "PASS",
+      "evidence": "ledgers/consumption.jsonl (hash chain)",
+      "detail": {
+        "entries": 40
+      }
+    },
+    {
+      "area": "consumption_learning_ledgers",
+      "requirement": "Learning trace (loss linked to source)",
+      "result": "PASS",
+      "evidence": "ledgers/learning.jsonl",
+      "detail": {
+        "loss_start": 6.49072,
+        "loss_end": 6.41882,
+        "initial_loss_theory": 6.491
+      }
+    },
+    {
+      "area": "checkpoint_crash_resume_replay_fork",
+      "requirement": "Crash recovery (resume next batch)",
+      "result": "PASS",
+      "evidence": "expected vs resumed batch hashes",
+      "detail": {
+        "resume_from_step": 20,
+        "next_expected": "3977dcdb05dc",
+        "next_actual": "3977dcdb05dc"
+      }
+    },
+    {
+      "area": "checkpoint_crash_resume_replay_fork",
+      "requirement": "Replay",
+      "result": "PASS",
+      "evidence": "original vs replay hashes",
+      "detail": {
+        "interval": [
+          12,
+          18
+        ]
+      }
+    },
+    {
+      "area": "checkpoint_crash_resume_replay_fork",
+      "requirement": "Fork from earlier checkpoint",
+      "result": "PASS",
+      "evidence": "original vs fork hashes",
+      "detail": {
+        "from_step": 20,
+        "diverged": true
+      }
+    },
+    {
+      "area": "throughput_packing_efficiency",
+      "requirement": "Throughput",
+      "result": "PASS",
+      "evidence": "performance.json",
+      "detail": {
+        "batches_per_sec": 54.84,
+        "useful_tok_per_sec": 90826.2,
+        "avg_packing_utilization": 0.8562
+      }
+    },
+    {
+      "area": "end_to_end_execution",
+      "requirement": "End-to-end run completed",
+      "result": "PASS",
+      "evidence": "run.log completed",
+      "detail": {
+        "steps": 40
+      }
+    }
+  ]
+}
