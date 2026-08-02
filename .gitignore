@@ -7,3 +7,7 @@ dist/
 .DS_Store
 *.log
 .netlify/
+
+# Course transcripts contain participant names — private llm-cloud repo only.
+*axiom-transcript*
+transcripts/
