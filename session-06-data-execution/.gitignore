@@ -4,3 +4,7 @@ __pycache__/
 # model weight blobs regenerate on every `python run_demo.py`; keep the repo lean.
 # checkpoint *.json metadata (step, hashes, offsets, sampler state) IS committed.
 submission_artifacts/**/*.model.bin
+
+# The repo root ignores `*.log`, but run.log is a REQUIRED submission artifact
+# (one of the four graded links) — re-include it explicitly.
+!submission_artifacts/run.log

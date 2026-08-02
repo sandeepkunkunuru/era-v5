@@ -1,0 +1,73 @@
+=== TDES demo — master_seed=6006 batch_size=16 steps=40 ===
+corpus built: 148 docs, lanes={'general_web': 46, 'code': 24, 'math': 24, 'indic': 22, 'reasoning': 18, 'agentic': 14}, split={'eval': 20, 'train': 128}
+tokenizer frozen: vocab=659 hash=86e8622796973291
+shards created: 24 shards (5305 tokens)
+[PASS] tokenizer_hash_verified
+manifests validated: 24 shards, content hashes OK
+evaluation data blocked: shard agentic.eval.00 withheld from training
+evaluation data blocked: shard code.eval.00 withheld from training
+evaluation data blocked: shard general_web.eval.00 withheld from training
+evaluation data blocked: shard indic.eval.00 withheld from training
+evaluation data blocked: shard math.eval.00 withheld from training
+evaluation data blocked: shard reasoning.eval.00 withheld from training
+[PASS] eval_shard_blocked (6 eval shards withheld)
+mixture compiled: 3 stages, 40 steps, feasible=False
+reference run complete: 40 batches (expected stream)
+step 000 stage=seed    batch=b000000-ad541832 loss=6.491 util=0.91 sha=5b20f797b32b
+step 001 stage=seed    batch=b000001-071c86a6 loss=6.487 util=0.91 sha=02d69bbc893e
+step 002 stage=seed    batch=b000002-b15bddb0 loss=6.482 util=0.91 sha=f388474ec105
+step 003 stage=seed    batch=b000003-6918da79 loss=6.478 util=0.91 sha=a871ab7673b1
+step 004 stage=seed    batch=b000004-d9aca479 loss=6.474 util=0.91 sha=33b2d86c1a5c
+step 005 stage=seed    batch=b000005-65a89796 loss=6.469 util=0.91 sha=68b72d59c12a
+step 006 stage=seed    batch=b000006-c17cd49c loss=6.466 util=0.91 sha=44892bffc35c
+step 007 stage=seed    batch=b000007-0ab53cfb loss=6.461 util=0.91 sha=b80c48168ad2
+step 008 stage=seed    batch=b000008-d4219cf4 loss=6.457 util=0.91 sha=c9e24a034fe5
+step 009 stage=seed    batch=b000009-cb1d077a loss=6.453 util=0.91 sha=116f701c99ad
+[PASS] checkpoint_saved step=10 id=5441bba05df5 cons_off=10 learn_off=10
+step 010 stage=mid     batch=b000010-d82375ea loss=6.458 util=0.86 sha=68da1f0e0517
+step 011 stage=mid     batch=b000011-08cba4a7 loss=6.455 util=0.86 sha=252b6534732c
+step 012 stage=mid     batch=b000012-79566062 loss=6.453 util=0.86 sha=fbea9f3988a7
+step 013 stage=mid     batch=b000013-b8584149 loss=6.450 util=0.86 sha=c91554a9e4bc
+step 014 stage=mid     batch=b000014-77c7c6b6 loss=6.448 util=0.86 sha=c58a4931e1b3
+step 015 stage=mid     batch=b000015-130959ab loss=6.444 util=0.86 sha=3974ffc026a9
+step 016 stage=mid     batch=b000016-2f6d0899 loss=6.443 util=0.86 sha=c03d3a7a5e38
+step 017 stage=mid     batch=b000017-80b988d8 loss=6.440 util=0.86 sha=0e9c1d85c516
+step 018 stage=mid     batch=b000018-7e851266 loss=6.437 util=0.86 sha=6f04894b589f
+step 019 stage=mid     batch=b000019-e7e539e1 loss=6.434 util=0.86 sha=a72021fe2d3e
+[PASS] checkpoint_saved step=20 id=63ca23b67051 cons_off=20 learn_off=20
+step 020 stage=mid     batch=b000020-1529b236 loss=6.432 util=0.86 sha=3977dcdb05dc
+step 021 stage=mid     batch=b000021-725fe509 loss=6.428 util=0.86 sha=21735b11b88a
+step 022 stage=mid     batch=b000022-fd4f79a7 loss=6.426 util=0.86 sha=62691b4d7576
+step 023 stage=mid     batch=b000023-f8c5cf29 loss=6.424 util=0.86 sha=554af14ae1b8
+step 024 stage=mid     batch=b000024-26c74065 loss=6.421 util=0.86 sha=687b7a4d7977
+crash simulated: simulated crash at step 25
+batches packed so far: 25; OPUS decisions recorded: 1266
+run resumed from checkpoint step=20 (dropped 5 consumption + 5 learning entries)
+step 020 stage=mid     batch=b000020-1529b236 loss=6.432 util=0.86 sha=3977dcdb05dc
+step 021 stage=mid     batch=b000021-725fe509 loss=6.428 util=0.86 sha=21735b11b88a
+step 022 stage=mid     batch=b000022-fd4f79a7 loss=6.426 util=0.86 sha=62691b4d7576
+step 023 stage=mid     batch=b000023-f8c5cf29 loss=6.424 util=0.86 sha=554af14ae1b8
+step 024 stage=mid     batch=b000024-26c74065 loss=6.421 util=0.86 sha=687b7a4d7977
+step 025 stage=anneal  batch=b000025-a3fd5dad loss=6.441 util=0.82 sha=134d7f4b7230
+step 026 stage=anneal  batch=b000026-a1ab2e36 loss=6.441 util=0.82 sha=82a74361d448
+step 027 stage=anneal  batch=b000027-1faf4a27 loss=6.439 util=0.82 sha=bdb73c7b984b
+step 028 stage=anneal  batch=b000028-7101be02 loss=6.438 util=0.82 sha=933fc93da2ce
+step 029 stage=anneal  batch=b000029-96940939 loss=6.436 util=0.82 sha=0af2632ab617
+[PASS] checkpoint_saved step=30 id=8f1113d5100e cons_off=30 learn_off=30
+step 030 stage=anneal  batch=b000030-3a543e74 loss=6.433 util=0.82 sha=5359da907385
+step 031 stage=anneal  batch=b000031-bb07518b loss=6.434 util=0.82 sha=e5ec42d9662a
+step 032 stage=anneal  batch=b000032-9581c0bd loss=6.427 util=0.82 sha=6716ac203072
+step 033 stage=anneal  batch=b000033-f0be6354 loss=6.429 util=0.82 sha=be96d46f17a4
+step 034 stage=anneal  batch=b000034-2349c1c2 loss=6.428 util=0.82 sha=dc973d778c4f
+step 035 stage=anneal  batch=b000035-67659915 loss=6.427 util=0.82 sha=70d30844155a
+step 036 stage=anneal  batch=b000036-f82d7607 loss=6.422 util=0.82 sha=e4f69e5e5629
+step 037 stage=anneal  batch=b000037-a0c70ac6 loss=6.424 util=0.82 sha=e3c7af93d930
+step 038 stage=anneal  batch=b000038-5a86ece0 loss=6.422 util=0.82 sha=a52e5c21eec1
+step 039 stage=anneal  batch=b000039-cb831b09 loss=6.419 util=0.82 sha=e18251b0dbce
+[PASS] checkpoint_saved step=40 id=4ee25ffac822 cons_off=40 learn_off=40
+[PASS] resume_next_batch_matched step=20 sha=3977dcdb05dc (full stream identical: True)
+historical stream replayed: interval (12, 18) match=True
+[PASS] replay_hash_matched interval=[12, 18]
+branch forked: from step 20 seed 99 diverged=True self_consistent=True
+performance measured: 62.2 batches/s, 103024.5 useful-loss-tok/s, util=0.8562
+audit completed: overall=PASS
