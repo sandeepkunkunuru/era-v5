@@ -1,0 +1,719 @@
+{
+  "vocab_size": 131072,
+  "scripts": {
+    "Latin": {
+      "tokens": 34354,
+      "bytes_per_char": 1,
+      "mean_byte_len": 7.8,
+      "max_byte_len": 142
+    },
+    "Bengali": {
+      "tokens": 13982,
+      "bytes_per_char": 3,
+      "mean_byte_len": 16.72,
+      "max_byte_len": 57
+    },
+    "Devanagari": {
+      "tokens": 12967,
+      "bytes_per_char": 3,
+      "mean_byte_len": 15.84,
+      "max_byte_len": 63
+    },
+    "Telugu": {
+      "tokens": 8652,
+      "bytes_per_char": 3,
+      "mean_byte_len": 15.65,
+      "max_byte_len": 60
+    },
+    "Arabic": {
+      "tokens": 8414,
+      "bytes_per_char": 2,
+      "mean_byte_len": 9.95,
+      "max_byte_len": 29
+    },
+    "Malayalam": {
+      "tokens": 8333,
+      "bytes_per_char": 3,
+      "mean_byte_len": 17.17,
+      "max_byte_len": 64
+    },
+    "Kannada": {
+      "tokens": 8154,
+      "bytes_per_char": 3,
+      "mean_byte_len": 16.35,
+      "max_byte_len": 58
+    },
+    "Gujarati": {
+      "tokens": 7687,
+      "bytes_per_char": 3,
+      "mean_byte_len": 15.09,
+      "max_byte_len": 48
+    },
+    "Oriya": {
+      "tokens": 7113,
+      "bytes_per_char": 3,
+      "mean_byte_len": 15.93,
+      "max_byte_len": 51
+    },
+    "Gurmukhi": {
+      "tokens": 7024,
+      "bytes_per_char": 3,
+      "mean_byte_len": 13.78,
+      "max_byte_len": 39
+    },
+    "Tamil": {
+      "tokens": 6909,
+      "bytes_per_char": 3,
+      "mean_byte_len": 18.3,
+      "max_byte_len": 64
+    },
+    "Symbol": {
+      "tokens": 5514,
+      "bytes_per_char": 1,
+      "mean_byte_len": 6.32,
+      "max_byte_len": 81
+    },
+    "Han": {
+      "tokens": 1375,
+      "bytes_per_char": 3,
+      "mean_byte_len": 12.89,
+      "max_byte_len": 751
+    },
+    "Other": {
+      "tokens": 431,
+      "bytes_per_char": 1,
+      "mean_byte_len": 3.23,
+      "max_byte_len": 10
+    },
+    "Cyrillic": {
+      "tokens": 43,
+      "bytes_per_char": 2,
+      "mean_byte_len": 2.05,
+      "max_byte_len": 4
+    },
+    "Mixed": {
+      "tokens": 42,
+      "bytes_per_char": 1,
+      "mean_byte_len": 8.26,
+      "max_byte_len": 76
+    },
+    "Hangul": {
+      "tokens": 35,
+      "bytes_per_char": 3,
+      "mean_byte_len": 3.0,
+      "max_byte_len": 3
+    },
+    "Kana": {
+      "tokens": 32,
+      "bytes_per_char": 3,
+      "mean_byte_len": 3.0,
+      "max_byte_len": 3
+    },
+    "Thai": {
+      "tokens": 6,
+      "bytes_per_char": 3,
+      "mean_byte_len": 3.0,
+      "max_byte_len": 3
+    },
+    "Syriac": {
+      "tokens": 5,
+      "bytes_per_char": 2,
+      "mean_byte_len": 2.0,
+      "max_byte_len": 2
+    }
+  },
+  "windows": {
+    "32": {
+      "window_bytes": 32,
+      "truncated_tokens": 3241,
+      "truncated_pct": 2.473,
+      "collision_clusters": 460,
+      "collided_tokens": 1154,
+      "collided_pct": 0.88,
+      "indic_share_of_collisions": 92.0,
+      "by_script": {
+        "Latin": {
+          "tokens": 34354,
+          "truncated": 38,
+          "truncated_pct": 0.111,
+          "collided": 19,
+          "collided_pct": 0.055,
+          "effective_chars": 32.0
+        },
+        "Symbol": {
+          "tokens": 5514,
+          "truncated": 11,
+          "truncated_pct": 0.199,
+          "collided": 15,
+          "collided_pct": 0.272,
+          "effective_chars": 32.0
+        },
+        "Devanagari": {
+          "tokens": 12967,
+          "truncated": 412,
+          "truncated_pct": 3.177,
+          "collided": 128,
+          "collided_pct": 0.987,
+          "effective_chars": 10.7
+        },
+        "Bengali": {
+          "tokens": 13982,
+          "truncated": 544,
+          "truncated_pct": 3.891,
+          "collided": 211,
+          "collided_pct": 1.509,
+          "effective_chars": 10.7
+        },
+        "Gurmukhi": {
+          "tokens": 7024,
+          "truncated": 20,
+          "truncated_pct": 0.285,
+          "collided": 2,
+          "collided_pct": 0.028,
+          "effective_chars": 10.7
+        },
+        "Gujarati": {
+          "tokens": 7687,
+          "truncated": 133,
+          "truncated_pct": 1.73,
+          "collided": 23,
+          "collided_pct": 0.299,
+          "effective_chars": 10.7
+        },
+        "Oriya": {
+          "tokens": 7113,
+          "truncated": 213,
+          "truncated_pct": 2.995,
+          "collided": 65,
+          "collided_pct": 0.914,
+          "effective_chars": 10.7
+        },
+        "Tamil": {
+          "tokens": 6909,
+          "truncated": 536,
+          "truncated_pct": 7.758,
+          "collided": 234,
+          "collided_pct": 3.387,
+          "effective_chars": 10.7
+        },
+        "Telugu": {
+          "tokens": 8652,
+          "truncated": 241,
+          "truncated_pct": 2.785,
+          "collided": 60,
+          "collided_pct": 0.693,
+          "effective_chars": 10.7
+        },
+        "Kannada": {
+          "tokens": 8154,
+          "truncated": 391,
+          "truncated_pct": 4.795,
+          "collided": 92,
+          "collided_pct": 1.128,
+          "effective_chars": 10.7
+        },
+        "Malayalam": {
+          "tokens": 8333,
+          "truncated": 597,
+          "truncated_pct": 7.164,
+          "collided": 247,
+          "collided_pct": 2.964,
+          "effective_chars": 10.7
+        },
+        "Han": {
+          "tokens": 1375,
+          "truncated": 103,
+          "truncated_pct": 7.491,
+          "collided": 58,
+          "collided_pct": 4.218,
+          "effective_chars": 10.7
+        },
+        "Mixed": {
+          "tokens": 42,
+          "truncated": 2,
+          "truncated_pct": 4.762,
+          "collided": 0,
+          "collided_pct": 0.0,
+          "effective_chars": 32.0
+        }
+      },
+      "examples": [
+        {
+          "script": "Oriya",
+          "shared_prefix_bytes": 32,
+          "tokens": [
+            "ଅକ୍ଟୋବର-ଡିସେ",
+            "ଅକ୍ଟୋବର-ଡିସେମ୍ବର\n"
+          ]
+        },
+        {
+          "script": "Oriya",
+          "shared_prefix_bytes": 32,
+          "tokens": [
+            "ଜୁଲାଇ-ସେପ୍ଟେ",
+            "ଜୁଲାଇ-ସେପ୍ଟେମ୍ବର\n"
+          ]
+        },
+        {
+          "script": "Oriya",
+          "shared_prefix_bytes": 32,
+          "tokens": [
+            "ଜାନୁଆରୀ-ମାର୍ଚ୍ଚ",
+            "ଜାନୁଆରୀ-ମାର୍ଚ୍ଚ\n"
+          ]
+        },
+        {
+          "script": "Devanagari",
+          "shared_prefix_bytes": 32,
+          "tokens": [
+            "▁महाराष्ट्र",
+            "▁महाराष्ट्रातील",
+            "▁महाराष्ट्रात",
+            "▁महाराष्ट्राचे",
+            "▁महाराष्ट्राच्या"
+          ]
+        },
+        {
+          "script": "Bengali",
+          "shared_prefix_bytes": 32,
+          "tokens": [
+            "▁খ্রিষ্টাব্দ",
+            "▁খ্রিষ্টাব্দের",
+            "▁খ্রিষ্টাব্দে"
+          ]
+        },
+        {
+          "script": "Devanagari",
+          "shared_prefix_bytes": 32,
+          "tokens": [
+            "▁मनोविज्ञान",
+            "▁मनोविज्ञान,",
+            "▁मनोविज्ञानी",
+            "▁मनोविज्ञानियों"
+          ]
+        },
+        {
+          "script": "Tamil",
+          "shared_prefix_bytes": 32,
+          "tokens": [
+            "▁பயன்படுத்த",
+            "▁பயன்படுத்தி",
+            "▁பயன்படுத்தப்பட்ட",
+            "▁பயன்படுத்தும்",
+            "▁பயன்படுத்திய"
+          ]
+        },
+        {
+          "script": "Devanagari",
+          "shared_prefix_bytes": 32,
+          "tokens": [
+            "▁ऑस्ट्रेलिया",
+            "▁ऑस्ट्रेलियन",
+            "▁ऑस्ट्रेलियाई",
+            "▁ऑस्ट्रेलियाइ",
+            "▁ऑस्ट्रेलियाचा"
+          ]
+        },
+        {
+          "script": "Bengali",
+          "shared_prefix_bytes": 32,
+          "tokens": [
+            "▁বিশ্ববিদ্যালয়",
+            "▁বিশ্ববিদ্যালয়ৰ",
+            "▁বিশ্ববিদ্যালয়,",
+            "▁বিশ্ববিদ্যালয়ের",
+            "▁বিশ্ববিদ্যালয়\n"
+          ]
+        },
+        {
+          "script": "Malayalam",
+          "shared_prefix_bytes": 32,
+          "tokens": [
+            "▁തിരുവനന്തപുര",
+            "▁തിരുവനന്തപുരം",
+            "▁തിരുവനന്തപുരത്തെ",
+            "▁തിരുവനന്തപുരത്ത്",
+            "▁തിരുവനന്തപുരത്തു"
+          ]
+        },
+        {
+          "script": "Kannada",
+          "shared_prefix_bytes": 32,
+          "tokens": [
+            "▁ವಿಶ್ವವಿದ್ಯ",
+            "▁ವಿಶ್ವವಿದ್ಯಾಲಯ",
+            "▁ವಿಶ್ವವಿದ್ಯಾನಿಲ",
+            "▁ವಿಶ್ವವಿದ್ಯಾನಿಲಯ",
+            "▁ವಿಶ್ವವಿದ್ಯಾಲಯದ"
+          ]
+        },
+        {
+          "script": "Bengali",
+          "shared_prefix_bytes": 32,
+          "tokens": [
+            "▁উল্লেখযোগ্য",
+            "▁উল্লেখযোগ্য।",
+            "▁উল্লেখযোগ্য।\n"
+          ]
+        }
+      ]
+    },
+    "48": {
+      "window_bytes": 48,
+      "truncated_tokens": 175,
+      "truncated_pct": 0.134,
+      "collision_clusters": 33,
+      "collided_tokens": 81,
+      "collided_pct": 0.062,
+      "indic_share_of_collisions": 42.0,
+      "by_script": {
+        "Latin": {
+          "tokens": 34354,
+          "truncated": 8,
+          "truncated_pct": 0.023,
+          "collided": 7,
+          "collided_pct": 0.02,
+          "effective_chars": 48.0
+        },
+        "Symbol": {
+          "tokens": 5514,
+          "truncated": 8,
+          "truncated_pct": 0.145,
+          "collided": 7,
+          "collided_pct": 0.127,
+          "effective_chars": 48.0
+        },
+        "Devanagari": {
+          "tokens": 12967,
+          "truncated": 11,
+          "truncated_pct": 0.085,
+          "collided": 5,
+          "collided_pct": 0.039,
+          "effective_chars": 16.0
+        },
+        "Bengali": {
+          "tokens": 13982,
+          "truncated": 7,
+          "truncated_pct": 0.05,
+          "collided": 5,
+          "collided_pct": 0.036,
+          "effective_chars": 16.0
+        },
+        "Oriya": {
+          "tokens": 7113,
+          "truncated": 1,
+          "truncated_pct": 0.014,
+          "collided": 0,
+          "collided_pct": 0.0,
+          "effective_chars": 16.0
+        },
+        "Tamil": {
+          "tokens": 6909,
+          "truncated": 33,
+          "truncated_pct": 0.478,
+          "collided": 12,
+          "collided_pct": 0.174,
+          "effective_chars": 16.0
+        },
+        "Telugu": {
+          "tokens": 8652,
+          "truncated": 4,
+          "truncated_pct": 0.046,
+          "collided": 0,
+          "collided_pct": 0.0,
+          "effective_chars": 16.0
+        },
+        "Kannada": {
+          "tokens": 8154,
+          "truncated": 9,
+          "truncated_pct": 0.11,
+          "collided": 3,
+          "collided_pct": 0.037,
+          "effective_chars": 16.0
+        },
+        "Malayalam": {
+          "tokens": 8333,
+          "truncated": 32,
+          "truncated_pct": 0.384,
+          "collided": 9,
+          "collided_pct": 0.108,
+          "effective_chars": 16.0
+        },
+        "Han": {
+          "tokens": 1375,
+          "truncated": 61,
+          "truncated_pct": 4.436,
+          "collided": 33,
+          "collided_pct": 2.4,
+          "effective_chars": 16.0
+        },
+        "Mixed": {
+          "tokens": 42,
+          "truncated": 1,
+          "truncated_pct": 2.381,
+          "collided": 0,
+          "collided_pct": 0.0,
+          "effective_chars": 48.0
+        }
+      },
+      "examples": [
+        {
+          "script": "Tamil",
+          "shared_prefix_bytes": 48,
+          "tokens": [
+            "▁குறிப்பிடத்தக்க",
+            "▁குறிப்பிடத்தக்கது."
+          ]
+        },
+        {
+          "script": "Kannada",
+          "shared_prefix_bytes": 48,
+          "tokens": [
+            "▁ವಿಶ್ವವಿದ್ಯಾನಿಲಯ",
+            "▁ವಿಶ್ವವಿದ್ಯಾನಿಲಯದ",
+            "▁ವಿಶ್ವವಿದ್ಯಾನಿಲಯ\n"
+          ]
+        },
+        {
+          "script": "Devanagari",
+          "shared_prefix_bytes": 48,
+          "tokens": [
+            "▁स्वातंत्र्यसैनिक",
+            "▁स्वातंत्र्यसैनिक.\n",
+            "▁स्वातंत्र्यसैनिक,"
+          ]
+        },
+        {
+          "script": "Malayalam",
+          "shared_prefix_bytes": 48,
+          "tokens": [
+            "▁തിരുവനന്തപുരത്തെ",
+            "▁തിരുവനന്തപുരത്ത്",
+            "▁തിരുവനന്തപുരത്തു",
+            "▁തിരുവനന്തപുരത്തിന്റെ"
+          ]
+        },
+        {
+          "script": "Bengali",
+          "shared_prefix_bytes": 48,
+          "tokens": [
+            "▁বিশ্ববিদ্যালয়ের",
+            "▁বিশ্ববিদ্যালয়ে"
+          ]
+        },
+        {
+          "script": "Malayalam",
+          "shared_prefix_bytes": 48,
+          "tokens": [
+            "▁ഇൻസ്റ്റിറ്റ്യൂട്ട",
+            "▁ഇൻസ്റ്റിറ്റ്യൂട്ട്"
+          ]
+        },
+        {
+          "script": "Tamil",
+          "shared_prefix_bytes": 48,
+          "tokens": [
+            "▁பயன்படுத்தப்பட்ட",
+            "▁பயன்படுத்தப்பட்டன.",
+            "▁பயன்படுத்தப்பட்டது.",
+            "▁பயன்படுத்தப்பட்டு"
+          ]
+        },
+        {
+          "script": "Bengali",
+          "shared_prefix_bytes": 48,
+          "tokens": [
+            "▁খ্রিস্টপূর্বাব্দ",
+            "▁খ্রিস্টপূর্বাব্দে",
+            "▁খ্রিস্টপূর্বাব্দের"
+          ]
+        },
+        {
+          "script": "Devanagari",
+          "shared_prefix_bytes": 48,
+          "tokens": [
+            "▁पुरातत्त्वशास्त्र",
+            "▁पुरातत्त्वशास्त्रज्ञ"
+          ]
+        },
+        {
+          "script": "Tamil",
+          "shared_prefix_bytes": 48,
+          "tokens": [
+            "▁அழைக்கப்படுகிறது.",
+            "▁அழைக்கப்படுகிறது.\n"
+          ]
+        },
+        {
+          "script": "Malayalam",
+          "shared_prefix_bytes": 48,
+          "tokens": [
+            "▁സ്ഥിതിചെയ്യുന്ന",
+            "▁സ്ഥിതിചെയ്യുന്നത്.",
+            "▁സ്ഥിതിചെയ്യുന്നു."
+          ]
+        },
+        {
+          "script": "Tamil",
+          "shared_prefix_bytes": 48,
+          "tokens": [
+            "▁பயன்படுத்தப்படும்",
+            "▁பயன்படுத்தப்படுகிறது."
+          ]
+        }
+      ]
+    },
+    "64": {
+      "window_bytes": 64,
+      "truncated_tokens": 52,
+      "truncated_pct": 0.04,
+      "collision_clusters": 12,
+      "collided_tokens": 30,
+      "collided_pct": 0.023,
+      "indic_share_of_collisions": 0.0,
+      "by_script": {
+        "Latin": {
+          "tokens": 34354,
+          "truncated": 6,
+          "truncated_pct": 0.017,
+          "collided": 5,
+          "collided_pct": 0.015,
+          "effective_chars": 64.0
+        },
+        "Symbol": {
+          "tokens": 5514,
+          "truncated": 5,
+          "truncated_pct": 0.091,
+          "collided": 7,
+          "collided_pct": 0.127,
+          "effective_chars": 64.0
+        },
+        "Han": {
+          "tokens": 1375,
+          "truncated": 40,
+          "truncated_pct": 2.909,
+          "collided": 18,
+          "collided_pct": 1.309,
+          "effective_chars": 21.3
+        },
+        "Mixed": {
+          "tokens": 42,
+          "truncated": 1,
+          "truncated_pct": 2.381,
+          "collided": 0,
+          "collided_pct": 0.0,
+          "effective_chars": 64.0
+        }
+      },
+      "examples": []
+    }
+  },
+  "separation": {
+    "v1_onehot32": {
+      "codec": "ByteCodec(onehot, K=32, dim=8192, caps@32B)",
+      "code_dim": 8192,
+      "clusters_tested": 200,
+      "clusters_still_colliding": 200,
+      "min_cosine_distance": -2.6e-05,
+      "median_cosine_distance": -1.1e-05
+    },
+    "v1_onehot64": {
+      "codec": "ByteCodec(onehot, K=64, dim=16384, caps@64B)",
+      "code_dim": 16384,
+      "clusters_tested": 200,
+      "clusters_still_colliding": 2,
+      "min_cosine_distance": -1.3e-05,
+      "median_cosine_distance": 0.036474
+    },
+    "dyn_fourier16": {
+      "codec": "ByteCodec(fourier, K=16, dim=4096, no cap)",
+      "code_dim": 4096,
+      "clusters_tested": 200,
+      "clusters_still_colliding": 0,
+      "min_cosine_distance": 0.001621,
+      "median_cosine_distance": 0.008023
+    },
+    "dyn_fourier32": {
+      "codec": "ByteCodec(fourier, K=32, dim=8192, no cap)",
+      "code_dim": 8192,
+      "clusters_tested": 200,
+      "clusters_still_colliding": 0,
+      "min_cosine_distance": 0.001452,
+      "median_cosine_distance": 0.00764
+    },
+    "dyn_randproj16": {
+      "codec": "ByteCodec(randproj, K=16, dim=4096, no cap)",
+      "code_dim": 4096,
+      "clusters_tested": 200,
+      "clusters_still_colliding": 0,
+      "min_cosine_distance": 0.008486,
+      "median_cosine_distance": 0.032127
+    },
+    "dyn_relative16": {
+      "codec": "ByteCodec(relative, K=16, dim=4096, no cap)",
+      "code_dim": 4096,
+      "clusters_tested": 200,
+      "clusters_still_colliding": 0,
+      "min_cosine_distance": 0.012336,
+      "median_cosine_distance": 0.716209
+    },
+    "dyn_hybrid16": {
+      "codec": "ByteCodec(hybrid, K=16, dim=4096, no cap)",
+      "code_dim": 4096,
+      "clusters_tested": 200,
+      "clusters_still_colliding": 0,
+      "min_cosine_distance": 0.001868,
+      "median_cosine_distance": 0.010201
+    },
+    "dyn_hybrid8": {
+      "codec": "ByteCodec(hybrid, K=8, dim=2048, no cap)",
+      "code_dim": 2048,
+      "clusters_tested": 200,
+      "clusters_still_colliding": 0,
+      "min_cosine_distance": 0.002278,
+      "median_cosine_distance": 0.011982
+    }
+  },
+  "prefix_similarity": {
+    "v1_onehot32": {
+      "related": 0.7493,
+      "unrelated": 0.2101,
+      "separation": 0.5392
+    },
+    "v1_onehot64": {
+      "related": 0.7428,
+      "unrelated": 0.2101,
+      "separation": 0.5327
+    },
+    "dyn_fourier16": {
+      "related": 0.8849,
+      "unrelated": 0.28,
+      "separation": 0.6049
+    },
+    "dyn_fourier32": {
+      "related": 0.8915,
+      "unrelated": 0.2821,
+      "separation": 0.6094
+    },
+    "dyn_randproj16": {
+      "related": 0.7511,
+      "unrelated": 0.2002,
+      "separation": 0.5509
+    },
+    "dyn_relative16": {
+      "related": 0.2294,
+      "unrelated": 0.0749,
+      "separation": 0.1545
+    },
+    "dyn_hybrid16": {
+      "related": 0.8621,
+      "unrelated": 0.2749,
+      "separation": 0.5872
+    },
+    "dyn_hybrid8": {
+      "related": 0.8289,
+      "unrelated": 0.2592,
+      "separation": 0.5697
+    }
+  }
+}

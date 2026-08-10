@@ -1,0 +1,62 @@
+[
+  {
+    "claim": "the problem is real",
+    "evidence": "1154 tokens collide at a 32-byte window",
+    "status": "PASS"
+  },
+  {
+    "claim": "the problem is Indic",
+    "evidence": "92.0% of collided tokens are Indic-script",
+    "status": "PASS"
+  },
+  {
+    "claim": "widening the window does not fix it",
+    "evidence": "2 clusters still collide at 64 bytes, at 2x the parameters",
+    "status": "PASS"
+  },
+  {
+    "claim": "v1 collisions are exact, not approximate",
+    "evidence": "24/24 probe pairs are bit-identical under v1",
+    "status": "PASS"
+  },
+  {
+    "claim": "v1 is pinned at chance on the probe",
+    "evidence": "accuracy 0.500",
+    "status": "PASS"
+  },
+  {
+    "claim": "the dynamic codec solves the probe",
+    "evidence": "dyn_hybrid8 accuracy 1.000",
+    "status": "PASS"
+  },
+  {
+    "claim": "the dynamic codec never crops",
+    "evidence": "0 clusters still colliding at any tested window",
+    "status": "PASS"
+  },
+  {
+    "claim": "it costs a quarter of v1's parameters",
+    "evidence": "code_dim 2048 vs 8192",
+    "status": "PASS"
+  },
+  {
+    "claim": "spelling awareness is preserved, not sacrificed",
+    "evidence": "prefix separation +0.5697 vs v1 +0.5392",
+    "status": "PASS"
+  },
+  {
+    "claim": "normalised position is NOT the answer",
+    "evidence": "relative-position prefix separation collapses to +0.1545",
+    "status": "PASS"
+  },
+  {
+    "claim": "language modelling does not regress",
+    "evidence": "val loss 5.3808 vs v1 5.3870 (delta -0.0062)",
+    "status": "PASS"
+  },
+  {
+    "claim": "at a quarter of the input-path parameters",
+    "evidence": "524,288 vs 2,097,152",
+    "status": "PASS"
+  }
+]

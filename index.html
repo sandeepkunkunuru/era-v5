@@ -120,6 +120,21 @@
         <span class="card-cta">Enter Session 6 →</span>
       </a>
 
+      <a class="session-card" href="./session-7/">
+        <div class="row">
+          <span class="marker">S7</span>
+          <h2>Kronecker v2 — the dynamic byte window</h2>
+        </div>
+        <p>Byte-built embeddings see only the first 32 bytes of a token. For English that's 32 characters; for Tamil it's ten — and past that, distinct words silently become the same vector, forever.</p>
+        <ul class="card-proofs">
+          <li><b>census</b><span>1,154 tokens collide in a real 131,072 vocabulary — <em>92% of them Indic</em></span></li>
+          <li><b>asymmetry</b><span>a Tamil token is <em>61×</em> likelier to be destroyed than a Latin one</span></li>
+          <li><b>fix</b><span>compute position instead of storing it: no cap, <em>4× smaller</em>, better spelling similarity</span></li>
+          <li><b>proof</b> v1 pinned at 0.500 on a task the new codec solves at 1.000</li>
+        </ul>
+        <span class="card-cta">Enter Session 7 →</span>
+      </a>
+
     </div>
   </main>
 

@@ -1,0 +1,55 @@
+{
+  "steps": 1200,
+  "d_model": 256,
+  "block": 128,
+  "batch": 16,
+  "vocab": 12001,
+  "stream_tokens": 662013,
+  "device": "cuda",
+  "arms": [
+    {
+      "arm": "dense_control",
+      "codec": "dense nn.Embedding",
+      "input_path_params": 3072256,
+      "total_trainable": 9336832,
+      "val_loss": 5.5745,
+      "val_ppl": 263.62,
+      "seconds": 32.2,
+      "input_path_vs_v1": 1.465,
+      "val_loss_delta_vs_v1": 0.1875
+    },
+    {
+      "arm": "kron_v1_onehot32",
+      "codec": "ByteCodec(onehot, K=32, dim=8192, caps@32B)",
+      "input_path_params": 2097152,
+      "total_trainable": 8361728,
+      "val_loss": 5.387,
+      "val_ppl": 218.55,
+      "seconds": 36.2,
+      "input_path_vs_v1": 1.0,
+      "val_loss_delta_vs_v1": 0.0
+    },
+    {
+      "arm": "dyn_fourier16",
+      "codec": "ByteCodec(fourier, K=16, dim=4096, no cap)",
+      "input_path_params": 1048576,
+      "total_trainable": 7313152,
+      "val_loss": 5.3642,
+      "val_ppl": 213.62,
+      "seconds": 33.5,
+      "input_path_vs_v1": 0.5,
+      "val_loss_delta_vs_v1": -0.0228
+    },
+    {
+      "arm": "dyn_hybrid8",
+      "codec": "ByteCodec(hybrid, K=8, dim=2048, no cap)",
+      "input_path_params": 524288,
+      "total_trainable": 6788864,
+      "val_loss": 5.3808,
+      "val_ppl": 217.2,
+      "seconds": 32.2,
+      "input_path_vs_v1": 0.25,
+      "val_loss_delta_vs_v1": -0.0062
+    }
+  ]
+}

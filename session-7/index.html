@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ERA v5 · Session 7 — Kronecker v2: the dynamic byte window</title>
+  <meta name="description" content="Kronecker embeddings crop tokens at 32 bytes, silently merging distinct Indic words into one vector. Measured on a real 131,072-token vocabulary: 1,154 collisions, 92% Indic. Replacing the stored position one-hot with a computed basis removes the cap at a quarter of the parameters." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1020'/%3E%3Crect x='6' y='9' width='7' height='14' rx='2' fill='%232dd4bf'/%3E%3Crect x='15' y='9' width='11' height='14' rx='2' fill='none' stroke='%23fb7185' stroke-width='2.4' stroke-dasharray='3 2.4'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/tokens.css" />
+  <style>
+    .s7-hero { padding: 3.4rem 0 2rem; border-bottom: 1px solid var(--line); }
+    .eyebrow { font-family: var(--mono); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--teal); margin: 0 0 .7rem; }
+    .s7-hero h1 { font-family: var(--display); font-size: clamp(1.9rem, 4.4vw, 3rem); line-height: 1.05; margin: 0 0 1rem; }
+    .s7-hero h1 .accent { color: var(--coral); }
+    .s7-sub { color: var(--muted); max-width: 66ch; font-size: 1.05rem; }
+    .quote-brief { margin: 1.5rem 0 0; padding: .9rem 1.1rem; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--teal); border-radius: 10px; }
+    .quote-brief p { margin: 0; font-size: .95rem; color: var(--text); }
+    .quote-brief cite { display: block; margin-top: .45rem; font-style: normal; font-family: var(--mono); font-size: .76rem; color: var(--muted); }
+    .cta-row { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.6rem; }
+    .btn { display: inline-flex; align-items: center; gap: .5rem; padding: .6rem 1rem; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: .92rem; border: 1px solid var(--line-strong); color: var(--text); background: var(--surface); transition: border-color .15s, transform .1s; }
+    .btn:hover { border-color: var(--teal); transform: translateY(-1px); }
+    .btn.primary { background: linear-gradient(135deg, rgba(45,212,191,.16), rgba(251,113,133,.14)); border-color: var(--teal); }
+    section.block { padding: 2.4rem 0; border-bottom: 1px solid var(--line); }
+    section.block > h2 { font-family: var(--display); font-size: 1.5rem; margin: 0 0 .4rem; }
+    section.block > h2 .n { color: var(--teal); font-family: var(--mono); font-size: 1rem; margin-right: .5rem; }
+    section.block > p.lead { color: var(--muted); max-width: 76ch; margin: 0 0 1.3rem; }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: .9rem; margin: 1.6rem 0 0; }
+    @media (max-width: 780px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+    .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: .9rem 1rem; }
+    .kpi .v { font-family: var(--display); font-size: 1.55rem; font-weight: 600; letter-spacing: -.01em; }
+    .kpi .v.ok { color: var(--teal); } .kpi .v.bad { color: var(--coral); }
+    .kpi .k { font-family: var(--mono); font-size: .72rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-top: .25rem; }
+    .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 560px; }
+    th, td { text-align: left; padding: .58rem .8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+    thead th { font-family: var(--mono); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--ink-2); }
+    tbody tr:last-child td { border-bottom: none; }
+    td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    tr.hl td { background: rgba(45,212,191,.07); }
+    code, .mono { font-family: var(--mono); font-size: .84em; }
+    .pass { color: var(--teal); font-weight: 700; font-family: var(--mono); font-size: .8rem; }
+    .bad { color: var(--coral); font-weight: 700; }
+    .callout { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--coral); border-radius: 10px; padding: 1rem 1.1rem; margin: 1.2rem 0 0; }
+    .callout.teal { border-left-color: var(--teal); }
+    .callout p { margin: .3rem 0; font-size: .93rem; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.3rem; }
+    @media (max-width: 820px) { .grid2 { grid-template-columns: 1fr; } }
+
+    /* Magnitude bars: one measure across categories, so ONE hue, sorted desc.
+       Every bar carries its script name and its value, so identity is never
+       colour-alone. The baseline row is outlined rather than filled. */
+    .bars { margin: .3rem 0 0; }
+    .bar-row { display: grid; grid-template-columns: 108px 1fr 66px; align-items: center; gap: .7rem; padding: .27rem 0; }
+    .bar-row .lbl { font-size: .86rem; color: var(--text); }
+    .bar-row .track { background: var(--ink-2); border-radius: 5px; height: 17px; position: relative; border: 1px solid var(--line); }
+    .bar-row .fill { position: absolute; inset: 0 auto 0 0; background: var(--teal); border-radius: 4px; min-width: 2px; }
+    .bar-row.base .fill { background: transparent; border: 1.5px solid var(--coral); }
+    .bar-row .val { font-family: var(--mono); font-size: .8rem; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+    .bar-row.base .val, .bar-row.base .lbl { color: var(--coral); }
+    .axis-note { font-family: var(--mono); font-size: .72rem; color: var(--muted); margin-top: .55rem; }
+
+    .tok { font-size: 1.02rem; line-height: 1.9; }
+    .tok b { font-weight: 500; background: var(--ink-2); border: 1px solid var(--line-strong); border-radius: 6px; padding: .1rem .4rem; margin-right: .3rem; display: inline-block; }
+    .arrow { font-family: var(--mono); color: var(--coral); margin: 0 .4rem; }
+    .formula { background: var(--ink-2); border: 1px solid var(--line); border-radius: 10px; padding: .9rem 1.1rem; margin: 1rem 0; font-family: var(--mono); font-size: .84rem; line-height: 1.85; overflow-x: auto; white-space: pre; }
+    .formula span { display: block; }
+    .formula .old { color: var(--coral); } .formula .new { color: var(--teal); }
+    ul.pts { margin: .6rem 0 0; padding-left: 1.1rem; color: var(--muted); font-size: .93rem; }
+    ul.pts li { margin: .35rem 0; } ul.pts b { color: var(--text); font-weight: 600; }
+    .foot { padding: 2.2rem 0 3rem; color: var(--muted); font-size: .88rem; }
+    .foot a { color: var(--teal); }
+  </style>
+</head>
+<body>
+
+<header class="s7-hero wrap">
+  <p class="eyebrow">ERA v5 · Session 7 · Embeddings &amp; Model Internals</p>
+  <h1>Kronecker v2 — the <span class="accent">dynamic byte window</span></h1>
+  <p class="s7-sub">
+    Kronecker embeddings build a token's vector from its UTF-8 bytes, and see only the first
+    <strong>32</strong> of them. For English that is 32 characters. For Tamil it is ten — and past
+    that, distinct words silently become the <em>same vector</em>, permanently.
+  </p>
+
+  <div class="quote-brief">
+    <p>“Today Kronecker is limiting to presenting 32 position for every word (even <em>apple</em> or
+       <em>a</em> as well). That's a waste of space. What can we do? How can it be dynamic and
+       doesn't force us to crop a word… What can we do with indic?”</p>
+    <cite>Session 7 assignment, problem 3 of 5</cite>
+  </div>
+
+  <div class="cta-row">
+    <a class="btn primary" href="https://github.com/sandeepkunkunuru/era-v5/tree/main/session-07-dynamic-kronecker">Code &amp; README <small>· github</small></a>
+    <a class="btn" href="https://github.com/sandeepkunkunuru/era-v5/blob/main/session-07-dynamic-kronecker/artifacts/evidence.json">evidence.json <small>· 12/12 PASS</small></a>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="v bad">1,154</div><div class="k">tokens collided @ 32 B</div></div>
+    <div class="kpi"><div class="v bad">92%</div><div class="k">of them Indic-script</div></div>
+    <div class="kpi"><div class="v ok">4×</div><div class="k">smaller input path</div></div>
+    <div class="kpi"><div class="v ok">0.50 → 1.00</div><div class="k">probe accuracy</div></div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="block">
+    <h2><span class="n">01</span>The waste is real. The collision is fatal.</h2>
+    <p class="lead">
+      I trained a <strong>131,072-token BPE vocabulary</strong> — the V5 number — on the Session 3
+      India-first corpus, and encoded every token. Two different damages fall out, and the
+      assignment names only the milder one.
+    </p>
+
+    <div class="grid2">
+      <div>
+        <p style="margin:0 0 .5rem"><strong>Truncation</strong> — bytes past the window are dropped.
+          Lossy, but the token still exists.</p>
+        <p style="margin:0;color:var(--muted);font-size:.93rem">3,241 tokens (2.47%) exceed 32 bytes.</p>
+      </div>
+      <div>
+        <p style="margin:0 0 .5rem"><strong class="bad">Collision</strong> — two distinct tokens agree
+          on their first 32 bytes, so they get byte-identical codes and <em>identical embedding
+          vectors, forever</em>.</p>
+        <p style="margin:0;color:var(--muted);font-size:.93rem">1,154 tokens in 460 clusters. Nothing errors.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>A Tamil token is 61× more likely to be destroyed than a Latin one.</strong>
+         Not because Tamil is harder — because UTF-8 spends three bytes per character on Brahmic
+         scripts and one on ASCII, so the same 32-byte window is a 10-character window.</p>
+    </div>
+
+    <h3 style="font-family:var(--display);font-size:1.05rem;margin:1.7rem 0 .6rem">Collision rate by script, 32-byte window</h3>
+    <div class="bars">
+      <div class="bar-row" title="Tamil — 234 of 6,909 tokens collide"><span class="lbl">Tamil</span><span class="track"><i class="fill" style="width:100%"></i></span><span class="val">3.39%</span></div>
+      <div class="bar-row" title="Malayalam — 247 of 8,333 tokens collide"><span class="lbl">Malayalam</span><span class="track"><i class="fill" style="width:87.5%"></i></span><span class="val">2.96%</span></div>
+      <div class="bar-row" title="Bengali — 211 of 13,982 tokens collide"><span class="lbl">Bengali</span><span class="track"><i class="fill" style="width:44.6%"></i></span><span class="val">1.51%</span></div>
+      <div class="bar-row" title="Kannada — 92 of 8,154 tokens collide"><span class="lbl">Kannada</span><span class="track"><i class="fill" style="width:33.3%"></i></span><span class="val">1.13%</span></div>
+      <div class="bar-row" title="Devanagari — 128 of 12,967 tokens collide"><span class="lbl">Devanagari</span><span class="track"><i class="fill" style="width:29.1%"></i></span><span class="val">0.99%</span></div>
+      <div class="bar-row" title="Oriya — 65 of 7,113 tokens collide"><span class="lbl">Oriya</span><span class="track"><i class="fill" style="width:27.0%"></i></span><span class="val">0.91%</span></div>
+      <div class="bar-row" title="Telugu — 60 of 8,652 tokens collide"><span class="lbl">Telugu</span><span class="track"><i class="fill" style="width:20.5%"></i></span><span class="val">0.69%</span></div>
+      <div class="bar-row" title="Gujarati — 23 of 7,687 tokens collide"><span class="lbl">Gujarati</span><span class="track"><i class="fill" style="width:8.8%"></i></span><span class="val">0.30%</span></div>
+      <div class="bar-row base" title="Latin — 19 of 34,354 tokens collide; this is the baseline"><span class="lbl">Latin ▸ baseline</span><span class="track"><i class="fill" style="width:1.6%"></i></span><span class="val">0.055%</span></div>
+    </div>
+    <p class="axis-note">0 ————————————————— 3.4% of that script's tokens · outlined bar = baseline</p>
+
+    <h3 style="font-family:var(--display);font-size:1.05rem;margin:2rem 0 .5rem">What actually collides</h3>
+    <p class="lead" style="margin-bottom:.9rem">Not edge cases — ordinary inflectional morphology, copied verbatim from <code>census.json</code>:</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Colliding cluster — one identical vector</th><th>Language</th><th>What is lost</th></tr></thead>
+        <tbody>
+          <tr><td class="tok"><b>▁பயன்படுத்த</b><b>▁பயன்படுத்தி</b><b>▁பயன்படுத்தப்பட்ட</b><b>▁பயன்படுத்தும்</b><b>▁பயன்படுத்திய</b></td><td>Tamil</td><td><em>to use</em> / <em>using</em> / <em>was used</em> / <em>that uses</em> / <em>used</em> — five forms of one verb</td></tr>
+          <tr><td class="tok"><b>▁महाराष्ट्र</b><b>▁महाराष्ट्रातील</b><b>▁महाराष्ट्रात</b><b>▁महाराष्ट्राचे</b></td><td>Marathi</td><td>Maharashtra + four case forms</td></tr>
+          <tr><td class="tok"><b>▁ऑस्ट्रेलिया</b><b>▁ऑस्ट्रेलियन</b><b>▁ऑस्ट्रेलियाई</b></td><td>Hindi</td><td><em>Australia</em> vs <em>Australian</em></td></tr>
+          <tr><td class="tok"><b>▁বিশ্ববিদ্যালয়</b><b>▁বিশ্ববিদ্যালয়ের</b><b>▁বিশ্ববিদ্যালয়ৰ</b></td><td>Bengali</td><td><em>university</em> and its genitives</td></tr>
+          <tr><td class="tok"><b>▁തിരുവനന്തപുരം</b><b>▁തിരുവനന്തപുരത്തെ</b><b>▁തിരുവനന്തപുരത്ത്</b></td><td>Malayalam</td><td>Thiruvananthapuram + inflections</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <p>A model on Kronecker v1 <strong>cannot distinguish “was used” from “that uses” in Tamil, or
+         “Australia” from “Australian” in Hindi.</strong> Not “finds it hard” — cannot, at any scale,
+         for any compute, because the two inputs are literally the same vector.</p>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2><span class="n">02</span>Widening the window is not the fix</h2>
+    <p class="lead">
+      The obvious response is to raise <code>pos_dim</code> to 48 or 64 — which is what the session
+      proposes measuring. Measured, it is a bad trade: it buys an asymptote, not a fix, because
+      <em>any</em> fixed window can be exceeded.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Window</th><th class="num">Code width</th><th class="num">Truncated</th><th class="num">Collided</th><th class="num">Indic share</th></tr></thead>
+        <tbody>
+          <tr><td>32 B <span class="mono">(shipped)</span></td><td class="num">8,192</td><td class="num">3,241</td><td class="num bad">1,154</td><td class="num">92%</td></tr>
+          <tr><td>48 B</td><td class="num">12,288</td><td class="num">175</td><td class="num">81</td><td class="num">42%</td></tr>
+          <tr><td>64 B</td><td class="num">16,384</td><td class="num">52</td><td class="num">30</td><td class="num">0%</td></tr>
+          <tr class="hl"><td><strong>none</strong> <span class="mono">(v2)</span></td><td class="num"><strong>2,048</strong></td><td class="num pass">0</td><td class="num pass">0</td><td class="num">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="axis-note">Doubling the window doubles the projection to 132.6 M parameters and still leaves 30 colliding tokens.</p>
+  </section>
+
+  <section class="block">
+    <h2><span class="n">03</span>The insight: this is the positional-encoding problem, again</h2>
+    <p class="lead">
+      Session 7 §11 diagnoses the absolute learned position table: <em>“there is no signal in the
+      parameters that connects row 4,095 to row 4,096, because they were only ever independent rows
+      in a lookup table.”</em> The byte-position factor in Kronecker v1 is the same object with the
+      same defect — and the field already knows the fix.
+    </p>
+    <div class="callout teal">
+      <p><strong>Stop <em>storing</em> position. Start <em>computing</em> it.</strong></p>
+    </div>
+    <div class="formula">
+<span class="old">v1:  κ(t) = z( (1/√L) Σ  onehot₂₅₆(byte_p) ⊗ onehot₃₂(p) )   L = min(len, 32)  ← caps</span>
+<span class="new">v2:  κ(t) = z( (1/√L) Σ  onehot₂₅₆(byte_p) ⊗ φ(p)        )   L = len           ← no cap</span>
+    </div>
+    <ul class="pts">
+      <li><b>No cap.</b> φ is defined for every p, so nothing is cropped — the 751-byte token in the real vocabulary encodes fine.</li>
+      <li><b>Width decouples from the window.</b> K = dim(φ) is a <em>resolution</em> choice, not a length limit. K = 8 still represents a 700-byte token.</li>
+      <li><b>The waste disappears at its root.</b> v1 reserves one slot per position; a computed basis spends K dimensions regardless of length, so <code>a</code> and <code>apple</code> stop each reserving 32.</li>
+    </ul>
+    <p class="lead" style="margin:1.3rem 0 .5rem">
+      The recommended codec is <strong>hybrid</strong> — half sinusoid, half fixed-random. The
+      sinusoidal half keeps shared spellings close (Kronecker's stated benefit); the random half
+      supplies the near-orthogonality that drives hard pairs apart.
+    </p>
+  </section>
+
+  <section class="block">
+    <h2><span class="n">04</span>Proof — a task v1 provably cannot learn</h2>
+    <p class="lead">
+      Same shape as the Session 2 experiment that pinned a token-only model at chance. Take 24
+      <em>real</em> colliding pairs and ask the smallest possible question: given the token, which one
+      was it? Under v1 the two inputs are the same vector, so the input carries zero information
+      about the label and accuracy is pinned at exactly 50%. The script asserts the bit-identity
+      numerically <em>before</em> training — verified, not argued.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Arm</th><th class="num">Bit-identical pairs</th><th class="num">Input-path params</th><th class="num">Accuracy</th></tr></thead>
+        <tbody>
+          <tr><td>dense control</td><td class="num">—</td><td class="num">3,200</td><td class="num">1.000</td></tr>
+          <tr><td><code>kron_v1_onehot32</code></td><td class="num bad">24 / 24</td><td class="num">524,288</td><td class="num bad">0.500 ← chance</td></tr>
+          <tr class="hl"><td><code>dyn_hybrid8</code></td><td class="num pass">0 / 24</td><td class="num"><strong>131,072</strong></td><td class="num pass">1.000</td></tr>
+          <tr><td><code>dyn_fourier16</code></td><td class="num pass">0 / 24</td><td class="num">262,144</td><td class="num pass">1.000</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="axis-note">v1 scores exactly chance while using 4× the parameters of the codec that scores 1.000. Falsifiable: if v1 ever beat chance, the argument is wrong.</p>
+
+    <h3 style="font-family:var(--display);font-size:1.05rem;margin:1.9rem 0 .5rem">And the compression is free</h3>
+    <p class="lead" style="margin-bottom:.9rem">
+      Identical transformer, data, and seed — only the input path differs. 662k tokens of real Indic
+      and English text.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Arm</th><th class="num">Input-path params</th><th class="num">vs v1</th><th class="num">Val loss</th><th class="num">Val ppl</th></tr></thead>
+        <tbody>
+          <tr><td>dense control</td><td class="num">3,072,256</td><td class="num">1.46×</td><td class="num">5.5745</td><td class="num">263.62</td></tr>
+          <tr><td><code>kron_v1_onehot32</code></td><td class="num">2,097,152</td><td class="num">1.00×</td><td class="num">5.3870</td><td class="num">218.55</td></tr>
+          <tr><td><code>dyn_fourier16</code></td><td class="num">1,048,576</td><td class="num">0.50×</td><td class="num pass">5.3642</td><td class="num">213.62</td></tr>
+          <tr class="hl"><td><code>dyn_hybrid8</code></td><td class="num"><strong>524,288</strong></td><td class="num pass"><strong>0.25×</strong></td><td class="num">5.3808</td><td class="num">217.20</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="axis-note">No regression at a quarter of the parameters. Both runs, executed independently, gave identical losses to four decimals — the codec is deterministic.</p>
+  </section>
+
+  <section class="block">
+    <h2><span class="n">05</span>The negative result that matters</h2>
+    <p class="lead">
+      The most literal reading of “don't waste 32 slots on <code>a</code>” is to rescale position by
+      token length, so a short token spreads across the whole basis. I built it. <strong>It is the
+      wrong answer</strong>, and that is worth more than another win.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Codec</th><th class="num">Related pairs</th><th class="num">Unrelated pairs</th><th class="num">Separation</th></tr></thead>
+        <tbody>
+          <tr><td><code>v1_onehot32</code></td><td class="num">+0.7493</td><td class="num">+0.2101</td><td class="num">+0.5392</td></tr>
+          <tr><td><code>dyn_fourier16</code></td><td class="num">+0.8849</td><td class="num">+0.2800</td><td class="num pass">+0.6049</td></tr>
+          <tr class="hl"><td><code>dyn_hybrid8</code></td><td class="num">+0.8289</td><td class="num">+0.2592</td><td class="num pass">+0.5697</td></tr>
+          <tr><td><code>dyn_relative16</code></td><td class="num">+0.2294</td><td class="num">+0.0749</td><td class="num bad">+0.1545 ← collapsed</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <p>Rescaling position destroys prefix structure: <code>train</code> and <code>training</code> no
+        longer align, because the same letter sits at a different normalised position in each.
+        <strong>Fixing the waste by rescaling costs the very property Kronecker exists to
+        provide.</strong> The fix must come from an <em>unbounded absolute</em> basis, not a
+        normalised one.</p>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2><span class="n">06</span>What I would put in V5</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Decision</th><th>Value</th><th>Because</th></tr></thead>
+        <tbody>
+          <tr><td>Input codec</td><td><code>hybrid</code>, K = 8</td><td>zero collisions, no cap, 4× smaller, prefix similarity preserved</td></tr>
+          <tr><td>Code width</td><td>2,048 <span class="mono">(256 × 8)</span></td><td>vs 8,192 for v1</td></tr>
+          <tr><td>Trainable projection</td><td><strong>16,580,608</strong></td><td>vs 66.3 M for v1 · vs 1.06 B dense — <strong>64× smaller than a dense table</strong></td></tr>
+          <tr class="hl"><td><code>pos_dim</code></td><td><strong>retired as a concept</strong></td><td>there is no window to tune — the answer to “32 or 64?” is “neither”</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="axis-note"><code>embedding_policy_id</code> gains <code>basis_kind</code>, <code>K</code>, <code>basis_seed</code>. The codec stays frozen by construction, so the tokenizer-hash argument is unchanged — and pos_dim never has to be re-litigated when a new script is added.</p>
+
+    <div class="callout">
+      <p><strong>Honest limits.</strong> The LM runs are d_model 256, 4 layers, 662k tokens — this
+        shows the codec is <em>not worse</em> and far cheaper; it does not establish behaviour at 40 B.
+        The margin on hard pairs is small (~0.002 worst-case cosine) — nonzero and sufficient for the
+        probe, but the random half of <code>hybrid</code> is what keeps it from degrading at long
+        lengths. 45 MB is thin for a 131 k vocabulary, so absolute counts would shift on a production
+        corpus; the <em>asymmetry between scripts</em> is structural and would not.</p>
+    </div>
+  </section>
+
+  <footer class="foot wrap">
+    <p><a href="../">← ERA v5 hub</a> · Session 7 · problem 3 of 5 · every number regenerated by
+       <code>python run_demo.py</code> (~150 s), 12/12 evidence checks PASS, 13 invariant tests.</p>
+    <p style="margin-top:.5rem">Collision census run on a real 131,072-token BPE vocabulary trained on the Session 3 India-first corpus.</p>
+  </footer>
+
+</main>
+</body>
+</html>

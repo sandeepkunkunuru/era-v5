@@ -1,0 +1,6 @@
+# The trained tokenizer is 11 MB and fully regenerable in ~7 s by dyn/build_vocab.py.
+# The small measured artifacts (census/probe/lm/evidence) ARE committed as the
+# reproducible record — they are the evidence the README's claims rest on.
+artifacts/tokenizer-*.json
+__pycache__/
+*.pyc
