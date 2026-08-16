@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ERA v5 · Session 8 — How attention works now: a timeline</title>
+  <meta name="description" content="Every attention mechanism from 2014 to 2026, in the order it was launched — each one an answer to a bill the previous one left unpaid. Standard scaled dot-product attention first, then thirty mechanisms with honest pros, cons, and a primary source for every date." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1020'/%3E%3Cpath d='M6 25 L6 7' stroke='%238a93a8' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='6' cy='11' r='3' fill='%232dd4bf'/%3E%3Ccircle cx='6' cy='18' r='3' fill='%23fb7185'/%3E%3Ccircle cx='6' cy='24' r='3' fill='%23fbbf24'/%3E%3Crect x='13' y='9' width='13' height='3.4' rx='1.7' fill='%232dd4bf'/%3E%3Crect x='13' y='16' width='9' height='3.4' rx='1.7' fill='%23fb7185'/%3E%3Crect x='13' y='22.5' width='16' height='3.4' rx='1.7' fill='%23fbbf24'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/tokens.css" />
+  <style>
+    /* ---- lane roles. Three hues + one neutral. The site trio validates
+       all-pairs on this surface (worst CVD deutan ΔE 8.4, normal-vision 22.7),
+       and every lane ALSO carries its name as text, so identity is never
+       colour-alone. ---- */
+    :root {
+      --lane-core:     #8a93a8;
+      --lane-compute:  #2dd4bf;
+      --lane-memory:   #fb7185;
+      --lane-position: #fbbf24;
+    }
+    .l-core     { --lane: var(--lane-core); }
+    .l-compute  { --lane: var(--lane-compute); }
+    .l-memory   { --lane: var(--lane-memory); }
+    .l-position { --lane: var(--lane-position); }
+
+    .hero { padding: 3.4rem 0 2.2rem; border-bottom: 1px solid var(--line); }
+    .eyebrow { font-family: var(--mono); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--teal); margin: 0 0 .7rem; }
+    .hero h1 { font-family: var(--display); font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.04; margin: 0 0 1rem; letter-spacing: -.015em; }
+    .hero h1 .accent { color: var(--coral); }
+    .hero .sub { color: var(--muted); max-width: 68ch; font-size: 1.06rem; margin: 0; }
+    .quote-brief { margin: 1.6rem 0 0; padding: .95rem 1.15rem; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--teal); border-radius: 10px; }
+    .quote-brief p { margin: 0; font-size: .95rem; }
+    .quote-brief cite { display: block; margin-top: .5rem; font-style: normal; font-family: var(--mono); font-size: .76rem; color: var(--muted); }
+    .cta-row { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.7rem; }
+    .btn { display: inline-flex; align-items: center; gap: .5rem; padding: .6rem 1rem; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: .92rem; border: 1px solid var(--line-strong); color: var(--text); background: var(--surface); transition: border-color .15s, transform .1s; cursor: pointer; }
+    .btn:hover { border-color: var(--teal); transform: translateY(-1px); }
+    .btn.primary { background: linear-gradient(135deg, rgba(45,212,191,.16), rgba(251,113,133,.14)); border-color: var(--teal); }
+
+    section.block { padding: 2.6rem 0; border-bottom: 1px solid var(--line); }
+    section.block h2 { font-family: var(--display); font-size: 1.55rem; margin: 0 0 .45rem; letter-spacing: -.01em; }
+    section.block h2 .n { color: var(--teal); font-family: var(--mono); font-size: .95rem; margin-right: .55rem; }
+    section.block p.lead { color: var(--muted); max-width: 78ch; margin: 0 0 1.4rem; }
+    h3.sub { font-family: var(--display); font-size: 1.08rem; margin: 1.8rem 0 .5rem; }
+    p { max-width: 78ch; }
+    code, .mono { font-family: var(--mono); font-size: .86em; }
+    a { color: var(--teal); }
+
+    .callout { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--coral); border-radius: 10px; padding: 1rem 1.15rem; margin: 1.3rem 0; }
+    .callout.teal { border-left-color: var(--teal); }
+    .callout.gold { border-left-color: var(--gold); }
+    .callout p { margin: .35rem 0; font-size: .94rem; }
+    .callout p:first-child { margin-top: 0; } .callout p:last-child { margin-bottom: 0; }
+
+    /* ---------- §1 attention walkthrough ---------- */
+    .steps { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1.2rem; }
+    .steps button { font-family: var(--mono); font-size: .78rem; padding: .45rem .75rem; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--muted); cursor: pointer; transition: .15s; }
+    .steps button:hover { border-color: var(--teal); color: var(--text); }
+    .steps button[aria-pressed="true"] { background: rgba(45,212,191,.14); border-color: var(--teal); color: var(--text); font-weight: 600; }
+    .demo { display: grid; grid-template-columns: minmax(0,410px) minmax(0,1fr); gap: 1.6rem; align-items: start; }
+    @media (max-width: 900px) { .demo { grid-template-columns: 1fr; } }
+    .matrix { display: grid; gap: 2px; max-width: 400px; }
+    .matrix .cell { aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: .6rem; font-variant-numeric: tabular-nums; border: 1px solid transparent; }
+    .matrix .hdr { display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: .64rem; color: var(--muted); aspect-ratio: 1; }
+    .matrix .cell.masked { background: repeating-linear-gradient(135deg, transparent 0 3px, rgba(138,147,168,.16) 3px 6px); color: rgba(138,147,168,.55); border-color: var(--line); }
+    .demo-note { background: var(--ink-2); border: 1px solid var(--line); border-radius: 10px; padding: .95rem 1.1rem; font-size: .9rem; }
+    .demo-note h4 { font-family: var(--display); margin: 0 0 .45rem; font-size: .98rem; }
+    .demo-note p { margin: 0 0 .5rem; font-size: .89rem; color: var(--muted); max-width: none; }
+    .demo-note p:last-child { margin-bottom: 0; }
+    .demo-note .eq { font-family: var(--mono); font-size: .8rem; color: var(--text); background: var(--ink); border: 1px solid var(--line); border-radius: 7px; padding: .5rem .6rem; display: block; margin: .5rem 0; overflow-x: auto; }
+    .legend-ramp { display: flex; align-items: center; gap: .5rem; font-family: var(--mono); font-size: .7rem; color: var(--muted); margin-top: .7rem; }
+    .legend-ramp .swatches { display: flex; }
+    .legend-ramp .swatches i { width: 17px; height: 11px; display: block; }
+
+    /* ---------- §2 the two bills ---------- */
+    .chart-head { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: flex-end; margin-bottom: .9rem; }
+    .legend { display: flex; gap: 1.1rem; flex-wrap: wrap; font-size: .85rem; }
+    .legend span { display: inline-flex; align-items: center; gap: .45rem; color: var(--muted); }
+    .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+    .chartwrap { border: 1px solid var(--line); border-radius: 12px; background: var(--ink-2); padding: 1rem; overflow-x: auto; }
+    .chartwrap svg { display: block; min-width: 520px; width: 100%; height: auto; }
+    .slider-row { display: flex; align-items: center; gap: .8rem; margin: 1rem 0 .2rem; flex-wrap: wrap; }
+    .slider-row input[type=range] { flex: 1 1 220px; accent-color: var(--teal); }
+    .slider-row label { font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: .85rem; margin: 1.3rem 0 0; }
+    @media (max-width: 820px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+    .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: .85rem 1rem; }
+    .kpi .v { font-family: var(--display); font-size: 1.5rem; font-weight: 600; letter-spacing: -.015em; font-variant-numeric: tabular-nums; }
+    .kpi .k { font-family: var(--mono); font-size: .69rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-top: .25rem; }
+
+    /* ---------- §3 the timeline ---------- */
+    .filters { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; margin: 0 0 1.6rem; }
+    .filters .flabel { font-family: var(--mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-right: .3rem; }
+    .filters button { font-size: .82rem; padding: .4rem .8rem; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; gap: .45rem; transition: .15s; }
+    .filters button i { width: 9px; height: 9px; border-radius: 50%; background: var(--lane, var(--muted)); display: inline-block; }
+    .filters button:hover { color: var(--text); border-color: var(--line-strong); }
+    .filters button[aria-pressed="true"] { color: var(--text); border-color: var(--lane, var(--teal)); background: color-mix(in srgb, var(--lane, var(--teal)) 12%, var(--surface)); font-weight: 600; }
+
+    .tl { position: relative; padding-left: 0; }
+    .tl-year { display: flex; align-items: center; gap: .8rem; margin: 2rem 0 .8rem; }
+    .tl-year:first-child { margin-top: .4rem; }
+    .tl-year b { font-family: var(--display); font-size: 1.35rem; letter-spacing: -.01em; }
+    .tl-year .rule { flex: 1; height: 1px; background: var(--line); }
+    .tl-year .gap { font-family: var(--mono); font-size: .72rem; color: var(--coral); border: 1px solid rgba(251,113,133,.35); border-radius: 999px; padding: .16rem .6rem; }
+
+    .card { border: 1px solid var(--line); border-left: 3px solid var(--lane); border-radius: 11px; background: var(--surface); margin: .55rem 0; overflow: hidden; }
+    .card > summary { list-style: none; cursor: pointer; padding: .85rem 1.05rem; display: grid; grid-template-columns: 92px minmax(0,1fr) auto; gap: .9rem; align-items: baseline; }
+    .card > summary::-webkit-details-marker { display: none; }
+    .card > summary:hover { background: var(--surface-2); }
+    .card .date { font-family: var(--mono); font-size: .76rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .card .name { font-family: var(--display); font-size: 1.02rem; font-weight: 600; }
+    .card .who { display: block; font-family: var(--body); font-size: .8rem; color: var(--muted); font-weight: 400; margin-top: .12rem; }
+    /* used in the timeline cards, the lane table and the sources table — not scoped to .card */
+    .lane-chip { display: inline-block; font-family: var(--mono); font-size: .66rem; text-transform: uppercase; letter-spacing: .07em; color: var(--lane, var(--muted)); border: 1px solid var(--lane, var(--line-strong)); border-radius: 999px; padding: .14rem .5rem; white-space: nowrap; opacity: .95; }
+    .card .tag { display: inline-block; font-family: var(--mono); font-size: .7rem; color: var(--lane); margin-left: .5rem; }
+    .card[open] > summary { border-bottom: 1px solid var(--line); }
+    @media (max-width: 620px) {
+      /* the three-column summary head cannot hold a date, a title and a chip
+         side by side on a phone — stack it and let the chip sit under the date */
+      .card > summary { grid-template-columns: 1fr; gap: .3rem; }
+      .card .lane-chip { justify-self: start; }
+      .card .tag { display: block; margin-left: 0; margin-top: .15rem; }
+      .hero h1 { font-size: clamp(1.6rem, 7vw, 2.2rem); }
+      .finding { padding-left: 1.2rem; padding-top: 2.4rem; }
+      .finding::before { top: .8rem; }
+    }
+    .body { padding: .2rem 1.05rem 1.1rem; }
+    .body .row { margin-top: .95rem; }
+    .body .row > h5 { font-family: var(--mono); font-size: .69rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 .3rem; }
+    .body .row p { margin: 0; font-size: .93rem; max-width: none; }
+    .body ul { margin: 0; padding-left: 1.05rem; }
+    .body li { font-size: .93rem; margin: .22rem 0; }
+    .trade { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: .95rem; }
+    @media (max-width: 760px) { .trade { grid-template-columns: 1fr; } }
+    .trade > div { background: var(--ink-2); border: 1px solid var(--line); border-radius: 9px; padding: .7rem .85rem; }
+    .trade .buys { border-top: 2px solid var(--teal); }
+    .trade .costs { border-top: 2px solid var(--coral); }
+    .trade h5 { margin: 0 0 .35rem; font-family: var(--mono); font-size: .69rem; text-transform: uppercase; letter-spacing: .08em; }
+    .trade .buys h5 { color: var(--teal); } .trade .costs h5 { color: var(--coral); }
+    .pickwhen { margin-top: .95rem; background: var(--ink-2); border: 1px solid var(--line); border-left: 3px solid var(--lane); border-radius: 9px; padding: .7rem .9rem; }
+    .pickwhen h5 { margin: 0 0 .3rem; font-family: var(--mono); font-size: .69rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .pickwhen p { margin: 0; font-size: .93rem; max-width: none; }
+    .srcline { margin-top: .9rem; font-family: var(--mono); font-size: .76rem; color: var(--muted); }
+    .srcline a { color: var(--teal); }
+    .star { color: var(--gold); }
+
+    /* ---------- §4 findings ---------- */
+    .findings { counter-reset: f; }
+    .finding { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1.1rem 1.2rem 1.1rem 3.3rem; margin: .8rem 0; position: relative; }
+    .finding::before { counter-increment: f; content: counter(f); position: absolute; left: 1.1rem; top: 1.05rem; font-family: var(--display); font-size: 1.15rem; font-weight: 700; color: var(--teal); }
+    .finding h4 { font-family: var(--display); font-size: 1.05rem; margin: 0 0 .4rem; }
+    .finding p { margin: .35rem 0 0; font-size: .94rem; max-width: none; }
+    .finding .ev { display: block; margin-top: .55rem; font-family: var(--mono); font-size: .76rem; color: var(--muted); }
+
+    /* ---------- tables ---------- */
+    .scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem; min-width: 640px; }
+    th, td { text-align: left; padding: .55rem .8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+    thead th { font-family: var(--mono); font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--ink-2); position: sticky; top: 0; }
+    tbody tr:last-child td { border-bottom: none; }
+    td.d { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
+    footer { padding: 2.4rem 0 3.2rem; color: var(--muted); font-size: .87rem; }
+    footer a { color: var(--teal); }
+    .backlink { display: inline-block; margin-bottom: 1.2rem; font-family: var(--mono); font-size: .8rem; color: var(--muted); text-decoration: none; }
+    .backlink:hover { color: var(--teal); }
+  </style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <a class="backlink" href="../">← ERA v5 course index</a>
+    <p class="eyebrow">Session 8 · Modern Attention Variants</p>
+    <h1>How attention works now,<br /><span class="accent">in the order it was invented</span></h1>
+    <p class="sub">
+      Thirty mechanisms, 2014 to 2026, arranged by launch date rather than by family. Standard
+      scaled dot-product attention comes first, because nothing after it makes sense otherwise.
+      Everything else is somebody looking at a bill attention sends and trying to pay less of it —
+      and every one of them charges you somewhere else. <b>Every date here was checked against the
+      paper, not recalled.</b>
+    </p>
+    <div class="quote-brief">
+      <p>“Vanilla attention was not wrong, it was expensive, and every single thing that follows is
+      somebody looking at that bill and trying to pay less of it. When you lay them out on a timeline
+      you can watch the field change its mind.”</p>
+      <cite>— the assignment brief, Session 8</cite>
+    </div>
+    <div class="cta-row">
+      <a class="btn primary" href="#timeline">The timeline ↓</a>
+      <a class="btn" href="#attention">Start with plain attention</a>
+      <a class="btn" href="#shows">What the timeline shows</a>
+      <a class="btn" href="#sources">Sources for every date</a>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════ §1 ══════════════ -->
+<section class="block" id="attention">
+  <div class="wrap">
+    <h2><span class="n">01</span>The mechanism everything else modifies</h2>
+    <p class="lead">
+      Six tokens, four dimensions, every number computed live. Step through it once. Every mechanism
+      further down this page changes exactly one of these five steps — which is the only reason the
+      timeline is legible at all.
+    </p>
+
+    <div class="steps" id="steps"></div>
+    <div class="demo">
+      <div>
+        <div class="matrix" id="mtx"></div>
+        <div class="legend-ramp" id="ramp"></div>
+      </div>
+      <div class="demo-note" id="note"></div>
+    </div>
+
+    <div class="callout teal">
+      <p><b>Two facts to carry forward.</b></p>
+      <p><b>1.</b> Every token is compared with every other token. Six tokens give 36 scores; 10,000
+      give 100,000,000 — <em>per head, per layer</em>. That is the compute bill.</p>
+      <p><b>2.</b> Attention is order-blind. Compare step 3 with step 4 above: before the mask, every
+      query is happily scoring tokens that have not happened yet. Even with the mask, nothing in <code>QKᵀ</code> knows whether a token
+      is two positions back or two thousand. Position has to be injected from outside, and seven
+      entries in the timeline below are attempts to do it well.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ §2 ══════════════ -->
+<section class="block" id="bills">
+  <div class="wrap">
+    <h2><span class="n">02</span>The two bills — and why they never merged</h2>
+    <p class="lead">
+      Attention charges twice, and the two charges grow at different rates. Almost every mechanism
+      below pays down one of them, and a good number make the other worse. Reading the timeline
+      without this distinction is what makes it look like a pile of unrelated tricks.
+    </p>
+
+    <div class="chart-head">
+      <div class="legend">
+        <span><i style="background:var(--lane-compute)"></i> Attention compute — grows as T²</span>
+        <span><i style="background:var(--lane-memory)"></i> KV-cache memory — grows as T</span>
+      </div>
+      <div class="mono" style="font-size:.72rem;color:var(--muted)">both indexed to T = 1,024 → 1×</div>
+    </div>
+    <div class="chartwrap"><svg id="bills-svg" viewBox="0 0 760 300" role="img"
+      aria-label="Log-scale chart. Relative to a 1,024-token context, attention compute grows quadratically and KV-cache memory grows linearly; at 1,048,576 tokens compute is about one million times larger and memory about one thousand times larger."></svg></div>
+
+    <div class="slider-row">
+      <label for="tslider">context T</label>
+      <input type="range" id="tslider" min="10" max="20" step="1" value="15" />
+      <output class="mono" id="tout" style="font-size:.82rem;color:var(--text)"></output>
+    </div>
+
+    <div class="kpis" id="billkpis"></div>
+
+    <div class="callout">
+      <p><b>The cache bill is per-conversation, and that is the whole commercial problem.</b> Model
+      weights load once and every user shares them. A KV cache belongs to one active sequence — so
+      concurrency multiplies it directly. At 48 layers, 8 KV heads, head&nbsp;dim 128 in bf16, one
+      user at 32,768 tokens costs <b>6.44 GB</b>; eight users at 1M tokens cost <b>1.6 TB</b>.
+      That is why the interesting hardware number is memory capacity, not FLOPs.</p>
+    </div>
+
+    <h3 class="sub">Which bill does each lane pay?</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Lane</th><th>Pays down</th><th>Usually charges you</th><th>Entries</th></tr></thead>
+        <tbody id="lanetable"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ §3 ══════════════ -->
+<section class="block" id="timeline">
+  <div class="wrap">
+    <h2><span class="n">03</span>The timeline</h2>
+    <p class="lead">
+      Chronological by first public release. Each entry states the problem <em>as it existed at that
+      moment</em>, the mechanism, what it buys, what it gives up, and when you would actually pick it.
+      Click any entry to open it. <span class="star">★</span> marks the four entries that most change
+      how the sequence reads.
+    </p>
+
+    <div class="filters" id="filters"></div>
+    <div class="tl" id="tl"></div>
+  </div>
+</section>
+
+<!-- ══════════════ §4 ══════════════ -->
+<section class="block" id="shows">
+  <div class="wrap">
+    <h2><span class="n">04</span>What the timeline shows that a list cannot</h2>
+    <p class="lead">
+      A list tells you a mechanism exists. Dates tell you what people were stuck on, how long they
+      stayed stuck, and what actually unstuck them — which is almost never the thing you would guess.
+      Eight things fall out of the ordering that no taxonomy contains.
+    </p>
+
+    <div class="findings">
+      <div class="finding">
+        <h4>Nobody optimised attention for two years.</h4>
+        <p>The transformer is June 2017. The first paper attacking its quadratic cost is April 2019.
+        In between: nothing — because at the lengths people used, T² did not yet hurt. Optimisation
+        follows demand, not invention. The corollary is uncomfortable: a mechanism's absence from the
+        record is evidence about what was painful, not about what was possible.</p>
+        <span class="ev">2017-06-12 → 2019-04-23 · 22 months</span>
+      </div>
+
+      <div class="finding">
+        <h4>The two bills separated within seven months and never merged again.</h4>
+        <p>Sparse Transformer (April 2019) attacks compute. MQA (November 2019) attacks the KV cache.
+        Different authors, different institutions, different failure being felt — and from that moment
+        the field runs two parallel threads that only meet in 2025's hybrid schedules. Grouping by
+        family hides this completely; grouping by date makes it the first thing you see.</p>
+        <span class="ev">2019-04-23 compute · 2019-11-06 memory</span>
+      </div>
+
+      <div class="finding">
+        <h4>The best ideas arrive years before they are usable, and what unlocks them is a kernel.</h4>
+        <p>The delta rule is February 2021 and gets deployed in 2025. What changed in between was not
+        the idea — Yang et al. (June 2024) added <em>no</em> new modelling contribution. They
+        reparameterised the update so it runs as chunked matmuls instead of a sequential scan. Same
+        maths, different memory-access pattern, four years of difference. FlashAttention (2022) is the
+        same story told the other way: it changed nothing about what attention computes and everything
+        about what it costs.</p>
+        <span class="ev">2021-02-22 delta rule → 2024-06-10 parallel form → 2024-12-09 gated → shipped 2025</span>
+      </div>
+
+      <div class="finding">
+        <h4>The field changed its mind about exactness — twice.</h4>
+        <p>2019–2021 says approximate: sparse patterns, then delete the softmax outright. Then
+        FlashAttention (May 2022) shows that exact attention was never actually expensive for the
+        reason everyone assumed — the cost was memory traffic, not arithmetic — and the approximation
+        literature goes quiet for about two years. It returns in 2024–2025, but changed: sparsity is
+        now <em>trained in</em> (NSA) rather than bolted on, and linear layers appear only alongside
+        exact ones. The second wave learned the lesson of the first.</p>
+        <span class="ev">approximate → exact-and-cheap → approximate-but-trained</span>
+      </div>
+
+      <div class="finding">
+        <h4>Position ends by being deleted.</h4>
+        <p>Read the position lane top to bottom and each step stores less than the last. Learned table
+        (2017): store a vector per position, and hit a wall. Sinusoidal and RoPE (2017, 2021): compute
+        it instead — the wall becomes soft. NTK-aware and YaRN (2023): rescale the computation to
+        stretch further. DroPE (2025): remove it entirely and recalibrate, on the argument that
+        positional encoding <em>helps convergence and then blocks generalisation</em>. Eight years to
+        get from "store position" to "position was scaffolding."</p>
+        <span class="ev">store → compute → rescale → remove</span>
+      </div>
+
+      <div class="finding">
+        <h4>The most-adopted context-extension trick of 2023 was a Reddit post.</h4>
+        <p>NTK-aware scaled RoPE (June 2023) was posted to r/LocalLLaMA by a pseudonymous author, ran
+        on hardware people already owned, and shipped in production models before YaRN formalised parts
+        of it two months later. If you build the timeline from arXiv alone you get the wrong story
+        about how context extension actually happened.</p>
+        <span class="ev">2023-06-28 reddit → 2023-08-31 arXiv:2309.00071</span>
+      </div>
+
+      <div class="finding">
+        <h4>Compromises beat extremes, and the compromise arrives late.</h4>
+        <p>MQA (2019) cut the cache 8× and almost nobody shipped it, because one shared KV head cost
+        too much quality. The interpolation — GQA — is May 2023. <em>Four years</em> for
+        "use two instead of one or eight," and it was adopted near-universally within a year of
+        arriving. What GQA added was not the idea but the uptraining recipe: you could convert a
+        checkpoint you already had. Adoption is an engineering property, not a quality one.</p>
+        <span class="ev">2019-11-06 MQA → 2023-05-22 GQA</span>
+      </div>
+
+      <div class="finding">
+        <h4>The answer stopped being a mechanism and became a schedule.</h4>
+        <p>By late 2025 nobody picks one. Qwen3-Next runs 3 Gated DeltaNet layers to 1 attention layer;
+        LightningLM V4's DDDGDDDG motif is 6 DeltaNet to 2 GSA — <b>the same 3:1 ratio, reached
+        independently</b>. Cheap recurrent layers carry the bulk; periodic exact layers restore precise
+        lookup. That two labs converged on one number is the strongest evidence in this whole
+        timeline that the ratio means something, and it is only visible if you put them side by side
+        by date.</p>
+        <span class="ev">2025-01-14 MiniMax 7:1 · 2025-09-11 Qwen3-Next 3:1 · LightningLM V4 3:1</span>
+      </div>
+    </div>
+
+    <div class="callout gold">
+      <p><b>And one thing the timeline lets you do that a list does not: guess what comes next.</b>
+      The pattern is that each wave takes something previously bolted on at inference time and makes
+      it part of training — sparsity did this in 2025 (NSA), position did it in 2025 (DroPE), and the
+      cache did it in 2024 (MLA compresses by construction rather than by eviction). The remaining
+      bolted-on component is the <em>schedule</em>: every hybrid ratio in existence, including both
+      3:1 results above, was chosen by hand. Making the depth schedule learned rather than
+      hand-picked is the obvious next entry, and nothing on this timeline has done it yet.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ §5 ══════════════ -->
+<section class="block" id="missing">
+  <div class="wrap">
+    <h2><span class="n">05</span>The mechanism the syllabus missed</h2>
+    <p class="lead">The assignment asks for one that was not covered, with its date and primary source.</p>
+
+    <div class="callout teal">
+      <p style="font-size:1.02rem"><b>FlashAttention</b> — Dao, Fu, Ermon, Rudra &amp; Ré ·
+      <b>27 May 2022</b> · <a href="https://arxiv.org/abs/2205.14135">arXiv:2205.14135</a>
+      (v1 submission date read from the arXiv abstract page).</p>
+    </div>
+
+    <p>
+      It is the strongest answer available, and not because it was left out by accident. Every other
+      mechanism on the required list buys cheapness with approximation: skip some keys, share some
+      heads, compress the cache, delete the softmax. FlashAttention buys it with <b>nothing</b>. The
+      output is bit-for-bit identical to standard attention. It is 2–4× faster and uses O(T) memory
+      instead of O(T²), and there is no quality column to report because there is no quality trade.
+    </p>
+    <p>
+      That matters for the timeline specifically, because it identifies the real bottleneck the
+      preceding three years had misdiagnosed. Sparse Transformer, Longformer and linear attention all
+      assume the enemy is <em>arithmetic</em>. It was not. It was writing the T×T score matrix out to
+      HBM and reading it back — an I/O problem wearing a complexity-theory costume. Tile the
+      computation, keep the tiles in SRAM, fuse the softmax, never materialise the matrix, recompute
+      in the backward pass.
+    </p>
+    <p>
+      Leave it out and the timeline tells a clean, wrong story: attention was expensive, so the field
+      approximated it, and got better at approximating. Put it in and the story is the true one — the
+      field approximated attention for three years on a mispriced assumption, someone repriced it, the
+      approximation work paused for two years, and what came back afterwards was a different and more
+      careful kind of approximation. <b>An entry that changes the shape of the argument is worth more
+      than one that extends the list.</b>
+    </p>
+    <p style="color:var(--muted);font-size:.9rem">
+      Five further uncovered mechanisms are in the timeline above, each with a verified primary
+      source: <b>Transformer-XL</b> (2019-01-09, arXiv:1901.02860) — the direct ancestor of every
+      cross-chunk memory since, including LightningLM V4's own Memory Stream;
+      <b>Ring Attention</b> (2023-10-03, arXiv:2310.01889); <b>RetNet</b> (2023-07-17,
+      arXiv:2307.08621); <b>Mamba</b> (2023-12-01, arXiv:2312.00752); and
+      <b>Differential Transformer</b> (2024-10-07, arXiv:2410.05258), the one entry here that treats
+      attention as <em>wrong</em> rather than expensive.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════ §6 ══════════════ -->
+<section class="block" id="sources">
+  <div class="wrap">
+    <h2><span class="n">06</span>Sources — every date, checked</h2>
+    <p class="lead">
+      Dates are v1 submission dates read from the arXiv abstract page, or the primary release
+      announcement where there is no paper. Where a mechanism has a widely-cited later paper, the row
+      is the <em>first</em> public appearance, and the later work appears as its own row.
+      Nothing here is from recall.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Date</th><th>Mechanism</th><th>Authors</th><th>Primary source</th><th>Lane</th></tr></thead>
+        <tbody id="srctable"></tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <p><b>Three date corrections this exercise turned up</b>, each of which the lecture or a common
+      summary gets wrong:</p>
+      <p><b>The delta rule is 2021, not 2024.</b> Schlag, Irie &amp; Schmidhuber introduced it in
+      February 2021 (arXiv:2102.11174). The 2024 paper parallelised it; Gated DeltaNet is a third,
+      later paper (December 2024, arXiv:2412.06464). Three papers, three years, routinely collapsed
+      into one.</p>
+      <p><b>Sparse attention is 2019, not DeepSeek's.</b> Child, Gray, Radford &amp; Sutskever at
+      OpenAI, April 2019 (arXiv:1904.10509). DeepSeek's real contribution, six years later, is making
+      it <em>natively trainable</em> — which is a better claim than inventing it.</p>
+      <p><b>Attention is 2014, not 2017.</b> Bahdanau, Cho &amp; Bengio, September 2014
+      (arXiv:1409.0473). 2017 removed the recurrence; it did not invent the mechanism.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>
+      <b>ERA v5 · Session 8 — Modern Attention Variants.</b>
+      Built for the Session 8 assignment: a chronological, honestly-costed account of every attention
+      mechanism covered, plus the ones that were not.
+    </p>
+    <p>
+      Code and the full source table: <a href="https://github.com/sandeepkunkunuru/era-v5/tree/main/session-08-attention-timeline">github.com/sandeepkunkunuru/era-v5</a>
+      · <a href="../">course index</a> · <a href="../session-7/">← Session 7</a>
+    </p>
+  </div>
+</footer>
+
+<script src="./data.js"></script>
+<script>
+/* ═══════════ §1 · a real attention layer, six tokens, four dims ═══════════ */
+const TOK = ["The","cat","sat","on","the","mat"];
+const D = 4, N = TOK.length;
+
+/* Deterministic pseudo-random weights — a fixed LCG so the page is identical
+   for every reader and the numbers can be quoted. */
+function lcg(seed){ let s = seed >>> 0; return () => (s = (s*1664525 + 1013904223) >>> 0) / 4294967296; }
+function mat(r,c,rnd,sc){ return Array.from({length:r},()=>Array.from({length:c},()=>+( (rnd()*2-1)*sc ).toFixed(3))); }
+const rnd = lcg(20260815);
+const E  = mat(N,D,rnd,1);            // token embeddings
+const WQ = mat(D,D,rnd,0.9), WK = mat(D,D,rnd,0.9), WV = mat(D,D,rnd,0.9);
+const mm = (A,B) => A.map(r => B[0].map((_,j) => +r.reduce((s,v,k)=>s+v*B[k][j],0).toFixed(3)));
+const Q = mm(E,WQ), K = mm(E,WK), V = mm(E,WV);
+
+const RAW = Q.map(q => K.map(k => +q.reduce((s,v,i)=>s+v*k[i],0).toFixed(2)));
+const SCALED = RAW.map(r => r.map(v => +(v/Math.sqrt(D)).toFixed(2)));
+const MASKED = SCALED.map((r,i) => r.map((v,j) => j>i ? -Infinity : v));
+const softmax = r => { const f=r.filter(isFinite); const m=Math.max(...f);
+  const e=r.map(v=>isFinite(v)?Math.exp(v-m):0); const s=e.reduce((a,b)=>a+b,0);
+  return e.map(v=>+(v/s).toFixed(2)); };
+const WEIGHTS = MASKED.map(softmax);
+const OUT = WEIGHTS.map(w => V[0].map((_,d)=> +w.reduce((s,wi,j)=>s+wi*V[j][d],0).toFixed(2)));
+
+/* Sequential ramp: ONE hue, light→dark, for a magnitude encoding. */
+const RAMP = ["#0e1428","#12362f","#14554a","#199e70","#2dd4bf"];
+function rampIdx(t){ return Math.min(RAMP.length-1, Math.max(0, Math.round(t*(RAMP.length-1)))); }
+function rampColor(t){ return RAMP[rampIdx(t)]; }
+/* ink chosen from the ramp STEP, so a mid step never gets dark-on-dark */
+function rampInk(t){ return rampIdx(t) >= 3 ? "#08131c" : "#dfe5ef"; }
+
+const STEPS = [
+ { id:"qkv", label:"1 · project",
+   title:"Q, K, V — three views of one token",
+   html:`<p>Each token vector goes through three learned matrices. The same three, for every token — what differs is the output, not the network.</p>
+         <span class="eq">q = xW<sub>Q</sub>   ·   k = xW<sub>K</sub>   ·   v = xW<sub>V</sub></span>
+         <p><b>Q</b> amplifies the dimensions the token is unsure about — <em>what am I looking for?</em> <b>K</b> amplifies what it can answer for — <em>what do I contain?</em> <b>V</b> is what it hands over if chosen.</p>
+         <p>Three, not one, because a vector dotted with itself always scores highest: every dimension matches. Splitting the roles is what breaks that tie.</p>` },
+ { id:"raw", label:"2 · score", mtx:()=>RAW, title:"Q · Kᵀ — 36 numbers",
+   html:`<p>Every query meets every key. One dot product per pair, and a dot product measures similarity.</p>
+         <span class="eq">S = QK<sup>T</sup></span>
+         <p>Six tokens give <b>36</b> scores. A thousand give a million. Ten thousand give a hundred million — per head, per layer. <b>This grid is the compute bill.</b></p>` },
+ { id:"scaled", label:"3 · scale", mtx:()=>SCALED, title:"÷ √d_k",
+   html:`<p>Dot products of long vectors grow with dimension, and large inputs drive softmax into its saturated corners where gradients vanish.</p>
+         <span class="eq">S / √d<sub>k</sub>    (here d<sub>k</sub> = 4, so ÷ 2)</span>
+         <p>An empirical fix from the original paper, and one of the few constants in the architecture nobody has since improved on.</p>` },
+ { id:"masked", label:"4 · mask", mtx:()=>MASKED, title:"The causal mask",
+   html:`<p>Hatched cells are set to <b>−∞</b>, so softmax sends them to exactly zero.</p>
+         <span class="eq">softmax(−∞) = 0</span>
+         <p>Note <em>why</em> this exists. When generating you would simply stop at the current token. But training processes the whole sequence at once for parallelism, so the future has to be forbidden <b>algebraically</b> instead. The mask is a consequence of how we train, not of what the model is.</p>` },
+ { id:"weights", label:"5 · softmax", mtx:()=>WEIGHTS, title:"Rows that sum to one",
+   html:`<p>Each row becomes a distribution over the tokens that query is allowed to see.</p>
+         <p>Softmax is doing four jobs here, and every one of them is something you lose in the linear-attention entries below: weights stay <b>positive</b>; they <b>sum to one</b>, so the output is an average and does not grow with length; they <b>compete</b>, so more for one is less for another; and each query gets a <b>fresh distribution</b> over the exact old keys.</p>
+         <p>That last one is why softmax blocks the trick that makes linear attention possible — the shared denominator couples every score to every other, so the past cannot be summarised before the query arrives.</p>` },
+ { id:"out", label:"6 · weighted sum", mtx:()=>OUT, title:"The new representation",
+   html:`<p>Multiply the values by those weights and add. The token leaves the layer carrying information from whichever earlier tokens it selected.</p>
+         <span class="eq">out = softmax(QK<sup>T</sup>/√d<sub>k</sub> + M) · V</span>
+         <p>Four columns, not six — this grid is <code>N × d</code>, not <code>N × N</code>. Token 1 can only ever see itself, so its row is just its own value vector. Token 6 is a blend of all six.</p>` },
+];
+
+let step = 1;
+const stepsEl = document.getElementById("steps");
+STEPS.forEach((s,i)=>{ const b=document.createElement("button");
+  b.textContent=s.label; b.setAttribute("aria-pressed", i===step);
+  b.onclick=()=>{ step=i; render(); }; stepsEl.appendChild(b); });
+
+function render(){
+  [...stepsEl.children].forEach((b,i)=>b.setAttribute("aria-pressed", i===step));
+  const s = STEPS[step];
+  const note = document.getElementById("note");
+  note.innerHTML = `<h4>${s.title}</h4>${s.html}`;
+  const box = document.getElementById("mtx");
+  const ramp = document.getElementById("ramp");
+
+  if(!s.mtx){ // the projection step — show Q/K/V side by side
+    box.style.gridTemplateColumns = `repeat(${D*3+2}, minmax(0,1fr))`;
+    let h = "";
+    const label = t => `<div class="hdr" style="grid-column:span ${D}">${t}</div>`;
+    h += `<div class="hdr"></div>` + label("Q") + `<div class="hdr"></div>` + label("K") + label("V");
+    // simpler: three blocks stacked
+    box.style.gridTemplateColumns = "";
+    box.style.display = "block";
+    const blk = (name,M,col) => `
+      <div style="margin-bottom:.7rem">
+        <div class="mono" style="font-size:.72rem;color:${col};margin-bottom:.25rem">${name}  <span style="color:var(--muted)">6 × 4</span></div>
+        <div style="display:grid;grid-template-columns:34px repeat(${D},minmax(0,1fr));gap:2px">
+          ${M.map((r,i)=>`<div class="hdr" style="font-size:.64rem;aspect-ratio:auto">${TOK[i]}</div>`+
+            r.map(v=>`<div class="cell" style="aspect-ratio:auto;padding:.3rem 0;background:var(--surface);border-color:var(--line)">${v.toFixed(2)}</div>`).join("")).join("")}
+        </div>
+      </div>`;
+    box.innerHTML = blk("query  Q", Q, "var(--lane-compute)") + blk("key  K", K, "var(--lane-memory)") + blk("value  V", V, "var(--lane-position)");
+    ramp.innerHTML = `<span>same weights for every token — only the input differs</span>`;
+    return;
+  }
+
+  box.style.display = "grid";
+  const M = s.mtx();
+  const cols = M[0].length;
+  const flat = M.flat().filter(isFinite);
+  const lo = Math.min(...flat), hi = Math.max(...flat);
+  const norm = v => hi===lo ? .5 : (v-lo)/(hi-lo);
+  box.style.gridTemplateColumns = `44px repeat(${cols}, minmax(0,1fr))`;
+  let h = `<div class="hdr"></div>`;
+  for(let j=0;j<cols;j++) h += `<div class="hdr">${s.id==="out" ? "d"+j : TOK[j]}</div>`;
+  M.forEach((row,i)=>{
+    h += `<div class="hdr" style="justify-content:flex-end;padding-right:.3rem">${TOK[i]}</div>`;
+    row.forEach(v=>{
+      if(!isFinite(v)){ h += `<div class="cell masked" title="masked — future token">−∞</div>`; return; }
+      const t = norm(v);
+      h += `<div class="cell" style="background:${rampColor(t)};color:${rampInk(t)}"
+              title="${v}">${v.toFixed(2)}</div>`;
+    });
+  });
+  box.innerHTML = h;
+  ramp.innerHTML = `<span>${lo.toFixed(2)}</span><span class="swatches">${RAMP.map(c=>`<i style="background:${c}"></i>`).join("")}</span><span>${hi.toFixed(2)}</span>`
+    + (s.id==="masked" ? `<span style="margin-left:.6rem">hatched = masked</span>` : "");
+}
+render();
+
+/* ═══════════ §2 · the two bills ═══════════ */
+const BASE = 1024;
+const billSvg = document.getElementById("bills-svg");
+function drawBills(){
+  const W=760,H=300, ml=62, mr=98, mt=18, mb=40;
+  const xs=[], pts=[];
+  for(let e=10;e<=20;e++){ const T=2**e; xs.push({e,T,c:(T/BASE)**2,m:T/BASE}); }
+  const x = e => ml + (e-10)/(20-10) * (W-ml-mr);
+  const maxL = Math.log10(xs[xs.length-1].c);
+  const y = v => { const l=Math.log10(Math.max(v,1)); return H-mb - l/maxL*(H-mb-mt); };
+  let g = "";
+  // grid — recessive
+  for(let d=0; d<=maxL; d+=2){
+    g += `<line x1="${ml}" x2="${W-mr}" y1="${y(10**d)}" y2="${y(10**d)}" stroke="rgba(230,234,242,.08)"/>`;
+    g += `<text x="${ml-8}" y="${y(10**d)+4}" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#8a93a8">${d===0?"1×":"10"+sup(d)+"×"}</text>`;
+  }
+  for(const p of xs){ if(p.e%2) continue;
+    g += `<text x="${x(p.e)}" y="${H-mb+17}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#8a93a8">${p.T>=1048576? (p.T/1048576)+"M" : p.T>=1024 ? (p.T/1024)+"K" : p.T}</text>`; }
+  g += `<line x1="${ml}" x2="${W-mr}" y1="${H-mb}" y2="${H-mb}" stroke="rgba(230,234,242,.18)"/>`;
+  const path = key => xs.map((p,i)=>`${i?"L":"M"}${x(p.e).toFixed(1)},${y(p[key]).toFixed(1)}`).join(" ");
+  g += `<path d="${path("m")}" fill="none" stroke="var(--lane-memory)" stroke-width="2" stroke-linecap="round"/>`;
+  g += `<path d="${path("c")}" fill="none" stroke="var(--lane-compute)" stroke-width="2" stroke-linecap="round"/>`;
+  const last = xs[xs.length-1];
+  g += `<text x="${x(last.e)+8}" y="${y(last.c)+4}" font-family="IBM Plex Mono" font-size="10.5" fill="#2dd4bf">10⁶× compute</text>`;
+  g += `<text x="${x(last.e)+8}" y="${y(last.m)+4}" font-family="IBM Plex Mono" font-size="10.5" fill="#fb7185">10³× memory</text>`;
+  g += `<circle cx="${x(last.e)}" cy="${y(last.c)}" r="4" fill="var(--lane-compute)" stroke="#0e1428" stroke-width="2"/>`;
+  g += `<circle cx="${x(last.e)}" cy="${y(last.m)}" r="4" fill="var(--lane-memory)" stroke="#0e1428" stroke-width="2"/>`;
+  g += `<text x="${ml}" y="${H-6}" font-family="IBM Plex Mono" font-size="10" fill="#8a93a8">context length T (tokens, log scale) →</text>`;
+  billSvg.innerHTML = g;
+}
+function sup(d){ return String(d).split("").map(c=>"⁰¹²³⁴⁵⁶⁷⁸⁹"[+c]).join(""); }
+drawBills();
+
+const LAYERS=48, KVH=8, HD=128, BYTES=2;
+const cacheBytes = (T,b=1) => 2*LAYERS*KVH*HD*T*BYTES*b;
+const fmtB = b => b>=1e12 ? (b/1e12).toFixed(2)+" TB" : b>=1e9 ? (b/1e9).toFixed(2)+" GB" : (b/1e6).toFixed(0)+" MB";
+const sl = document.getElementById("tslider"), out = document.getElementById("tout");
+function upd(){
+  const T = 2**(+sl.value);
+  out.textContent = T.toLocaleString() + " tokens";
+  const rel = T/BASE;
+  document.getElementById("billkpis").innerHTML = [
+    ["scores per head/layer", (T*T).toLocaleString(), "var(--lane-compute)"],
+    ["compute vs 1K context", (rel*rel).toLocaleString(undefined,{maximumFractionDigits:0})+"×", "var(--lane-compute)"],
+    ["KV cache · 1 user", fmtB(cacheBytes(T)), "var(--lane-memory)"],
+    ["KV cache · 8 users", fmtB(cacheBytes(T,8)), "var(--lane-memory)"],
+  ].map(([k,v,c])=>`<div class="kpi"><div class="v" style="color:${c}">${v}</div><div class="k">${k}</div></div>`).join("");
+}
+sl.oninput = upd; upd();
+
+/* ═══════════ §3 · the timeline ═══════════ */
+const LANES = {
+  core:     { name:"the mechanism", pays:"—", charges:"—", blurb:"The baseline, or a change to what attention computes rather than what it costs." },
+  compute:  { name:"compute",  pays:"the T² score work", charges:"exactness, or hardware" },
+  memory:   { name:"memory",   pays:"the KV cache / state bytes", charges:"exact recall of old tokens" },
+  position: { name:"position", pays:"length the model was not trained at", charges:"a prior about distance" },
+};
+const items = [...MECHANISMS].sort((a,b)=> a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+
+document.getElementById("lanetable").innerHTML = ["compute","memory","position","core"].map(k=>{
+  const L=LANES[k], n=items.filter(m=>m.lane===k).length;
+  return `<tr><td><span class="lane-chip l-${k}" style="--lane:var(--lane-${k})">${L.name}</span></td>
+    <td>${L.pays}</td><td>${L.charges}</td><td class="d">${n}</td></tr>`;
+}).join("");
+
+let active = new Set(["core","compute","memory","position"]);
+const fEl = document.getElementById("filters");
+fEl.innerHTML = `<span class="flabel">which bill</span>` + ["compute","memory","position","core"].map(k=>
+  `<button class="l-${k}" data-l="${k}" aria-pressed="true"><i></i>${LANES[k].name}</button>`).join("")
+  + `<button data-l="__all" aria-pressed="false" style="margin-left:.4rem">reset</button>`;
+fEl.onclick = e => {
+  const b = e.target.closest("button"); if(!b) return;
+  const k = b.dataset.l;
+  if(k==="__all"){ active = new Set(["core","compute","memory","position"]); }
+  else if(active.size===4){ active = new Set([k]); }
+  else if(active.has(k)){ active.delete(k); if(!active.size) active=new Set(["core","compute","memory","position"]); }
+  else active.add(k);
+  [...fEl.querySelectorAll("button")].forEach(x => x.setAttribute("aria-pressed", x.dataset.l!=="__all" && active.has(x.dataset.l)));
+  drawTL();
+};
+
+const GAPS = { 2019:"22 months after the transformer — nobody optimised until length hurt",
+               2022:"the year the field stopped approximating",
+               2025:"everything ships as a hybrid" };
+function drawTL(){
+  const shown = items.filter(m=>active.has(m.lane));
+  let html = "", year = null;
+  for(const m of shown){
+    if(m.year !== year){ year = m.year;
+      html += `<div class="tl-year"><b>${year}</b><span class="rule"></span>${GAPS[year]?`<span class="gap">${GAPS[year]}</span>`:""}</div>`; }
+    html += `
+    <details class="card l-${m.lane}">
+      <summary>
+        <span class="date">${m.date}</span>
+        <span><span class="name">${m.starred?'<span class="star">★</span> ':""}${m.name}</span>${m.tag?`<span class="tag">${m.tag.replace("★ ","")}</span>`:""}
+          <span class="who">${m.who}</span></span>
+        <span class="lane-chip">${LANES[m.lane].name}</span>
+      </summary>
+      <div class="body">
+        <div class="row"><h5>the problem, at that moment</h5><p>${m.problem}</p></div>
+        <div class="row"><h5>the mechanism</h5><p>${m.mech}</p></div>
+        <div class="trade">
+          <div class="buys"><h5>what it buys</h5><ul>${m.buys.map(b=>`<li>${b}</li>`).join("")}</ul></div>
+          <div class="costs"><h5>what it gives up</h5><ul>${m.costs.map(c=>`<li>${c}</li>`).join("")}</ul></div>
+        </div>
+        <div class="pickwhen"><h5>when would I actually pick it?</h5><p>${m.pick}</p></div>
+        <p class="srcline">source · <a href="${m.url}" rel="noopener">${m.src}</a></p>
+      </div>
+    </details>`;
+  }
+  document.getElementById("tl").innerHTML = html;
+}
+drawTL();
+
+document.getElementById("srctable").innerHTML = items.map(m=>
+  `<tr><td class="d">${m.date}</td><td>${m.name}</td><td>${m.who}</td>
+   <td><a href="${m.url}" rel="noopener">${m.src}</a></td>
+   <td><span class="lane-chip l-${m.lane}">${LANES[m.lane].name}</span></td></tr>`).join("");
+</script>
+</body>
+</html>
