@@ -6,6 +6,12 @@ node_modules/
 dist/
 .DS_Store
 *.log
+# ...but a run log IS the evidence for these assignments, so keep those.
+!session-06-data-execution/run.log
+!session-09-loss-harness/run.log
+
+# The harness downloads its corpus; no need to carry 1.1 MB of Shakespeare.
+session-09-loss-harness/input.txt
 .netlify/
 
 # Course transcripts contain participant names — private llm-cloud repo only.

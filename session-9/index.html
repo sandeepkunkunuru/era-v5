@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ERA v5 · Session 9 — Where the prediction becomes a number</title>
+<meta name="description" content="Loss functions and output heads: the seven lines between a hidden state and the scalar an optimiser can push down, and what each one costs at V5 scale." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1020'/%3E%3Cpath d='M6 22 L14 22 L14 10' fill='none' stroke='%232dd4bf' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='22' cy='11' r='3.5' fill='%23fb7185'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../shared/css/tokens.css" />
+<style>
+  header.hero { padding: 5rem 0 3rem; border-bottom: 1px solid var(--line); }
+  header.hero h1 { font-family: var(--display); font-size: clamp(2.1rem, 5.2vw, 3.5rem); line-height: 1.06; margin: 0 0 1.1rem; letter-spacing: -0.02em; }
+  header.hero .sub { font-size: clamp(1rem, 2vw, 1.2rem); color: #c3cbdb; max-width: 62ch; margin: 0 0 2rem; }
+  .backlink { font-family: var(--mono); font-size: .8rem; color: var(--muted); text-decoration: none; }
+  .backlink:hover { color: var(--teal); }
+
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-top: 2.4rem; }
+  .kpi { background: var(--ink-2); padding: 1.3rem 1.2rem; }
+  .kpi b { display: block; font-family: var(--display); font-size: clamp(1.5rem, 3.4vw, 2.05rem); line-height: 1; letter-spacing: -0.02em; }
+  .kpi span { display: block; font-size: .82rem; color: var(--muted); margin-top: .5rem; line-height: 1.45; }
+  .kpi.t b { color: var(--teal); } .kpi.c b { color: var(--coral); } .kpi.g b { color: var(--gold); }
+
+  section.block { padding: 4.2rem 0; border-bottom: 1px solid var(--line); }
+  section.block h2 { font-family: var(--display); font-size: clamp(1.45rem, 3vw, 2.05rem); margin: 0 0 .5rem; letter-spacing: -0.015em; display: flex; gap: .9rem; align-items: baseline; }
+  section.block h2 .n { font-family: var(--mono); font-size: .78rem; color: var(--teal); letter-spacing: .18em; }
+  section.block p.lead { color: #c3cbdb; max-width: 72ch; margin: 0 0 2rem; }
+  p, li { max-width: 76ch; }
+
+  .spine { display: flex; flex-wrap: wrap; align-items: stretch; gap: .5rem; margin: 0 0 2rem; }
+  .spine .st { flex: 1 1 130px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: .8rem .85rem; }
+  .spine .st b { display: block; font-family: var(--mono); font-size: .78rem; color: var(--teal); }
+  .spine .st span { display: block; font-size: .78rem; color: var(--muted); margin-top: .3rem; }
+  .spine .ar { align-self: center; color: var(--muted); font-size: 1.1rem; }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1.5rem; }
+  figure { margin: 0; }
+  figcaption { font-size: .84rem; color: var(--muted); margin-top: .9rem; max-width: 74ch; }
+  .figtitle { font-family: var(--display); font-size: 1.02rem; margin: 0 0 .25rem; }
+  .figsub { font-size: .84rem; color: var(--muted); margin: 0 0 1.1rem; }
+  .chartwrap { overflow-x: auto; }
+  svg { display: block; }
+  .legend { display: flex; flex-wrap: wrap; gap: 1.1rem; margin: 0 0 1rem; font-size: .84rem; color: #cdd4e2; }
+  .legend i { width: 22px; height: 3px; border-radius: 2px; display: inline-block; margin-right: .45rem; vertical-align: middle; }
+
+  table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+  th, td { text-align: left; padding: .55rem .7rem; border-bottom: 1px solid var(--line); }
+  th { font-family: var(--mono); font-size: .74rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .tblwrap { overflow-x: auto; }
+
+  .bugs { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+  .bug { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1.3rem; }
+  .bug .hl { font-family: var(--display); font-size: 1.85rem; color: var(--coral); line-height: 1; }
+  .bug .hll { font-size: .78rem; color: var(--muted); margin: .35rem 0 .9rem; }
+  .bug h3 { font-size: .96rem; margin: 0 0 .5rem; }
+  .bug p { font-size: .86rem; color: #c3cbdb; margin: 0 0 .6rem; }
+  .bug .meas { font-family: var(--mono); font-size: .78rem; color: var(--teal); }
+
+  .ce { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(240px, 320px); gap: 1.6rem; align-items: start; }
+  .row-tok { display: grid; grid-template-columns: 5.5rem 1fr 4.2rem; align-items: center; gap: .7rem; margin-bottom: .5rem; }
+  .row-tok label { font-family: var(--mono); font-size: .84rem; }
+  .row-tok input[type=range] { width: 100%; accent-color: var(--teal); }
+  .row-tok .p { font-family: var(--mono); font-size: .82rem; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .row-tok.correct label { color: var(--teal); }
+  .bars { margin-top: 1rem; }
+  .barrow { display: grid; grid-template-columns: 5.5rem 1fr; align-items: center; gap: .7rem; margin-bottom: .35rem; }
+  .barrow .b { height: 14px; border-radius: 3px; background: var(--surface-2); position: relative; }
+  .barrow .b i { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--teal); }
+  .barrow.correct .b i { background: var(--coral); }
+  .ceout { background: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem; }
+  .ceout .big { font-family: var(--display); font-size: 2.2rem; color: var(--coral); line-height: 1; }
+  .ceout .lab { font-size: .78rem; color: var(--muted); margin-top: .3rem; }
+  .ceout hr { border: 0; border-top: 1px solid var(--line); margin: 1rem 0; }
+  .ceout dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: .35rem .8rem; font-size: .84rem; }
+  .ceout dt { color: var(--muted); } .ceout dd { margin: 0; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  .hyp { border: 1px solid var(--line); border-radius: 14px; padding: 1.3rem; background: var(--surface); margin-bottom: 1rem; }
+  .hyp h3 { margin: 0 0 .3rem; font-size: 1rem; display: flex; gap: .7rem; align-items: center; }
+  .tag { font-family: var(--mono); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; padding: .2rem .55rem; border-radius: 999px; border: 1px solid; }
+  .tag.refuted { color: var(--coral); border-color: rgba(251,113,133,.45); }
+  .hyp p { font-size: .88rem; margin: .5rem 0; color: #c3cbdb; }
+  .hyp .lbl { font-family: var(--mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
+  .corr { border-left: 2px solid var(--line-strong); padding: 0 0 0 1.2rem; margin: 0 0 1.6rem; }
+  .corr .st { font-family: var(--mono); font-size: .76rem; color: var(--teal); }
+  .corr .said { color: var(--muted); font-style: italic; margin: .3rem 0; font-size: .9rem; }
+  .corr .fact { margin: .3rem 0; font-size: .93rem; }
+  .corr .note { font-size: .82rem; color: var(--muted); margin: .3rem 0 0; }
+  .wt { font-family: var(--mono); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; padding: .15rem .5rem; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); margin-left: .5rem; }
+  .wt.repeat { color: var(--coral); border-color: rgba(251,113,133,.4); }
+  .wt.v4 { color: var(--gold); border-color: rgba(251,191,36,.4); }
+
+  footer { padding: 3rem 0 4rem; color: var(--muted); font-size: .86rem; }
+  footer a { color: var(--teal); }
+  .tip { position: fixed; pointer-events: none; background: var(--ink-2); border: 1px solid var(--line-strong); border-radius: 8px; padding: .5rem .7rem; font-size: .8rem; font-family: var(--mono); opacity: 0; transition: opacity .12s; z-index: 40; white-space: nowrap; }
+  @media (max-width: 720px) { .ce { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="tip" id="tip"></div>
+
+<header class="hero">
+  <div class="wrap">
+    <a class="backlink" href="../">← ERA v5</a>
+    <p class="eyebrow" style="margin-top:1.6rem">Session 9 · Loss functions &amp; output heads</p>
+    <h1>Where the prediction<br />becomes a number</h1>
+    <p class="sub">A hidden state of 4,096 numbers is not a token and it is not a probability. Something has to turn it into a prediction, and then something has to turn the gap between that prediction and the truth into one scalar an optimiser can push down. This is that machinery — and the bill it sends, which arrives at the very last layer after all the clever attention work is done.</p>
+    <div class="kpis">
+      <div class="kpi t"><b>32×</b><span>the logits tensor against the hidden state that produced it — <code>V/D</code>, and it does not care about batch or context</span></div>
+      <div class="kpi c"><b>64 GiB</b><span>that tensor at 256K context, for a quantity whose whole purpose is to become one number</span></div>
+      <div class="kpi g"><b>536.9M</b><span>the output head at V5's shape — and Session 7 removed the input table there was to tie it to</span></div>
+      <div class="kpi t"><b>11.78</b><span><code>ln(131,072)</code> — where an untrained run must start, and the cheapest check you will ever run</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section class="block"><div class="wrap">
+  <h2><span class="n">01</span> The spine</h2>
+  <p class="lead">Seven steps, and the interesting part is that only one of them is a choice. The rest follow.</p>
+  <div class="spine">
+    <div class="st"><b>hidden state</b><span>[B,T,D] — every token has seen its whole left context</span></div><div class="ar">→</div>
+    <div class="st"><b>output head</b><span>one learned row per token, [V,D]</span></div><div class="ar">→</div>
+    <div class="st"><b>logits</b><span>[B,T,V] — raw, unnormalised, meaningless alone</span></div><div class="ar">→</div>
+    <div class="st"><b>softmax</b><span>differences become ratios</span></div><div class="ar">→</div>
+    <div class="st"><b>cross-entropy</b><span>−log p(the true token)</span></div><div class="ar">→</div>
+    <div class="st"><b>one scalar</b><span>the only thing the optimiser sees</span></div>
+  </div>
+
+  <div class="panel">
+    <p class="figtitle">Cross-entropy asks exactly one question</p>
+    <p class="figsub">Drag a logit. The loss follows only the bar in coral — the probability given to the <em>correct</em> token. The other four matter only because softmax made them share the total.</p>
+    <div class="ce">
+      <div>
+        <div id="sliders"></div>
+        <div class="bars" id="bars"></div>
+      </div>
+      <div class="ceout">
+        <div class="big" id="loss">2.010</div>
+        <div class="lab">cross-entropy loss, nats</div>
+        <hr />
+        <dl>
+          <dt>perplexity, <code>e^loss</code></dt><dd id="ppl">7.5</dd>
+          <dt>p(correct token)</dt><dd id="pc">0.134</dd>
+          <dt>gradient on correct</dt><dd id="gc">−0.866</dd>
+          <dt>sum of all gradients</dt><dd id="gs">0.000</dd>
+        </dl>
+        <hr />
+        <p style="font-size:.82rem;color:var(--muted);margin:0">The gradient is <code>softmax(z) − onehot(y)</code>: the true token pushed up by <code>1−p</code>, every other pushed down by exactly its own probability. It always sums to zero — so the loss can move logit mass around but never move the whole vector up or down together. That unwatched direction is why <code>log Z</code> drifts, and why soft-capping exists.</p>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="block"><div class="wrap">
+  <h2><span class="n">02</span> The third bill</h2>
+  <p class="lead">Session 8 spent itself on two bills: attention's compute, which grows as T², and the KV cache, which grows as T. There is a third, it grows as T×V, and it is larger than the one everybody budgets for.</p>
+
+  <figure class="panel">
+    <p class="figtitle">Two memory bills at V5's shape, against context length</p>
+    <p class="figsub">V = 131,072 · d_model = 4,096 · 48 layers · 8 KV heads · head_dim 128 · bf16 · one sequence</p>
+    <div class="legend">
+      <span><i style="background:var(--teal)"></i>KV cache</span>
+      <span><i style="background:var(--coral)"></i>logits tensor</span>
+      <span><i style="background:var(--gold)"></i>logits + its gradient</span>
+    </div>
+    <div class="chartwrap"><svg id="billsChart" role="img" aria-label="Log-log chart of KV cache and logits tensor memory against context length"></svg></div>
+    <figcaption><b>They are not the same kind of cost, and the chart does not pretend otherwise.</b> The KV cache is an inference cost that persists for the length of a conversation, per user. The logits tensor is a training-time transient that exists for one microbatch at the last layer. Same units, different phases — plotted together because the comparison is the point: at every context length the bill nobody budgets for is the bigger one, and with its gradient it is <b>2.67×</b> the cache.</figcaption>
+  </figure>
+
+  <p style="margin-top:2rem">Weight tying is the standard escape from the parameter half of this, and Session 7 closed it. With a byte-codec input side there is no <code>[V,D]</code> input table to tie <em>to</em> — so the head stays a dense 536.9M matrix unless something is invented, which is what makes a factored head an open V5 question rather than a solved one.</p>
+</div></section>
+
+<section class="block"><div class="wrap">
+  <h2><span class="n">03</span> Four quiet bugs</h2>
+  <p class="lead">All four live in the few lines between the model's output and the scalar. None of them raises an exception, and every one of them makes the loss look <em>better</em>. Numbers below are measured, on a trained model — on an untrained one every position costs <code>ln(V)</code> and none of this is visible.</p>
+  <div class="bugs" id="bugs"></div>
+</div></section>
+
+<section class="block"><div class="wrap">
+  <h2><span class="n">04</span> The same loss, for a fraction of the memory</h2>
+  <p class="lead">Chunking computes the logits a slice at a time and recomputes them in the backward. The arithmetic goes up, the memory goes down, and the number does not move at all — measured here to the ninth decimal.</p>
+
+  <figure class="panel">
+    <p class="figtitle">Peak memory of one forward and backward through cross-entropy</p>
+    <p class="figsub">Measured with <code>torch.cuda.max_memory_allocated</code> on an RTX 4050, nothing else resident</p>
+    <div class="chartwrap"><svg id="chunkChart" role="img" aria-label="Bar chart of peak memory for naive and chunked cross-entropy at two vocabulary sizes"></svg></div>
+    <figcaption>Every bar's loss agrees with the naive one — bit-identical at V = 131,072, and to 2.9e−06 at V = 50,257 — fp32 reduction order, not approximation. <b>The ratio plateaus</b>, and that is the useful part: chunking removes the logits, and the floor it cannot go below is the head matrix, its gradient, and the copies the matmul needs. Past a certain chunk size you are paying recompute for nothing.</figcaption>
+  </figure>
+</div></section>
+
+<section class="block"><div class="wrap">
+  <h2><span class="n">05</span> A second head, and something in the curve</h2>
+  <p class="lead">Add a head predicting <code>t+2</code> and the losses simply add. Both start at <code>ln(V)</code> — they must, since at step 0 "the token after next" is exactly as unknown as "the next token". Then the gap opens, and widens, which is the extra supervision MTP is bought with.</p>
+
+  <figure class="panel">
+    <p class="figtitle">Two heads, 1,500 steps</p>
+    <p class="figsub">4 layers · d_model 256 · tiny Shakespeare · GPT-2 BPE · seed 20260822</p>
+    <div class="legend">
+      <span><i style="background:var(--teal)"></i>head 1 — predicts <code>t+1</code></span>
+      <span><i style="background:var(--coral)"></i>head 2 — predicts <code>t+2</code></span>
+      <span><i style="background:var(--muted);height:2px"></i>ln(V) = 10.82</span>
+    </div>
+    <div class="chartwrap"><svg id="mtpChart" role="img" aria-label="Line chart of two head losses over training steps, showing an early crossover"></svg></div>
+    <figcaption>For the first fifty steps the <b>t+2</b> head is <em>ahead</em> of the t+1 head — the harder question answered better, by about 0.12 nats. The written brief's own widget says the opposite. So we tested it.</figcaption>
+  </figure>
+
+  <div id="hyps" style="margin-top:2rem"></div>
+
+  <p><b>Two hypotheses, two refutations.</b> What survives is the observation: reproducible under a fixed seed, identical in both arms, crossing at the same step. The next discriminating test is a frozen random trunk — if the effect is about how much context the trunk carries, freezing it should stop head 1 from ever overtaking. Not run, and not claimed either way.</p>
+  <p>It is worth reporting rather than deleting, because the brief presents "head <em>k</em>'s loss sits above head 1's" as what an MTP curve shows, and for the first fifty steps of a real run it is simply not true. Anyone reading an early MTP curve as evidence the extra head is working is reading a regime nobody has characterised.</p>
+</div></section>
+
+<section class="block"><div class="wrap">
+  <h2><span class="n">06</span> Corrections</h2>
+  <p class="lead">Eight of the twenty-two in the report. Two are repeats of corrections already made in earlier sessions, which is its own kind of finding.</p>
+  <div id="corrections"></div>
+</div></section>
+
+</main>
+
+<footer><div class="wrap">
+  <p>Built from the Session 9 recording (2026-08-22, 2:34:29) and the written brief, cross-checked against the ERA v4 cookbook (arXiv:2606.07404), Cut Cross-Entropy (arXiv:2411.09009), Output Embedding Centering (arXiv:2601.02031), ReasonMaxxer (arXiv:2605.06241) and DeepSeek-V4 (arXiv:2606.19348). Every <code>[hh:mm:ss]</code> cited in the report is machine-verified to exist in the transcript.</p>
+  <p>Measurements come from <a href="https://github.com/sandeepkunkunuru/era-v5/tree/main/session-09-loss-harness">the loss harness</a> — one command, seed 20260822, full log and JSON in the repo. · <a href="../">All sessions</a></p>
+</div></footer>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

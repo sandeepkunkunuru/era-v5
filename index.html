@@ -150,6 +150,21 @@
         <span class="card-cta">Enter Session 8 →</span>
       </a>
 
+      <a class="session-card" href="./session-9/">
+        <div class="row">
+          <span class="marker">S9</span>
+          <h2>Where the prediction becomes a number</h2>
+        </div>
+        <p>A hidden state of 4,096 numbers is not a token and it is not a probability. This is the machinery that turns it into one — and the bill it sends, which arrives at the very last layer after all the clever attention work is done.</p>
+        <ul class="card-proofs">
+          <li><b>the third bill</b><span>compute grows as T², the cache as T — <em>the logits grow as T×V, and they are the bigger bill</em></span></li>
+          <li><b>measured</b><span>chunked cross-entropy, <em>5.99× less memory, loss bit-identical</em></span></li>
+          <li><b>four quiet bugs</b><span>padding, boundaries, the denominator, the shift — <em>only 3% of one run's apparent progress was real</em></span></li>
+          <li><b>found</b> a t+2 head that beats t+1 early — two explanations proposed, both refuted by controls</li>
+        </ul>
+        <span class="card-cta">Enter Session 9 →</span>
+      </a>
+
     </div>
   </main>
 

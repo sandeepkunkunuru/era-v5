@@ -1,0 +1,301 @@
+ERA V5 Session 9 -- loss harness
+torch 2.12.1+cu130 | device cuda (NVIDIA GeForce RTX 4050 Laptop GPU)
+seed 20260822 | steps 1500
+corpus: 1,115,394 characters | tokenizer: GPT-2 BPE, V=50,257
+
+==============================================================================
+  5  Perplexity, and where an untrained model must start
+==============================================================================
+  vocabulary V                      : 50,257
+  ln(V), the uniform-guess loss     : 10.8249
+  measured loss, untrained model    : 10.9289
+  measured perplexity               : 55,764
+  ratio perplexity / V              : 1.110
+  excess over ln(V)                 : +0.1040
+
+  It lands just ABOVE ln(V), and it has to. ln(V) is the loss of a model that is exactly
+  uniform; any spread in the initial logits is confidence the model has not earned, and on
+  a random target unearned confidence costs more than it saves. The excess is a direct
+  measure of how opinionated the initialisation is.
+
+==============================================================================
+  --  Training the Part 1 model, so requirements 3 and 4 have something to measure
+==============================================================================
+  trained 400 steps in 44s -> loss 4.4717
+
+==============================================================================
+  1  Every tensor shape, and what each dimension means
+==============================================================================
+  tokens          (4, 256)                B sequences x T positions; each entry is one token id
+  hidden          (4, 256, 384)           B x T x D; one D-vector per position, having seen its whole left context
+  lm_head.weight  (50257, 384)            V rows x D; one learned row per vocabulary token
+  logits          (4, 256, 50257)         B x T x V; one raw score per vocabulary token, per position
+  inputs          (4, 255)                B x (T-1); the last position is dropped -- nothing follows it
+  targets         (4, 255)                B x (T-1); the first token is dropped -- nothing predicts it
+  flat logits     (1020, 50257)           (B*(T-1)) x V; cross_entropy wants one row per prediction
+  flat targets    (1020,)                 (B*(T-1)); one correct token id per prediction
+
+  B=4  T=256  D=384  V=50,257
+  logits tensor is 131x larger than the hidden state that produced it
+
+==============================================================================
+  2  Verify the shift by printing token STRINGS, not ids
+==============================================================================
+  input token           ->  target token        (target must be the NEXT input)
+    0  'First'              -> ' Citizen'          
+    1  ' Citizen'           -> ':'                 
+    2  ':'                  -> '\n'                
+    3  '\n'                 -> 'Before'            
+    4  'Before'             -> ' we'               
+    5  ' we'                -> ' proceed'          
+    6  ' proceed'           -> ' any'              
+    7  ' any'               -> ' further'          
+    8  ' further'           -> ','                 
+    9  ','                  -> ' hear'             
+   10  ' hear'              -> ' me'               
+   11  ' me'                -> ' speak'            
+
+  read as text:
+    inputs : 'First Citizen:\nBefore we proceed any further, hear me speak.\n\nAll:\nSpeak, speak.'
+    targets: ' Citizen:\nBefore we proceed any further, hear me speak.\n\nAll:\nSpeak, speak.\n'
+
+  inputs[1:] == targets[:-1] ? True   <- this is the shift, asserted not eyeballed
+
+  -- and the bug the lecture warns about twice: shifting the WRONG way --
+     targets = tokens (no shift) hands the model its own input as the answer.
+     inputs : 'First Citizen:\nBefore we proceed any further, hear me'
+     targets: 'First Citizen:\nBefore we proceed any further, hear me'   <- identical. The loss will look wonderful.
+
+==============================================================================
+  3  Mask padding, and confirm the contributing-token count changes
+==============================================================================
+  sequence lengths in the batch : [64, 48, 28, 16]  (padded to 64)
+  positions if padding counts   : 252
+  positions after masking       : 152   (100 pad targets dropped, 40% of the batch)
+
+  loss counting padding         : 9.2286
+  loss ignoring padding         : 4.2502
+  difference                    : -4.9784
+
+  The count is the part the requirement asks for, and it changed: 252 -> 152.
+  The loss moved too, but note which way. This model has never been trained on padded
+  batches, so it assigns <pad> almost no probability and those positions are the
+  EXPENSIVE ones -- masking them lowers the number. The famous trap is the opposite
+  case, and it needs a model that has learned <pad>. Demonstrated below.
+
+  -- the denominator bug, separately --
+     Even with an ignore_index, dividing by B*T instead of the real count rescales the loss
+     sum / n_real (152) = 4.2502   <- correct
+     sum / B*T   (252) = 2.5636   <- wrong, and it moves with every batch
+
+  -- and a distinction the lecture blurs: <eos> is NOT <pad> --
+     <pad> is an artefact of batching and must be masked. <eos> is a real token the model
+     has to learn to emit; mask it and the model never learns to stop.
+
+  -- the trap, demonstrated --
+     Above, the model has never seen <pad>, so masking it barely moves the number. The
+     danger appears once the model has learned <pad> is trivially predictable. Train a
+     copy on padded batches and measure both losses again:
+
+  trained 300 steps on PADDED batches in 33s -> loss 2.7159
+
+                                 counting pad   masking pad       gap
+     before padded training            9.2286        4.2502   -4.9784
+     after padded training             2.5965        4.0390    1.4425
+
+     The counted loss fell 6.6321. The honest loss fell 0.2113.
+     Only 3% of that apparent progress is real; the rest is the model
+     learning to predict padding, which is worth nothing at inference.
+
+==============================================================================
+  4  Pack two documents into one sequence, mask the boundary
+==============================================================================
+  doc A: Shakespeare, 253 tokens -- 'itizen:\nSoft! who comes here?\n\n'...
+  doc B: Python source, 312 tokens -- '"""A small GPT, deliberately boring.\n\n'...
+
+  packed sequence               : 256 tokens, 7 document boundaries (2.7% of positions)
+  loss WITHOUT boundary mask    : 6.8536
+  loss WITH boundary mask       : 6.5536
+  difference                    : -0.3000
+
+  mean loss AT the 7 boundary positions : 17.4826
+  mean loss at the 248 other positions   : 6.5536
+  a boundary position is 2.67x as expensive as an ordinary one
+
+  Explanation. A boundary position asks the model to predict the first token of a Python
+  file from the last token of a Shakespeare speech. Nothing connects them, so the model
+  cannot do better than its prior -- which is why those positions are the most expensive
+  in the sequence, 2.67x an ordinary one.
+
+  So masking them makes the reported loss FALL. That is not the loss being flattered:
+  the positions removed were the ones teaching the model something false, namely that a
+  Python file follows a Shakespeare speech. The unmasked number is the dishonest one --
+  it is an average that includes a question with no answer, and it will drift with your
+  packing density rather than with your model.
+
+==============================================================================
+  6  Tied against untied output head, on this configuration
+==============================================================================
+  V x D (the head matrix)   : 50,257 x 384 = 19,298,688
+  total params, TIED        : 30,018,816
+  total params, UNTIED      : 49,317,504
+  cost of untying           : 19,298,688  (+64.3%)
+  head as a share of the tied model : 64.3%
+
+  At V5 scale the same arithmetic is far less forgiving:
+    V=131,072  D=4096  -> head = 536,870,912 params (1.00 GiB in bf16, before optimiser state)
+    V=131,072  D=8192  -> head = 1,073,741,824 params (2.00 GiB in bf16, before optimiser state)
+
+  And Session 7 closes the escape: with a byte-codec input side there is no [V,D] input
+  table to tie to, so 'just tie it' is not available to V5 at any price.
+
+==============================================================================
+  7  Peak memory: ordinary cross-entropy against a chunked one
+==============================================================================
+  Same objective, two implementations. Chunking computes `chunk` rows of logits at a
+  time inside a checkpoint, so they are freed after the forward and recomputed during
+  the backward. Arithmetic traded for memory; the loss must not move at all.
+
+  this model's head: N=4,096 positions, D=384, V=50,257, bfloat16
+    logits tensor = 393 MiB, 785 MiB once cross_entropy upcasts it to fp32
+
+    implementation                peak MiB            loss   vs naive
+    naive (all logits at once)      2650.5    10.910684586      1.00x
+    chunked, chunk=1024              958.0    10.910684586      2.77x
+    chunked, chunk=256               516.3    10.910684586      5.13x
+    chunked, chunk=64                442.7    10.910687447      5.99x
+
+    ratio naive : best chunked = 5.99x
+    largest disagreement between any two losses: 2.86e-06
+    floor (one row of logits, so essentially just the head + its gradient): 366.2 MiB
+    best chunked sits 76.6 MiB above that floor
+
+  ------------------------------------------------------------------------
+  Again at the V5 vocabulary, which is where this stops being an optimisation and
+  starts being the difference between a run that fits and one that does not.
+
+  V5 vocabulary: N=2,048 positions, D=1024, V=131,072, bfloat16
+    logits tensor = 512 MiB, 1,024 MiB once cross_entropy upcasts it to fp32
+
+    implementation                peak MiB            loss   vs naive
+    naive (all logits at once)      3586.1    12.022954941      1.00x
+    chunked, chunk=512              1799.1    12.022954941      1.99x
+    chunked, chunk=128              1543.3    12.022954941      2.32x
+    chunked, chunk=32               1543.2    12.022954941      2.32x
+
+    ratio naive : best chunked = 2.32x
+    largest disagreement between any two losses: 0.00e+00
+    floor (one row of logits, so essentially just the head + its gradient): 1,026.4 MiB
+    best chunked sits 516.8 MiB above that floor
+
+  Projection to the real V5 training shape (arithmetic from the shapes, not measured
+  on this 6 GiB laptop card):
+    B=8  T=8192    -> logits   16.00 GiB bf16,   32.00 GiB with the backward
+    B=4  T=32768   -> logits   32.00 GiB bf16,   64.00 GiB with the backward
+    B=1  T=262144  -> logits   64.00 GiB bf16,  128.00 GiB with the backward
+
+  The last row is one intermediate tensor, larger than any accelerator sold, for a
+  quantity whose entire purpose is to be collapsed into a single scalar.
+
+==============================================================================
+  P2  Add a second output head predicting t+2, and train
+==============================================================================
+  model: 4 layers, d_model=256, block=128, head 1 TIED to the embedding
+  28,781,312 params; the t+2 head adds 12,865,792 of them
+  corpus: 338,025 GPT-2 tokens, training on 304,222
+
+    step    L1 (t+1)    L2 (t+2)       L1+L2     L2-L1     ppl(L1)
+       0     10.8619     10.8681     21.7300   +0.0062     52150.3
+      10      9.7080      9.5722     19.2803   -0.1358     16449.4
+      20      8.7211      8.6034     17.3245   -0.1177      6130.8
+      30      7.8796      7.7595     15.6391   -0.1201      2642.9
+      40      7.0928      7.0354     14.1282   -0.0574      1203.2
+      50      6.7028      6.7195     13.4223   +0.0168       814.7
+      75      6.1102      6.2892     12.3994   +0.1790       450.4
+     100      6.0837      6.3317     12.4154   +0.2480       438.7
+     150      5.4774      5.8052     11.2826   +0.3278       239.2
+     200      5.4394      5.8987     11.3382   +0.4593       230.3
+     300      5.1086      5.6747     10.7833   +0.5661       165.4
+     450      4.7146      5.3585     10.0731   +0.6439       111.6
+     600      4.3865      5.1061      9.4926   +0.7196        80.4
+     750      4.2940      5.0000      9.2939   +0.7060        73.3
+     900      4.1171      4.8527      8.9698   +0.7356        61.4
+    1050      4.1013      4.8080      8.9093   +0.7067        60.4
+    1200      3.9198      4.6849      8.6047   +0.7651        50.4
+    1350      3.7445      4.4791      8.2236   +0.7347        42.3
+    1500      3.7687      4.4709      8.2396   +0.7021        43.3
+
+  wall clock: 170.8s on cuda
+
+  head 1 (t+1): 10.8619 -> 3.7687   (-7.0932)
+  head 2 (t+2): 10.8681 -> 4.4709   (-6.3972)
+  sum         : 21.7300 -> 8.2396
+  gap L2-L1   : +0.0062 -> +0.7021
+
+  Both heads start at ln(V) = 10.8249. They have to: at step 0 neither knows anything,
+  and 'the token after next' is exactly as unknown as 'the next token'.
+
+  But look at the middle of the run. At steps [10, 20, 30, 40] the t+2 head
+  is AHEAD of the t+1 head -- the harder question is being answered better. That should
+  not happen, so it is worth finding out why rather than narrating past it.
+
+  Hypothesis: it is not about the horizon at all, it is about TYING. Head 1 shares its
+  matrix with the input embedding, so its gradient is fighting a second job; head 2 is a
+  free matrix. Early in training, when both heads are mostly learning the marginal token
+  frequencies, the unencumbered head fits that marginal faster.
+
+  The hypothesis makes a prediction, so run the control: same everything, head 1 untied.
+
+    step    tied: L2-L1    untied: L2-L1
+       0        +0.0062          -0.0127
+      10        -0.1358          -0.1209
+      20        -0.1177          -0.0991
+      30        -0.1201          -0.1061
+      40        -0.0574          -0.0188
+      50        +0.0168          +0.0246
+      75        +0.1790          +0.1685
+     100        +0.2480          +0.2600
+     150        +0.3278          +0.3973
+     200        +0.4593          +0.5238
+     300        +0.5661          +0.6623
+     450        +0.6439          +0.7302
+     600        +0.7196          +0.8590
+     750        +0.7060          +0.8240
+     900        +0.7356          +0.8904
+    1050        +0.7067          +0.8941
+    1200        +0.7651          +0.9576
+    1350        +0.7347          +0.9004
+    1500        +0.7021          +0.9564
+
+  tied   : gap negative at steps [10, 20, 30, 40]
+  untied : gap negative at steps [0, 10, 20, 30, 40]
+
+  REFUTED. The untied control crosses over at the same steps and by the same
+  margin, so tying is not the cause. The hypothesis was wrong; the observation
+  stands, and it is a property of the task pair rather than of the parameterisation.
+
+  Second hypothesis: the crossover is where the model stops fitting the marginal
+  and starts using context, which would put it at the corpus unigram entropy.
+    unigram entropy of the training tokens : 6.3151 nats
+    crossover happens between step 40 (L1=7.0928) and step 50 (L1=6.7028)
+    is the unigram entropy inside that window? False
+
+  ALSO REFUTED. The crossover happens at about 6.90 nats,
+  roughly 0.58 nats ABOVE the marginal floor -- so it
+  arrives before the model has even finished fitting unigram frequencies.
+
+  Two hypotheses proposed, two refuted. What survives is the observation itself:
+  reproducible under a fixed seed, identical in both arms, and crossing at the same
+  step. The next discriminating test is a frozen random trunk -- if the effect is
+  about how much context the trunk carries, freezing it should stop head 1 from ever
+  overtaking. That is not run here, and it is not claimed either way.
+
+  By the end the ordering is the expected one and the gap WIDENS as L1 falls. That gap is
+  the point rather than a defect: head 2 must predict a token without ever seeing the one
+  in between, so it forces the hidden state at t to carry information the next-token loss
+  alone would never ask for. That is the extra supervision MTP is bought with -- and the
+  cost is honest: another full [V,D] matrix, which at V5 scale is another 536.9M parameters.
+
+==============================================================================
+wrote results.json
+==============================================================================
