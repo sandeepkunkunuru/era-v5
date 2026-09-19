@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ERA v5 · Session 8 — How attention works now: a timeline</title>
-  <meta name="description" content="Every attention mechanism from 2014 to 2026, in the order it was launched — each one an answer to a bill the previous one left unpaid. Standard scaled dot-product attention first, then thirty mechanisms with honest pros, cons, and a primary source for every date." />
+  <meta name="description" content="Every attention mechanism from 2014 to 2026, in the order it was launched — each one an answer to a bill the previous one left unpaid. Standard scaled dot-product attention first, then thirty-two mechanisms with honest pros, cons, and a primary source for every date." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1020'/%3E%3Cpath d='M6 25 L6 7' stroke='%238a93a8' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='6' cy='11' r='3' fill='%232dd4bf'/%3E%3Ccircle cx='6' cy='18' r='3' fill='%23fb7185'/%3E%3Ccircle cx='6' cy='24' r='3' fill='%23fbbf24'/%3E%3Crect x='13' y='9' width='13' height='3.4' rx='1.7' fill='%232dd4bf'/%3E%3Crect x='13' y='16' width='9' height='3.4' rx='1.7' fill='%23fb7185'/%3E%3Crect x='13' y='22.5' width='16' height='3.4' rx='1.7' fill='%23fbbf24'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -175,7 +175,7 @@
     <p class="eyebrow">Session 8 · Modern Attention Variants</p>
     <h1>How attention works now,<br /><span class="accent">in the order it was invented</span></h1>
     <p class="sub">
-      Thirty mechanisms, 2014 to 2026, arranged by launch date rather than by family. Standard
+      Thirty-two mechanisms, 2014 to 2026, arranged by launch date rather than by family. Standard
       scaled dot-product attention comes first, because nothing after it makes sense otherwise.
       Everything else is somebody looking at a bill attention sends and trying to pay less of it —
       and every one of them charges you somewhere else. <b>Every date here was checked against the
@@ -397,40 +397,53 @@
 <!-- ══════════════ §5 ══════════════ -->
 <section class="block" id="missing">
   <div class="wrap">
-    <h2><span class="n">05</span>The mechanism the syllabus missed</h2>
-    <p class="lead">The assignment asks for one that was not covered, with its date and primary source.</p>
+    <h2><span class="n">05</span>The mechanisms the syllabus missed</h2>
+    <p class="lead">The assignment asks for one that was not covered, with its date and primary source. Two, both new attention variants, both dated from the arXiv abstract page (v1 submission date).</p>
 
     <div class="callout teal">
-      <p style="font-size:1.02rem"><b>FlashAttention</b> — Dao, Fu, Ermon, Rudra &amp; Ré ·
-      <b>27 May 2022</b> · <a href="https://arxiv.org/abs/2205.14135">arXiv:2205.14135</a>
-      (v1 submission date read from the arXiv abstract page).</p>
+      <p style="font-size:1.02rem"><b>MoBA (Mixture of Block Attention)</b> — Lu et al., Moonshot AI ·
+      <b>18 February 2025</b> · <a href="https://arxiv.org/abs/2502.13189">arXiv:2502.13189</a></p>
+      <p style="font-size:1.02rem"><b>Infini-attention</b> — Munkhdalai, Faruqui &amp; Gopal, Google ·
+      <b>10 April 2024</b> · <a href="https://arxiv.org/abs/2404.07143">arXiv:2404.07143</a></p>
     </div>
 
     <p>
-      It is the strongest answer available, and not because it was left out by accident. Every other
-      mechanism on the required list buys cheapness with approximation: skip some keys, share some
-      heads, compress the cache, delete the softmax. FlashAttention buys it with <b>nothing</b>. The
-      output is bit-for-bit identical to standard attention. It is 2–4× faster and uses O(T) memory
-      instead of O(T²), and there is no quality column to report because there is no quality trade.
+      <b>MoBA</b> applies Mixture-of-Experts routing to attention. Keys are cut into blocks; each query
+      scores every earlier block against the block's mean-pooled key, keeps the top-k plus its own
+      block, and runs ordinary softmax attention over those alone. The gate has no parameters. The paper
+      reports 6.5× faster prefill at 1M tokens at 95.31% sparsity, and MoBA serves Kimi's long-context
+      requests.
     </p>
     <p>
-      That matters for the timeline specifically, because it identifies the real bottleneck the
-      preceding three years had misdiagnosed. Sparse Transformer, Longformer and linear attention all
-      assume the enemy is <em>arithmetic</em>. It was not. It was writing the T×T score matrix out to
-      HBM and reading it back — an I/O problem wearing a complexity-theory costume. Tile the
-      computation, keep the tiles in SRAM, fuse the softmax, never materialise the matrix, recompute
-      in the backward pass.
+      It matters <em>to the timeline</em> because of where it lands: <b>two days after NSA</b>
+      (16 Feb 2025). Two labs attacked the same problem — sparse attention that is trained, not bolted
+      on — in the same week, with opposite answers. NSA adds three learned branches (compressed,
+      selected, sliding window) and a gate. MoBA adds nothing and lets routing decide. Grouped by family,
+      these are two rows in a "sparse" bucket. In date order they are a single moment where the field
+      split on how much structure to give the model, and the split is visible only because they sit
+      side by side.
     </p>
     <p>
-      Leave it out and the timeline tells a clean, wrong story: attention was expensive, so the field
-      approximated it, and got better at approximating. Put it in and the story is the true one — the
-      field approximated attention for three years on a mispriced assumption, someone repriced it, the
-      approximation work paused for two years, and what came back afterwards was a different and more
-      careful kind of approximation. <b>An entry that changes the shape of the argument is worth more
-      than one that extends the list.</b>
+      <b>Infini-attention</b> puts a linear-attention memory <em>inside</em> a softmax layer: exact
+      attention within a 2K segment, and a per-head compressive memory (delta-rule update) for
+      everything before it, mixed by one learned scalar per head. The paper reports 1M-token passkey
+      retrieval at 1B and 500K-token book summarisation at 8B. An independent Hugging Face
+      re-implementation (14 Aug 2024) found quality fell as the memory was compressed more times.
+    </p>
+    <p>
+      Its place on the timeline is the reason to include it. Linear memory plus exact attention is
+      exactly what 2025 settled on — but <b>across depth</b> (Qwen3-Next's 3 : 1, V4's DDDGDDDG), not
+      within one layer. Infini-attention is the within-layer version of that idea, tried seventeen
+      months earlier, and it did not become the default. The timeline shows the idea surviving and the
+      placement changing: <b>the hybrid moved from inside a layer to between layers.</b>
     </p>
     <p style="color:var(--muted);font-size:.9rem">
-      Five further uncovered mechanisms are in the timeline above, each with a verified primary
+      A first version of this page offered FlashAttention (27 May 2022, arXiv:2205.14135) here. That
+      was wrong for this question: FlashAttention is an exact-attention <em>kernel</em>, not a new
+      attention variant. It stays in the timeline as the reason approximation paused in 2022.
+    </p>
+    <p style="color:var(--muted);font-size:.9rem">
+      Five further uncovered mechanisms are also in the timeline above, each with a verified primary
       source: <b>Transformer-XL</b> (2019-01-09, arXiv:1901.02860) — the direct ancestor of every
       cross-chunk memory since, including LightningLM V4's own Memory Stream;
       <b>Ring Attention</b> (2023-10-03, arXiv:2310.01889); <b>RetNet</b> (2023-07-17,

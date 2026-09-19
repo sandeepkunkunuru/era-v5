@@ -16,7 +16,7 @@ Ordered by **launch date**, not by teaching order and not grouped by family — 
 ```
 session-8/
   index.html     the app — layout, the live attention walkthrough, the two-bills chart, the timeline
-  data.js        the thirty mechanisms: date, lane, problem, mechanism, buys, costs, pick-when, source
+  data.js        the thirty-two mechanisms: date, lane, problem, mechanism, buys, costs, pick-when, source
   README.md      this file — the source table below is the authority for every date in the app
 ```
 
@@ -60,16 +60,18 @@ work gets its own row rather than being folded in.
 | 18 | 2023-09-29 | Attention sinks / StreamingLLM | Xiao, Tian, Chen, Han & Lewis | [arXiv:2309.17453](https://arxiv.org/abs/2309.17453) | memory |
 | 19 | 2023-10-03 | Ring Attention | Liu, Zaharia & Abbeel | [arXiv:2310.01889](https://arxiv.org/abs/2310.01889) | compute |
 | 20 | 2023-12-01 | Mamba (selective SSM) | Gu & Dao | [arXiv:2312.00752](https://arxiv.org/abs/2312.00752) | compute |
-| 21 | 2024-04-30 | Multi-token prediction | Gloeckle, Youbi Idrissi, Rozière, Lopez-Paz & Synnaeve | [arXiv:2404.19737](https://arxiv.org/abs/2404.19737) | mechanism |
-| 22 | 2024-05-07 | MLA (multi-head latent attention) | DeepSeek-AI (DeepSeek-V2) | [arXiv:2405.04434](https://arxiv.org/abs/2405.04434) | memory |
-| 23 | 2024-06-10 | DeltaNet, parallelised | Yang, Wang, Zhang, Shen & Kim | [arXiv:2406.06484](https://arxiv.org/abs/2406.06484) | memory |
-| 24 | 2024-10-07 | Differential Transformer | Ye, Dong, Xia, Sun, Zhu, Huang & Wei | [arXiv:2410.05258](https://arxiv.org/abs/2410.05258) | mechanism |
-| 25 | 2024-12-09 | Gated DeltaNet | Yang, Kautz & Hatamizadeh (NVIDIA) | [arXiv:2412.06464](https://arxiv.org/abs/2412.06464) | memory |
-| 26 | 2025-01-14 | Lightning attention at scale | MiniMax (MiniMax-01) | [arXiv:2501.08313](https://arxiv.org/abs/2501.08313) | compute |
-| 27 | 2025-02-16 | NSA (native sparse attention) | Yuan et al. (DeepSeek) | [arXiv:2502.11089](https://arxiv.org/abs/2502.11089) | compute |
-| 28 | 2025-09-11 | Hybrid depth schedule (3 : 1) | Qwen Team | [Qwen3-Next-80B-A3B](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct) | memory |
-| 29 | 2025-09-29 | DSA + lightning indexer | DeepSeek-AI (V3.2-Exp) | [arXiv:2512.02556](https://arxiv.org/abs/2512.02556) | compute |
-| 30 | 2025-12-13 | DroPE | Gelberg, Eguchi, Akiba & Cetin (Sakana AI) | [arXiv:2512.12167](https://arxiv.org/abs/2512.12167) | position |
+| 21 | 2024-04-10 | Infini-attention *(not covered in class)* | Munkhdalai, Faruqui & Gopal (Google) | [arXiv:2404.07143](https://arxiv.org/abs/2404.07143) | memory |
+| 22 | 2024-04-30 | Multi-token prediction | Gloeckle, Youbi Idrissi, Rozière, Lopez-Paz & Synnaeve | [arXiv:2404.19737](https://arxiv.org/abs/2404.19737) | mechanism |
+| 23 | 2024-05-07 | MLA (multi-head latent attention) | DeepSeek-AI (DeepSeek-V2) | [arXiv:2405.04434](https://arxiv.org/abs/2405.04434) | memory |
+| 24 | 2024-06-10 | DeltaNet, parallelised | Yang, Wang, Zhang, Shen & Kim | [arXiv:2406.06484](https://arxiv.org/abs/2406.06484) | memory |
+| 25 | 2024-10-07 | Differential Transformer | Ye, Dong, Xia, Sun, Zhu, Huang & Wei | [arXiv:2410.05258](https://arxiv.org/abs/2410.05258) | mechanism |
+| 26 | 2024-12-09 | Gated DeltaNet | Yang, Kautz & Hatamizadeh (NVIDIA) | [arXiv:2412.06464](https://arxiv.org/abs/2412.06464) | memory |
+| 27 | 2025-01-14 | Lightning attention at scale | MiniMax (MiniMax-01) | [arXiv:2501.08313](https://arxiv.org/abs/2501.08313) | compute |
+| 28 | 2025-02-16 | NSA (native sparse attention) | Yuan et al. (DeepSeek) | [arXiv:2502.11089](https://arxiv.org/abs/2502.11089) | compute |
+| 29 | 2025-02-18 | MoBA, mixture of block attention *(not covered in class)* | Lu et al. (Moonshot AI) | [arXiv:2502.13189](https://arxiv.org/abs/2502.13189) | compute |
+| 30 | 2025-09-11 | Hybrid depth schedule (3 : 1) | Qwen Team | [Qwen3-Next-80B-A3B](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct) | memory |
+| 31 | 2025-09-29 | DSA + lightning indexer | DeepSeek-AI (V3.2-Exp) | [arXiv:2512.02556](https://arxiv.org/abs/2512.02556) | compute |
+| 32 | 2025-12-13 | DroPE | Gelberg, Eguchi, Akiba & Cetin (Sakana AI) | [arXiv:2512.12167](https://arxiv.org/abs/2512.12167) | position |
 
 Secondary sources used for figures quoted in the app, not for dates:
 
@@ -131,23 +133,36 @@ it part of training — sparsity did this in 2025 (NSA), position in 2025 (DroPE
 **schedule**: every hybrid ratio in existence, both 3:1 results included, was chosen by hand. A
 learned depth schedule is the obvious next entry, and nothing on this timeline has done it.
 
-### The mechanism that wasn't covered
+### The mechanisms that weren't covered
 
-**FlashAttention** — Dao, Fu, Ermon, Rudra & Ré, **27 May 2022**,
-[arXiv:2205.14135](https://arxiv.org/abs/2205.14135).
+**MoBA, mixture of block attention** — Lu et al. (Moonshot AI), **18 February 2025**,
+[arXiv:2502.13189](https://arxiv.org/abs/2502.13189).
 
-Every other mechanism on the required list buys cheapness with approximation. FlashAttention buys it
-with nothing — the output is bit-for-bit identical to standard attention, 2–4× faster, O(T) memory
-instead of O(T²), and there is no quality column to report. It matters *to the timeline* because it
-shows the preceding three years had misdiagnosed the bottleneck: the enemy was never arithmetic, it
-was writing the T×T matrix to HBM and reading it back.
+Mixture-of-Experts routing applied to attention: keys are split into blocks, each query scores every
+earlier block against its mean-pooled key, keeps the top-k plus its own block, and runs ordinary
+softmax attention over those alone. The gate adds no parameters. Reported 6.5× faster prefill at 1M
+tokens at 95.31% sparsity; deployed for Kimi's long-context requests. On the timeline it sits **two
+days after NSA** (16 Feb 2025): the same problem — sparse attention that is trained, not bolted on —
+answered in the same week with opposite philosophies. NSA adds three learned branches; MoBA adds
+nothing. In a family list they are two rows in one bucket; in date order they are one moment where
+the field split on how much structure to give the model.
 
-Leave it out and the timeline tells a clean, wrong story — attention was expensive, so the field
-approximated it and got better at approximating. Put it in and the true one appears: the field
-approximated attention for three years on a mispriced assumption, someone repriced it, the
-approximation work paused, and what returned was a more careful kind of approximation.
+**Infini-attention** — Munkhdalai, Faruqui & Gopal (Google), **10 April 2024**,
+[arXiv:2404.07143](https://arxiv.org/abs/2404.07143).
 
-Five more uncovered mechanisms are in the timeline with verified sources: **Transformer-XL**
+A linear-attention memory inside a softmax layer: exact attention within a 2K segment, a per-head
+compressive memory (delta-rule update) for everything earlier, mixed by one learned scalar per head.
+Reported 1M-token passkey retrieval at 1B and 500K-token book summarisation at 8B; an independent
+[Hugging Face re-implementation](https://huggingface.co/blog/infini-attention) (14 Aug 2024) found
+quality fell as the memory was compressed more times. On the timeline it is the **within-layer**
+version of the idea 2025 adopted **across depth** (Qwen3-Next 3 : 1, V4's DDDGDDDG), seventeen
+months earlier. The idea survived; the placement moved from inside a layer to between layers.
+
+*A first version of this answer offered FlashAttention (27 May 2022). The grader was right that it
+does not count: it is an exact-attention kernel, not a new attention variant. It stays in the
+timeline as the reason approximation paused in 2022.*
+
+Five more uncovered mechanisms are also in the timeline with verified sources: **Transformer-XL**
 (2019-01-09) — the direct ancestor of V4's own Memory Stream; **Ring Attention** (2023-10-03);
 **RetNet** (2023-07-17); **Mamba** (2023-12-01); and **Differential Transformer** (2024-10-07), the
 one entry that treats attention as *wrong* rather than expensive.
