@@ -1,0 +1,17 @@
+ERA V5 Session 12 -- ZeRO by hand on 32 virtual GPUs (gloo, one CPU process each) | seed 20260912 | torch 2.12.1+cu130
+model: tiny char-level GPT, d=128, 2 layers, 4 heads, T=64; 4 sequences per rank per step; 12 steps; Adam, bf16 weights, fp32 master
+  W= 8 stage 0: 16.00 B/param per rank (theory 16.00), traffic 1.750 P/step, step  194.8 ms (comm  54.1, optimizer  6.01), loss@12 3.1155
+  W= 8 stage 1:  5.50 B/param per rank (theory  5.50), traffic 1.750 P/step, step  238.3 ms (comm  86.4, optimizer  0.97), loss@12 3.1155
+  W= 8 stage 2:  3.75 B/param per rank (theory  3.75), traffic 1.750 P/step, step  246.0 ms (comm  93.4, optimizer  0.94), loss@12 3.1155
+  W= 8 stage 3:  2.00 B/param per rank (theory  2.00), traffic 2.590 P/step, step  245.3 ms (comm  95.8, optimizer  0.88), loss@12 3.1155
+  W=16 stage 0: 16.00 B/param per rank (theory 16.00), traffic 1.875 P/step, step  378.3 ms (comm 131.3, optimizer 11.53), loss@12 3.1434
+  W=16 stage 1:  4.75 B/param per rank (theory  4.75), traffic 1.875 P/step, step  463.0 ms (comm 211.8, optimizer  1.55), loss@12 3.1434
+  W=16 stage 2:  2.88 B/param per rank (theory  2.88), traffic 1.875 P/step, step  431.0 ms (comm 206.1, optimizer  0.86), loss@12 3.1434
+  W=16 stage 3:  1.00 B/param per rank (theory  1.00), traffic 2.775 P/step, step  517.1 ms (comm 279.4, optimizer  0.92), loss@12 3.1431
+  W=32 stage 0: 16.00 B/param per rank (theory 16.00), traffic 1.938 P/step, step  941.8 ms (comm 455.1, optimizer 15.47), loss@12 3.1564
+  W=32 stage 1:  4.38 B/param per rank (theory  4.38), traffic 1.938 P/step, step 1061.9 ms (comm 579.7, optimizer  0.93), loss@12 3.1564
+  W=32 stage 2:  2.44 B/param per rank (theory  2.44), traffic 1.938 P/step, step 1047.3 ms (comm 635.0, optimizer  0.98), loss@12 3.1564
+  W=32 stage 3:  0.50 B/param per rank (theory  0.50), traffic 2.868 P/step, step 1144.3 ms (comm 798.3, optimizer  0.92), loss@12 3.1566
+
+  reference: one process, the whole 128-sequence batch: loss@12 3.1559
+  largest loss difference from the reference over the run: stage 0 6.8e-04, stage 1 6.8e-04, stage 2 6.8e-04, stage 3 1.2e-03

@@ -1,0 +1,122 @@
+ERA V5 Session 11 -- optimizers | seed 20260905 | device cuda (NVIDIA GeForce RTX 4050 Laptop GPU) | torch 2.12.1+cu130
+tiny Shakespeare, GPT-2 BPE: 304,222 train / 33,803 val tokens; batch 16x128
+
+==============================================================================
+1. Adam by hand: one weight, five gradients
+==============================================================================
+  w0 = 1.0, eta = 0.001, beta1 = 0.9, beta2 = 0.999, eps = 1e-8 -- the brief's Section 6 example
+
+   t     g          m            v      m_hat      v_hat          step           w
+   1  0.50   0.050000  0.000250000   0.500000   0.250000  -0.001000000 0.999000000
+   2  0.40   0.085000  0.000409750   0.447368   0.204977  -0.000988126 0.998011874
+   3  0.60   0.136500  0.000769340   0.503690   0.256703  -0.000994140 0.997017734
+   4  0.45   0.167850  0.000971071   0.488078   0.243132  -0.000989847 0.996027887
+   5  0.55   0.206065  0.001272600   0.503199   0.255030  -0.000996425 0.995031463
+
+  torch.optim.Adam in float64  worst |hand - torch| per quantity: m 2.8e-17, v 2.2e-19, m_hat 1.1e-16, v_hat 5.6e-17, step 4.8e-17, w 0.0e+00
+  torch.optim.Adam in float32  worst |hand - torch| per quantity: m 2.6e-09, v 7.2e-11, m_hat 7.7e-09, v_hat 1.5e-08, step 1.4e-08, w 1.3e-08
+
+  against the brief's printed table: 30 of 30 values reproduce
+
+==============================================================================
+2. Bias correction switched off
+==============================================================================
+  constant gradient: corrected Adam steps exactly eta every time; uncorrected steps
+  eta * (1 - b1^t) / sqrt(1 - b2^t). The m bias shrinks the step, the v bias inflates it,
+  and with b2 = 0.999 the v bias wins for thousands of steps.
+
+  step size / eta, first 20 steps:
+    t= 1  corrected 1.000   uncorrected 3.162
+    t= 2  corrected 1.000   uncorrected 4.250
+    t= 3  corrected 1.000   uncorrected 4.950
+    t= 5  corrected 1.000   uncorrected 5.797
+    t=10  corrected 1.000   uncorrected 6.528
+    t=15  corrected 1.000   uncorrected 6.507
+    t=20  corrected 1.000   uncorrected 6.241
+  uncorrected peaks at 6.57x eta at t=12; comes within 50% at t=588, 10% at t=1,751, 1% at t=3,925
+  -> within twenty steps the difference never stops mattering; the uncorrected step is still 6x.
+  The ratio is exact for ANY gradient sequence, not just a constant one: both versions divide the same
+  m by the same sqrt(v), so step for step they differ by exactly (1 - b1^t) / sqrt(1 - b2^t) (eps aside).
+
+  the switchable AdamW, checked first: 20 steps against torch.optim.AdamW, worst loss difference 8.9e-05
+  no warmup       final held-out loss: corrected 5.2329, uncorrected 5.7793; training curves never back within 1% inside the run (largest gap 12.0%)
+  30-step warmup  final held-out loss: corrected 4.9312, uncorrected 5.6046; training curves never back within 1% inside the run (largest gap 19.8%)
+
+==============================================================================
+3. The update-to-weight ratio, every layer, every step
+==============================================================================
+  ||delta w|| / ||w|| per weight matrix, peak lr 1e-3, 300 steps; linear warmup over 100 steps
+  against the same run with no warmup. Clipping at 1.0 in both.
+
+  layer                             max, no warmup  max, warmup   last 20  warmup stops mattering
+  wte.weight                              4.92e-02     1.80e-02  2.95e-03      never (within run)
+  wpe.weight                              5.02e-02     1.84e-02  1.40e-02      never (within run)
+  blocks.0.attn.qkv.weight                5.01e-02     1.66e-02  1.03e-02      never (within run)
+  blocks.0.attn.proj.weight               5.01e-02     1.29e-02  1.19e-02      never (within run)
+  blocks.0.ffn.gate.weight                4.99e-02     1.45e-02  9.78e-03      never (within run)
+  blocks.0.ffn.up.weight                  5.00e-02     1.41e-02  9.66e-03      never (within run)
+  blocks.0.ffn.down.weight                4.99e-02     1.44e-02  9.98e-03      never (within run)
+  blocks.1.attn.qkv.weight                4.99e-02     1.54e-02  8.13e-03      never (within run)
+  blocks.1.attn.proj.weight               4.98e-02     7.84e-03  6.40e-03                step 264
+  blocks.1.ffn.gate.weight                4.99e-02     1.29e-02  9.39e-03      never (within run)
+  blocks.1.ffn.up.weight                  4.99e-02     1.27e-02  9.45e-03      never (within run)
+  blocks.1.ffn.down.weight                4.98e-02     1.42e-02  9.20e-03      never (within run)
+  blocks.2.attn.qkv.weight                4.98e-02     1.51e-02  9.99e-03      never (within run)
+  blocks.2.attn.proj.weight               4.98e-02     6.25e-03  5.87e-03                step 292
+  blocks.2.ffn.gate.weight                5.00e-02     1.24e-02  9.59e-03                step 278
+  blocks.2.ffn.up.weight                  4.99e-02     1.25e-02  9.70e-03                step 281
+  blocks.2.ffn.down.weight                5.00e-02     1.35e-02  9.95e-03                step 256
+  blocks.3.attn.qkv.weight                4.96e-02     1.66e-02  9.83e-03      never (within run)
+  blocks.3.attn.proj.weight               5.03e-02     6.90e-03  6.57e-03                step 284
+  blocks.3.ffn.gate.weight                4.99e-02     1.19e-02  9.72e-03                step 237
+  blocks.3.ffn.up.weight                  5.01e-02     1.18e-02  9.86e-03                step 273
+  blocks.3.ffn.down.weight                4.99e-02     1.22e-02  1.01e-02                step 230
+
+  largest ratio anywhere: 5.03e-02 without warmup, 1.84e-02 with it (2.7x smaller)
+  rule: the median over all 22 layers of ratio(warmup) / ratio(no warmup), each smoothed with a
+  9-step rolling median, stays within 10% of 1 from that step on.
+  -> warmup stops changing the update-to-weight ratio at step 283 (warmup itself ends at step 100); 9 of 22 layers also pass the rule individually
+
+==============================================================================
+4. Cosine against WSD: 300-step schedules, both stopped at step 200
+==============================================================================
+  both schedules defined for 300 steps with a 30-step warmup; WSD decays over the last 20%
+  (steps 240-300). Stopped at 200: cosine is at 0.38x its peak, WSD at 1.00x -- it has not started to decay.
+  tune both sides: peak learning rate swept over [0.0005, 0.001, 0.002, 0.004] for each schedule first.
+
+   peak lr  cosine @200   WSD @200
+     5e-04       5.3556     5.2433
+     1e-03       5.2390     5.1894
+     2e-03       5.4492     5.4614
+     4e-03       5.7027     5.7168
+
+  tuned: cosine best at 1e-03 -> 5.2390;  WSD best at 1e-03 -> 5.1894
+  WSD step-200 checkpoint + a 20-step decay branch (10% more steps): 5.1162
+  reference: cosine scheduled for exactly 200 steps (knowing the length in advance): 5.3886
+
+  stopped at 200 with no further compute, the lower held-out loss is WSD's (5.1894 vs 5.2390).
+
+==============================================================================
+5. Learning-rate sweep at widths 256, 512 and 1,024
+==============================================================================
+  4 layers, head dim 64, standard parameterization (init std 0.02 at every width), batch 16x128,
+  300 steps (30 warmup, cosine to 10%), one seed. Loss = held-out, token-weighted.
+
+    peak lr     w=256     w=512    w=1024
+    1.0e-04    6.2561    5.6865    5.2346
+    2.0e-04    5.7253    5.3633    4.9954
+    4.0e-04    5.3048    5.1619    4.8978
+    8.0e-04    5.0816    5.0633    4.8981
+    1.6e-03    5.1883    5.1165    5.2379
+    3.2e-03    5.5504    5.5464    5.5733
+    6.4e-03    5.5188    5.7636    5.8589
+    1.3e-02    5.8758    5.9064    6.0882
+
+  width   256: grid minimum 8.0e-04 (loss 5.0816), parabola in log-lr 9.04e-04
+  width   512: grid minimum 8.0e-04 (loss 5.0633), parabola in log-lr 8.87e-04
+  width  1024: grid minimum 4.0e-04 (loss 4.8978), parabola in log-lr 5.65e-04
+
+  fitted lr* ~ width^-0.34. Extrapolated to width 4,096: 3.8e-04
+  the two width doublings alone give exponents -0.03 and -0.65 -> 2.3e-04 to 5.4e-04 at 4,096
+
+done in 809s

@@ -9,9 +9,17 @@ dist/
 # ...but a run log IS the evidence for these assignments, so keep those.
 !session-06-data-execution/run.log
 !session-09-loss-harness/run.log
+!session-10-training-loop/run.log
+!session-11-optimizers/run.log
+!session-12-zero/run.log
+# console captures duplicate run.log
+*.out
 
 # The harness downloads its corpus; no need to carry 1.1 MB of Shakespeare.
 session-09-loss-harness/input.txt
+session-10-training-loop/input.txt
+session-11-optimizers/input.txt
+session-12-zero/input.txt
 .netlify/
 
 # Course transcripts contain participant names — private llm-cloud repo only.
