@@ -12,6 +12,7 @@ dist/
 !session-10-training-loop/run.log
 !session-11-optimizers/run.log
 !session-12-zero/run.log
+!session-13-reversibility/run.log
 # console captures duplicate run.log
 *.out
 
@@ -20,6 +21,9 @@ session-09-loss-harness/input.txt
 session-10-training-loop/input.txt
 session-11-optimizers/input.txt
 session-12-zero/input.txt
+# 52 MB of bytes rebuilt by data.py from Session 4's shard
+session-13-reversibility/train.bin
+session-13-reversibility/val.bin
 .netlify/
 
 # Course transcripts contain participant names — private llm-cloud repo only.

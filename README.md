@@ -16,6 +16,13 @@ screenshots. You press a button, the boundary moves, and you check the claim you
 | [Session 4](./session-4) | Data cleaning & dedup | the 8-stage pipeline run for real on 69.4M tokens — MinHash+LSH & decontam from scratch |
 | [Session 5](./session-05-data-mixture) | Data mixtures & curriculum | a defended V5 mixture-and-curriculum plan, with a proxy experiment that was actually run |
 | [Session 6](./session-06-data-execution) | Data execution system | a deterministic shards→ledgers→checkpoint→crash→resume→replay→fork pipeline that proves what it consumed |
+| [Session 7](./session-07-dynamic-kronecker) | Dynamic Kronecker embeddings | the shipped 32-byte window collides **1,154 tokens** (92% Indic; a Tamil token is 61× likelier to be destroyed than a Latin one) — fixed by *computing* byte position instead of storing it |
+| [Session 8](./session-8) | Attention, in launch order | 32 mechanisms from 2014 to 2026, every date read off the paper — what a timeline shows that a list cannot |
+| [Session 9](./session-09-loss-harness) | Loss & output-head harness | the seven lines between hidden state and scalar, made observable: chunked cross-entropy cuts peak memory 5.99× with the loss bit-identical |
+| [Session 10](./session-10-training-loop) | The training loop | a gradient check in fp64 that found a real bug in our own Session 9 model, plus the gradient-accumulation bug measured (0.101 nats worse held-out) |
+| [Session 11](./session-11-optimizers) | Optimizers & schedules | Adam by hand to 1e-16; bias correction's effect is a closed form in β₂ (peaks at 6.57×); warmup's fingerprint outlasts the warmup (step 283) |
+| [Session 12](./session-12-zero) | ZeRO on 32 virtual GPUs | stages 0–3 written by hand on 32 processes: 16.00 → 4.38 → 2.44 → 0.50 bytes/parameter, identical losses |
+| [Session 13](./session-13-reversibility) | Reversibility, measured | all three of the paper's reversible stacks written from scratch: **79.6% less memory for 37.7% less speed**, and the memory buys no throughput back at this depth |
 
 ### Session 2 — cross-lingual fertility parity
 

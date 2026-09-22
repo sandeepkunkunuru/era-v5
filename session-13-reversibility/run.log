@@ -1,0 +1,154 @@
+device cuda · NVIDIA GeForce RTX 4050 Laptop GPU · torch 2.12.1+cu130 · seed 20260919
+
+== correctness: custom backward vs autograd (fp64)
+  midpoint     worst relative gradient error 8.22e-16
+  leapfrog     worst relative gradient error 6.61e-16
+  hamiltonian  worst relative gradient error 1.21e-15
+
+== reconstruction error, and what V4's a = 0.5 does to it
+  midpoint     a=1.0  relative error 2.985e-14
+  midpoint     a=0.5  relative error 2.973e-11
+  leapfrog     a=1.0  relative error 6.984e-15
+  leapfrog     a=0.5  relative error 6.984e-15
+  hamiltonian  a=1.0  relative error 1.083e-13
+  hamiltonian  a=0.5  relative error 1.364e-06
+
+== largest batch that fits
+  baseline     26
+  midpoint     179
+  leapfrog     180
+  hamiltonian  221
+
+== which reversible variant works (short runs, equal batch)
+  [variant:midpoint] step 0/300 loss 5.5186
+  [variant:midpoint] step 200/300 loss 2.4685
+  [variant:midpoint] done: val 2.4429 · 13,822 tok/s · 1,069 MiB peak
+  [variant:leapfrog] step 0/300 loss 5.6666
+  [variant:leapfrog] step 200/300 loss 2.4248
+  [variant:leapfrog] done: val 2.4033 · 13,622 tok/s · 1,069 MiB peak
+  [variant:hamiltonian] step 0/300 loss 5.6777
+  [variant:hamiltonian] step 200/300 loss 2.4980
+  [variant:hamiltonian] done: val 2.4651 · 16,790 tok/s · 932 MiB peak
+  best by validation loss: leapfrog
+
+== the three runs the assignment asks for
+  [1-baseline] step 0/3756 loss 5.5363
+  [1-baseline] step 200/3756 loss 2.4828
+  [1-baseline] step 400/3756 loss 1.9166
+  [1-baseline] step 600/3756 loss 1.3696
+  [1-baseline] step 800/3756 loss 1.1602
+  [1-baseline] step 1000/3756 loss 1.1120
+  [1-baseline] step 1200/3756 loss 0.9827
+  [1-baseline] step 1400/3756 loss 0.9464
+  [1-baseline] step 1600/3756 loss 0.8430
+  [1-baseline] step 1800/3756 loss 0.8449
+  [1-baseline] step 2000/3756 loss 0.7670
+  [1-baseline] step 2200/3756 loss 0.7797
+  [1-baseline] step 2400/3756 loss 0.7607
+  [1-baseline] step 2600/3756 loss 0.7586
+  [1-baseline] step 2800/3756 loss 0.7260
+  [1-baseline] step 3000/3756 loss 0.7539
+  [1-baseline] step 3200/3756 loss 0.7826
+  [1-baseline] step 3400/3756 loss 0.7330
+  [1-baseline] step 3600/3756 loss 0.7030
+  [1-baseline] done: val 0.7984 · 22,429 tok/s · 5,243 MiB peak
+  [2-reversible-same-batch] step 0/3756 loss 5.6666
+  [2-reversible-same-batch] step 200/3756 loss 2.4470
+  [2-reversible-same-batch] step 400/3756 loss 1.9834
+  [2-reversible-same-batch] step 600/3756 loss 1.4697
+  [2-reversible-same-batch] step 800/3756 loss 1.2553
+  [2-reversible-same-batch] step 1000/3756 loss 1.2349
+  [2-reversible-same-batch] step 1200/3756 loss 1.1062
+  [2-reversible-same-batch] step 1400/3756 loss 1.0291
+  [2-reversible-same-batch] step 1600/3756 loss 0.9345
+  [2-reversible-same-batch] step 1800/3756 loss 0.9138
+  [2-reversible-same-batch] step 2000/3756 loss 0.8311
+  [2-reversible-same-batch] step 2200/3756 loss 0.8367
+  [2-reversible-same-batch] step 2400/3756 loss 0.8197
+  [2-reversible-same-batch] step 2600/3756 loss 0.8189
+  [2-reversible-same-batch] step 2800/3756 loss 0.7885
+  [2-reversible-same-batch] step 3000/3756 loss 0.8180
+  [2-reversible-same-batch] step 3200/3756 loss 0.8407
+  [2-reversible-same-batch] step 3400/3756 loss 0.7934
+  [2-reversible-same-batch] step 3600/3756 loss 0.7595
+  [2-reversible-same-batch] done: val 0.8438 · 13,977 tok/s · 1,069 MiB peak
+  [3-reversible-max-batch] step 0/542 loss 5.6643
+  [3-reversible-max-batch] out of memory -- backing off to batch 153
+  [3-reversible-max-batch] step 0/638 loss 5.6643
+  [3-reversible-max-batch] step 200/638 loss 2.2100
+  [3-reversible-max-batch] step 400/638 loss 1.3782
+  [3-reversible-max-batch] step 600/638 loss 1.2719
+  [3-reversible-max-batch] done: val 1.3244 · 13,997 tok/s · 4,565 MiB peak
+
+== memory against depth
+Traceback (most recent call last):
+  File "/home/vm-1/projects/llm_ws/era-v5/session-13-reversibility/train.py", line 304, in <module>
+    main()
+  File "/home/vm-1/projects/llm_ws/era-v5/session-13-reversibility/train.py", line 296, in main
+    R["memory_vs_depth"] = memory_vs_depth(max(1, base_batch // 2),
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vm-1/projects/llm_ws/era-v5/session-13-reversibility/train.py", line 241, in memory_vs_depth
+    _, loss = m(x, x)
+              ^^^^^^^
+  File "/home/vm-1/projects/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vm-1/projects/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vm-1/projects/llm_ws/era-v5/session-13-reversibility/model.py", line 291, in forward
+    p = p + blk(p)
+            ^^^^^^
+  File "/home/vm-1/projects/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vm-1/projects/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vm-1/projects/llm_ws/era-v5/session-13-reversibility/model.py", line 98, in forward
+    return h + self.mlp(self.ln2(p + h))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vm-1/projects/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vm-1/projects/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vm-1/projects/llm_ws/era-v5/session-13-reversibility/model.py", line 85, in forward
+    return self.down(F.silu(self.gate(x)) * self.up(x))
+                                            ^^^^^^^^^^
+  File "/home/vm-1/projects/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vm-1/projects/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vm-1/projects/venv/lib/python3.12/site-packages/torch/nn/modules/linear.py", line 134, in forward
+    return F.linear(input, self.weight, self.bias)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 26.00 MiB. GPU 0 has a total capacity of 5.64 GiB of which 23.44 MiB is free. Process 3110 has 83.93 MiB memory in use. Including non-PyTorch memory, this process has 5.44 GiB memory in use. Of the allocated memory 5.22 GiB is allocated by PyTorch, and 117.73 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+recovered 3 variant runs and 3 training runs from run.log
+  1-baseline                 batch   26 · val 0.7984 · 22,429 tok/s · 5,243 MiB
+  2-reversible-same-batch    batch   26 · val 0.8438 · 13,977 tok/s · 1,069 MiB
+  3-reversible-max-batch     batch  153 · val 1.3244 · 13,997 tok/s · 4,565 MiB
+
+== memory against depth (re-run; the sweep that crashed)
+    4 layers  baseline         922 MiB
+    4 layers  midpoint         438 MiB
+    8 layers  baseline       1,756 MiB
+    8 layers  midpoint         492 MiB
+   12 layers  baseline       2,590 MiB
+   12 layers  midpoint         546 MiB
+   24 layers  baseline       5,091 MiB
+   24 layers  midpoint         841 MiB
+   48 layers  baseline    out of memory
+   48 layers  midpoint       1,651 MiB
+
+wrote results.json
+batch 26 -> 153 (5.9x): learning rate 3.00e-04 -> 7.28e-04 (square-root rule, Session 11)
+  [4-reversible-max-batch-lr-scaled] step 0/638 loss 5.6643
+  [4-reversible-max-batch-lr-scaled] step 200/638 loss 1.8677
+  [4-reversible-max-batch-lr-scaled] step 400/638 loss 1.0576
+  [4-reversible-max-batch-lr-scaled] step 600/638 loss 0.9679
+  [4-reversible-max-batch-lr-scaled] done: val 1.0306 · 13,916 tok/s · 4,565 MiB peak
+appended run 4 to results.json

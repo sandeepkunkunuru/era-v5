@@ -1,0 +1,378 @@
+{
+ "device": "NVIDIA GeForce RTX 4050 Laptop GPU",
+ "torch": "2.12.1+cu130",
+ "seed": 20260919,
+ "block": 512,
+ "tokens": 50000000,
+ "quick": false,
+ "grad_check": [
+  {
+   "stack": "midpoint",
+   "worst_rel_grad_error": 8.22e-16
+  },
+  {
+   "stack": "leapfrog",
+   "worst_rel_grad_error": 6.61e-16
+  },
+  {
+   "stack": "hamiltonian",
+   "worst_rel_grad_error": 1.21e-15
+  }
+ ],
+ "reconstruction": [
+  {
+   "stack": "midpoint",
+   "a": 1.0,
+   "rel_error": 2.985e-14
+  },
+  {
+   "stack": "midpoint",
+   "a": 0.5,
+   "rel_error": 2.973e-11
+  },
+  {
+   "stack": "leapfrog",
+   "a": 1.0,
+   "rel_error": 6.984e-15
+  },
+  {
+   "stack": "leapfrog",
+   "a": 0.5,
+   "rel_error": 6.984e-15
+  },
+  {
+   "stack": "hamiltonian",
+   "a": 1.0,
+   "rel_error": 1.083e-13
+  },
+  {
+   "stack": "hamiltonian",
+   "a": 0.5,
+   "rel_error": 1.364e-06
+  }
+ ],
+ "max_batch": {
+  "baseline": 26,
+  "midpoint": 179,
+  "leapfrog": 180,
+  "hamiltonian": 221
+ },
+ "variants": [
+  {
+   "tag": "variant:midpoint",
+   "stack": "midpoint",
+   "batch": 26,
+   "steps": 300,
+   "tokens": 4000000,
+   "params": 21244416,
+   "h": 0.25,
+   "a": 1.0,
+   "layers": 12,
+   "val_loss": 2.4429,
+   "final_train_loss": null,
+   "seconds": 289.4,
+   "tokens_per_s": 13822.0,
+   "peak_mem_mib": 1069.0,
+   "curve": null,
+   "recovered_from": "run.log (the first run died in the depth sweep before writing JSON)"
+  },
+  {
+   "tag": "variant:leapfrog",
+   "stack": "leapfrog",
+   "batch": 26,
+   "steps": 300,
+   "tokens": 4000000,
+   "params": 21244416,
+   "h": 0.25,
+   "a": 1.0,
+   "layers": 12,
+   "val_loss": 2.4033,
+   "final_train_loss": null,
+   "seconds": 293.6,
+   "tokens_per_s": 13622.0,
+   "peak_mem_mib": 1069.0,
+   "curve": null,
+   "recovered_from": "run.log (the first run died in the depth sweep before writing JSON)"
+  },
+  {
+   "tag": "variant:hamiltonian",
+   "stack": "hamiltonian",
+   "batch": 26,
+   "steps": 300,
+   "tokens": 4000000,
+   "params": 21244416,
+   "h": 0.25,
+   "a": 1.0,
+   "layers": 12,
+   "val_loss": 2.4651,
+   "final_train_loss": null,
+   "seconds": 238.2,
+   "tokens_per_s": 16790.0,
+   "peak_mem_mib": 932.0,
+   "curve": null,
+   "recovered_from": "run.log (the first run died in the depth sweep before writing JSON)"
+  }
+ ],
+ "runs": [
+  {
+   "tag": "1-baseline",
+   "stack": "baseline",
+   "batch": 26,
+   "steps": 3756,
+   "tokens": 50000000,
+   "params": 21244416,
+   "h": 0.25,
+   "a": 1.0,
+   "layers": 12,
+   "val_loss": 0.7984,
+   "final_train_loss": null,
+   "seconds": 2229.3,
+   "tokens_per_s": 22429.0,
+   "peak_mem_mib": 5243.0,
+   "curve": null,
+   "recovered_from": "run.log (the first run died in the depth sweep before writing JSON)"
+  },
+  {
+   "tag": "2-reversible-same-batch",
+   "stack": "leapfrog",
+   "batch": 26,
+   "steps": 3756,
+   "tokens": 50000000,
+   "params": 21244416,
+   "h": 0.25,
+   "a": 1.0,
+   "layers": 12,
+   "val_loss": 0.8438,
+   "final_train_loss": null,
+   "seconds": 3577.3,
+   "tokens_per_s": 13977.0,
+   "peak_mem_mib": 1069.0,
+   "curve": null,
+   "recovered_from": "run.log (the first run died in the depth sweep before writing JSON)"
+  },
+  {
+   "tag": "3-reversible-max-batch",
+   "stack": "leapfrog",
+   "batch": 153,
+   "steps": 638,
+   "tokens": 50000000,
+   "params": 21244416,
+   "h": 0.25,
+   "a": 1.0,
+   "layers": 12,
+   "val_loss": 1.3244,
+   "final_train_loss": null,
+   "seconds": 3572.2,
+   "tokens_per_s": 13997.0,
+   "peak_mem_mib": 4565.0,
+   "curve": null,
+   "recovered_from": "run.log (the first run died in the depth sweep before writing JSON)"
+  },
+  {
+   "tag": "4-reversible-max-batch-lr-scaled",
+   "stack": "leapfrog",
+   "batch": 153,
+   "steps": 638,
+   "tokens": 49978368,
+   "params": 21636480,
+   "h": 0.25,
+   "a": 1.0,
+   "layers": 12,
+   "final_train_loss": 0.9614,
+   "val_loss": 1.0306,
+   "seconds": 3591.5,
+   "tokens_per_s": 13915.8,
+   "peak_mem_mib": 4564.6,
+   "curve": [
+    [
+     0,
+     5.6643
+    ],
+    [
+     25,
+     2.7755
+    ],
+    [
+     50,
+     2.5201
+    ],
+    [
+     75,
+     2.4514
+    ],
+    [
+     100,
+     2.4246
+    ],
+    [
+     125,
+     2.3263
+    ],
+    [
+     150,
+     2.2656
+    ],
+    [
+     175,
+     2.0729
+    ],
+    [
+     200,
+     1.8677
+    ],
+    [
+     225,
+     1.6355
+    ],
+    [
+     250,
+     1.4368
+    ],
+    [
+     275,
+     1.3524
+    ],
+    [
+     300,
+     1.2689
+    ],
+    [
+     325,
+     1.1974
+    ],
+    [
+     350,
+     1.1569
+    ],
+    [
+     375,
+     1.1068
+    ],
+    [
+     400,
+     1.0576
+    ],
+    [
+     425,
+     1.0274
+    ],
+    [
+     450,
+     1.03
+    ],
+    [
+     475,
+     1.0518
+    ],
+    [
+     500,
+     1.0061
+    ],
+    [
+     525,
+     1.0267
+    ],
+    [
+     550,
+     0.9771
+    ],
+    [
+     575,
+     0.9512
+    ],
+    [
+     600,
+     0.9679
+    ],
+    [
+     625,
+     0.9524
+    ],
+    [
+     637,
+     0.9614
+    ]
+   ],
+   "lr": 0.0007277467860563758,
+   "note": "run 3 repeated with the learning rate scaled by sqrt(5.9) = 2.43, so it differs from run 3 only in the learning rate"
+  }
+ ],
+ "best_variant": "leapfrog",
+ "memory_vs_depth": [
+  {
+   "layers": 4,
+   "stack": "baseline",
+   "peak_mem_mib": 922.3,
+   "params": 7474560,
+   "oom": false
+  },
+  {
+   "layers": 4,
+   "stack": "midpoint",
+   "peak_mem_mib": 438.2,
+   "params": 7474560,
+   "oom": false
+  },
+  {
+   "layers": 8,
+   "stack": "baseline",
+   "peak_mem_mib": 1756.1,
+   "params": 14555520,
+   "oom": false
+  },
+  {
+   "layers": 8,
+   "stack": "midpoint",
+   "peak_mem_mib": 492.2,
+   "params": 14555520,
+   "oom": false
+  },
+  {
+   "layers": 12,
+   "stack": "baseline",
+   "peak_mem_mib": 2589.9,
+   "params": 21636480,
+   "oom": false
+  },
+  {
+   "layers": 12,
+   "stack": "midpoint",
+   "peak_mem_mib": 546.2,
+   "params": 21636480,
+   "oom": false
+  },
+  {
+   "layers": 24,
+   "stack": "baseline",
+   "peak_mem_mib": 5091.4,
+   "params": 42879360,
+   "oom": false
+  },
+  {
+   "layers": 24,
+   "stack": "midpoint",
+   "peak_mem_mib": 840.7,
+   "params": 42879360,
+   "oom": false
+  },
+  {
+   "layers": 48,
+   "stack": "baseline",
+   "peak_mem_mib": 0.0,
+   "params": 85365120,
+   "oom": true
+  },
+  {
+   "layers": 48,
+   "stack": "midpoint",
+   "peak_mem_mib": 1651.0,
+   "params": 85365120,
+   "oom": false
+  }
+ ],
+ "lr_scaled": {
+  "base_lr": 0.0003,
+  "scaled_lr": 0.0007277467860563758,
+  "batch_ratio": 5.884615384615385
+ }
+}
