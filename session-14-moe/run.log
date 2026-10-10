@@ -1,0 +1,283 @@
+device cuda · NVIDIA GeForce RTX 4050 Laptop GPU · torch 2.12.1+cu130 · seed 20261010
+dense 21,538,176 params · moe 64,152,960 total / 21,685,632 active
+
+== 1. dense model
+[dense] step 0/1464 loss 5.5597 lr 6.00e-06
+[dense] step 50/1464 loss 3.2090 lr 1.56e-04
+[dense] step 100/1464 loss 2.6877 lr 2.97e-04
+[dense] step 150/1464 loss 2.4612 lr 2.93e-04
+[dense] step 200/1464 loss 2.5025 lr 2.88e-04
+[dense] step 250/1464 loss 2.4514 lr 2.81e-04
+[dense] step 300/1464 loss 2.4987 lr 2.73e-04
+[dense] step 350/1464 loss 2.4417 lr 2.63e-04
+[dense] step 400/1464 loss 2.3932 lr 2.53e-04
+[dense] step 450/1464 loss 2.2862 lr 2.42e-04
+[dense] step 500/1464 loss 2.0974 lr 2.29e-04
+[dense] step 550/1464 loss 1.9487 lr 2.16e-04
+[dense] step 600/1464 loss 1.9102 lr 2.02e-04
+[dense] step 650/1464 loss 1.6731 lr 1.88e-04
+[dense] step 700/1464 loss 1.5518 lr 1.74e-04
+[dense] step 750/1464 loss 1.5814 lr 1.59e-04
+[dense] step 800/1464 loss 1.4408 lr 1.45e-04
+[dense] step 850/1464 loss 1.3687 lr 1.31e-04
+[dense] step 900/1464 loss 1.3445 lr 1.17e-04
+[dense] step 950/1464 loss 1.2696 lr 1.04e-04
+[dense] step 1000/1464 loss 1.2521 lr 9.13e-05
+[dense] step 1050/1464 loss 1.2887 lr 7.96e-05
+[dense] step 1100/1464 loss 1.1941 lr 6.89e-05
+[dense] step 1150/1464 loss 1.3498 lr 5.93e-05
+[dense] step 1200/1464 loss 1.2225 lr 5.09e-05
+[dense] step 1250/1464 loss 1.1321 lr 4.39e-05
+[dense] step 1300/1464 loss 1.1565 lr 3.82e-05
+[dense] step 1350/1464 loss 1.1628 lr 3.39e-05
+[dense] step 1400/1464 loss 1.1979 lr 3.12e-05
+[dense] step 1450/1464 loss 1.1192 lr 3.01e-05
+[dense] step 1463/1464 loss 1.2080 lr 3.00e-05
+[dense] done: val 1.1881 · 63,240 tok/s · 1,355 MiB peak
+
+== 2. conversion exactness (router forced onto the inherited experts)
+  clone      val 1.188146  delta +0.000046
+  partition  val 1.188146  delta +0.000046
+  drop       val 3.074660  delta +1.886560
+
+== 3. validation loss at the moment of conversion
+  random     scale_down=False val 4.2154  delta +3.0273
+  random     scale_down=True  val 4.1863  delta +2.9982
+  clone      scale_down=False val 4.3126  delta +3.1245
+  clone      scale_down=True  val 1.8450  delta +0.6569
+  partition  scale_down=False val 4.2397  delta +3.0516
+  partition  scale_down=True  val 1.9509  delta +0.7628
+  drop       scale_down=False val 4.2007  delta +3.0126
+  drop       scale_down=True  val 3.3322  delta +2.1441
+  carrying forward scale_down = {'random': True, 'clone': True, 'partition': True, 'drop': True}
+
+== 4. continued training, grown models against a dense control
+[dense-control] step 0/976 loss 1.1073 lr 6.00e-06
+[dense-control] step 50/976 loss 1.3054 lr 1.55e-04
+[dense-control] step 100/976 loss 1.2798 lr 2.93e-04
+[dense-control] step 150/976 loss 1.1449 lr 2.84e-04
+[dense-control] step 200/976 loss 1.2213 lr 2.73e-04
+[dense-control] step 250/976 loss 1.1891 lr 2.58e-04
+[dense-control] step 300/976 loss 1.1945 lr 2.41e-04
+[dense-control] step 350/976 loss 1.1289 lr 2.23e-04
+[dense-control] step 400/976 loss 1.1165 lr 2.02e-04
+[dense-control] step 450/976 loss 1.1025 lr 1.81e-04
+[dense-control] step 500/976 loss 1.0014 lr 1.59e-04
+[dense-control] step 550/976 loss 0.9745 lr 1.38e-04
+[dense-control] step 600/976 loss 1.0077 lr 1.17e-04
+[dense-control] step 650/976 loss 0.9643 lr 9.74e-05
+[dense-control] step 700/976 loss 0.9745 lr 7.95e-05
+[dense-control] step 750/976 loss 1.0220 lr 6.39e-05
+[dense-control] step 800/976 loss 0.9567 lr 5.09e-05
+[dense-control] step 850/976 loss 0.9113 lr 4.08e-05
+[dense-control] step 900/976 loss 0.9132 lr 3.39e-05
+[dense-control] step 950/976 loss 0.8849 lr 3.04e-05
+[dense-control] step 975/976 loss 0.9750 lr 3.00e-05
+[dense-control] done: val 0.9768 · 62,580 tok/s · 1,373 MiB peak
+[grow:random] step 0/976 loss 4.1600 lr 6.00e-06
+[grow:random] step 50/976 loss 2.9295 lr 1.55e-04
+[grow:random] step 100/976 loss 2.3677 lr 2.93e-04
+[grow:random] step 150/976 loss 1.8558 lr 2.84e-04
+[grow:random] step 200/976 loss 1.7034 lr 2.73e-04
+[grow:random] step 250/976 loss 1.5130 lr 2.58e-04
+[grow:random] step 300/976 loss 1.4868 lr 2.41e-04
+[grow:random] step 350/976 loss 1.3390 lr 2.23e-04
+[grow:random] step 400/976 loss 1.2858 lr 2.02e-04
+[grow:random] step 450/976 loss 1.2744 lr 1.81e-04
+[grow:random] step 500/976 loss 1.1180 lr 1.59e-04
+[grow:random] step 550/976 loss 1.0825 lr 1.38e-04
+[grow:random] step 600/976 loss 1.1260 lr 1.17e-04
+[grow:random] step 650/976 loss 1.0440 lr 9.74e-05
+[grow:random] step 700/976 loss 1.0524 lr 7.95e-05
+[grow:random] step 750/976 loss 1.1150 lr 6.39e-05
+[grow:random] step 800/976 loss 1.0486 lr 5.09e-05
+[grow:random] step 850/976 loss 0.9877 lr 4.08e-05
+[grow:random] step 900/976 loss 1.0048 lr 3.39e-05
+[grow:random] step 950/976 loss 0.9673 lr 3.04e-05
+[grow:random] step 975/976 loss 1.0542 lr 3.00e-05
+[grow:random] done: val 1.0377 · 14,424 tok/s · 3,528 MiB peak · MaxVio 0.0154 · 0/384 dead
+[grow:clone] step 0/976 loss 1.9479 lr 6.00e-06
+[grow:clone] step 50/976 loss 1.4179 lr 1.55e-04
+[grow:clone] step 100/976 loss 1.3334 lr 2.93e-04
+[grow:clone] step 150/976 loss 1.1770 lr 2.84e-04
+[grow:clone] step 200/976 loss 1.2534 lr 2.73e-04
+[grow:clone] step 250/976 loss 1.2059 lr 2.58e-04
+[grow:clone] step 300/976 loss 1.2173 lr 2.41e-04
+[grow:clone] step 350/976 loss 1.1466 lr 2.23e-04
+[grow:clone] step 400/976 loss 1.1267 lr 2.02e-04
+[grow:clone] step 450/976 loss 1.1145 lr 1.81e-04
+[grow:clone] step 500/976 loss 1.0114 lr 1.59e-04
+[grow:clone] step 550/976 loss 0.9885 lr 1.38e-04
+[grow:clone] step 600/976 loss 1.0105 lr 1.17e-04
+[grow:clone] step 650/976 loss 0.9677 lr 9.74e-05
+[grow:clone] step 700/976 loss 0.9835 lr 7.95e-05
+[grow:clone] step 750/976 loss 1.0298 lr 6.39e-05
+[grow:clone] step 800/976 loss 0.9698 lr 5.09e-05
+[grow:clone] step 850/976 loss 0.9229 lr 4.08e-05
+[grow:clone] step 900/976 loss 0.9131 lr 3.39e-05
+[grow:clone] step 950/976 loss 0.8981 lr 3.04e-05
+[grow:clone] step 975/976 loss 0.9873 lr 3.00e-05
+[grow:clone] done: val 0.9845 · 14,432 tok/s · 3,528 MiB peak · MaxVio 0.0139 · 0/384 dead
+[grow:partition] step 0/976 loss 1.8075 lr 6.00e-06
+[grow:partition] step 50/976 loss 1.4521 lr 1.55e-04
+[grow:partition] step 100/976 loss 1.3597 lr 2.93e-04
+[grow:partition] step 150/976 loss 1.1895 lr 2.84e-04
+[grow:partition] step 200/976 loss 1.2636 lr 2.73e-04
+[grow:partition] step 250/976 loss 1.2231 lr 2.58e-04
+[grow:partition] step 300/976 loss 1.2116 lr 2.41e-04
+[grow:partition] step 350/976 loss 1.1466 lr 2.23e-04
+[grow:partition] step 400/976 loss 1.1347 lr 2.02e-04
+[grow:partition] step 450/976 loss 1.1218 lr 1.81e-04
+[grow:partition] step 500/976 loss 1.0096 lr 1.59e-04
+[grow:partition] step 550/976 loss 0.9913 lr 1.38e-04
+[grow:partition] step 600/976 loss 1.0187 lr 1.17e-04
+[grow:partition] step 650/976 loss 0.9723 lr 9.74e-05
+[grow:partition] step 700/976 loss 0.9856 lr 7.95e-05
+[grow:partition] step 750/976 loss 1.0373 lr 6.39e-05
+[grow:partition] step 800/976 loss 0.9712 lr 5.09e-05
+[grow:partition] step 850/976 loss 0.9296 lr 4.08e-05
+[grow:partition] step 900/976 loss 0.9330 lr 3.39e-05
+[grow:partition] step 950/976 loss 0.9062 lr 3.04e-05
+[grow:partition] step 975/976 loss 0.9875 lr 3.00e-05
+[grow:partition] done: val 0.991 · 14,582 tok/s · 3,528 MiB peak · MaxVio 0.0138 · 0/384 dead
+[grow:drop] step 0/976 loss 3.3326 lr 6.00e-06
+[grow:drop] step 50/976 loss 1.6709 lr 1.55e-04
+[grow:drop] step 100/976 loss 1.4567 lr 2.93e-04
+[grow:drop] step 150/976 loss 1.2378 lr 2.84e-04
+[grow:drop] step 200/976 loss 1.2853 lr 2.73e-04
+[grow:drop] step 250/976 loss 1.2513 lr 2.58e-04
+[grow:drop] step 300/976 loss 1.2339 lr 2.41e-04
+[grow:drop] step 350/976 loss 1.1684 lr 2.23e-04
+[grow:drop] step 400/976 loss 1.1454 lr 2.02e-04
+[grow:drop] step 450/976 loss 1.1379 lr 1.81e-04
+[grow:drop] step 500/976 loss 1.0163 lr 1.59e-04
+[grow:drop] step 550/976 loss 0.9864 lr 1.38e-04
+[grow:drop] step 600/976 loss 1.0236 lr 1.17e-04
+[grow:drop] step 650/976 loss 0.9750 lr 9.74e-05
+[grow:drop] step 700/976 loss 0.9850 lr 7.95e-05
+[grow:drop] step 750/976 loss 1.0450 lr 6.39e-05
+[grow:drop] step 800/976 loss 0.9760 lr 5.09e-05
+[grow:drop] step 850/976 loss 0.9326 lr 4.08e-05
+[grow:drop] step 900/976 loss 0.9334 lr 3.39e-05
+[grow:drop] step 950/976 loss 0.9097 lr 3.04e-05
+[grow:drop] step 975/976 loss 0.9910 lr 3.00e-05
+[grow:drop] done: val 0.989 · 14,569 tok/s · 3,528 MiB peak · MaxVio 0.0149 · 0/384 dead
+
+== 5. balancing methods, on the partition init
+[balance:none] step 0/976 loss 1.8552 lr 6.00e-06
+[balance:none] step 50/976 loss 1.3844 lr 1.55e-04
+[balance:none] step 100/976 loss 1.3280 lr 2.93e-04
+[balance:none] step 150/976 loss 1.1578 lr 2.84e-04
+[balance:none] step 200/976 loss 1.2235 lr 2.73e-04
+[balance:none] step 250/976 loss 1.1937 lr 2.58e-04
+[balance:none] step 300/976 loss 1.1932 lr 2.41e-04
+[balance:none] step 350/976 loss 1.1390 lr 2.23e-04
+[balance:none] step 400/976 loss 1.1132 lr 2.02e-04
+[balance:none] step 450/976 loss 1.1099 lr 1.81e-04
+[balance:none] step 500/976 loss 1.0004 lr 1.59e-04
+[balance:none] step 550/976 loss 0.9787 lr 1.38e-04
+[balance:none] step 600/976 loss 1.0027 lr 1.17e-04
+[balance:none] step 650/976 loss 0.9625 lr 9.74e-05
+[balance:none] step 700/976 loss 0.9758 lr 7.95e-05
+[balance:none] step 750/976 loss 1.0230 lr 6.39e-05
+[balance:none] step 800/976 loss 0.9588 lr 5.09e-05
+[balance:none] step 850/976 loss 0.9240 lr 4.08e-05
+[balance:none] step 900/976 loss 0.9162 lr 3.39e-05
+[balance:none] step 950/976 loss 0.8929 lr 3.04e-05
+[balance:none] step 975/976 loss 0.9863 lr 3.00e-05
+[balance:none] done: val 0.9836 · 16,352 tok/s · 3,528 MiB peak · MaxVio 2.1498 · 61/384 dead
+[balance:aux] step 0/976 loss 1.8597 lr 6.00e-06
+[balance:aux] step 50/976 loss 1.4012 lr 1.55e-04
+[balance:aux] step 100/976 loss 1.3237 lr 2.93e-04
+[balance:aux] step 150/976 loss 1.1731 lr 2.84e-04
+[balance:aux] step 200/976 loss 1.2440 lr 2.73e-04
+[balance:aux] step 250/976 loss 1.2183 lr 2.58e-04
+[balance:aux] step 300/976 loss 1.2038 lr 2.41e-04
+[balance:aux] step 350/976 loss 1.1540 lr 2.23e-04
+[balance:aux] step 400/976 loss 1.1299 lr 2.02e-04
+[balance:aux] step 450/976 loss 1.1240 lr 1.81e-04
+[balance:aux] step 500/976 loss 1.0230 lr 1.59e-04
+[balance:aux] step 550/976 loss 0.9951 lr 1.38e-04
+[balance:aux] step 600/976 loss 1.0210 lr 1.17e-04
+[balance:aux] step 650/976 loss 0.9699 lr 9.74e-05
+[balance:aux] step 700/976 loss 0.9913 lr 7.95e-05
+[balance:aux] step 750/976 loss 1.0424 lr 6.39e-05
+[balance:aux] step 800/976 loss 0.9746 lr 5.09e-05
+[balance:aux] step 850/976 loss 0.9378 lr 4.08e-05
+[balance:aux] step 900/976 loss 0.9323 lr 3.39e-05
+[balance:aux] step 950/976 loss 0.9069 lr 3.04e-05
+[balance:aux] step 975/976 loss 0.9942 lr 3.00e-05
+[balance:aux] done: val 0.9844 · 14,293 tok/s · 3,528 MiB peak · MaxVio 1.8435 · 0/384 dead
+
+== 6. hard top-k against probabilistic selection, on the clone init, no balancing
+[routing:hard] step 0/976 loss 2.0398 lr 6.00e-06
+[routing:hard] step 50/976 loss 1.3593 lr 1.55e-04
+[routing:hard] step 100/976 loss 1.2904 lr 2.93e-04
+[routing:hard] step 150/976 loss 1.1383 lr 2.84e-04
+[routing:hard] step 200/976 loss 1.2155 lr 2.73e-04
+[routing:hard] step 250/976 loss 1.1855 lr 2.58e-04
+[routing:hard] step 300/976 loss 1.1889 lr 2.41e-04
+[routing:hard] step 350/976 loss 1.1233 lr 2.23e-04
+[routing:hard] step 400/976 loss 1.1112 lr 2.02e-04
+[routing:hard] step 450/976 loss 1.0969 lr 1.81e-04
+[routing:hard] step 500/976 loss 0.9914 lr 1.59e-04
+[routing:hard] step 550/976 loss 0.9755 lr 1.38e-04
+[routing:hard] step 600/976 loss 0.9991 lr 1.17e-04
+[routing:hard] step 650/976 loss 0.9613 lr 9.74e-05
+[routing:hard] step 700/976 loss 0.9705 lr 7.95e-05
+[routing:hard] step 750/976 loss 1.0191 lr 6.39e-05
+[routing:hard] step 800/976 loss 0.9523 lr 5.09e-05
+[routing:hard] step 850/976 loss 0.9134 lr 4.08e-05
+[routing:hard] step 900/976 loss 0.9114 lr 3.39e-05
+[routing:hard] step 950/976 loss 0.8885 lr 3.04e-05
+[routing:hard] step 975/976 loss 0.9728 lr 3.00e-05
+[routing:hard] done: val 0.9773 · 16,606 tok/s · 3,528 MiB peak · MaxVio 2.2058 · 77/384 dead
+[routing:prob] step 0/976 loss 2.1968 lr 6.00e-06
+[routing:prob] step 50/976 loss 1.5053 lr 1.55e-04
+[routing:prob] step 100/976 loss 1.4381 lr 2.93e-04
+[routing:prob] step 150/976 loss 1.2743 lr 2.84e-04
+[routing:prob] probabilistic selection off at step 200
+[routing:prob] step 200/976 loss 1.3537 lr 2.73e-04
+[routing:prob] step 250/976 loss 1.2463 lr 2.58e-04
+[routing:prob] step 300/976 loss 1.2257 lr 2.41e-04
+[routing:prob] step 350/976 loss 1.1640 lr 2.23e-04
+[routing:prob] step 400/976 loss 1.1452 lr 2.02e-04
+[routing:prob] step 450/976 loss 1.1209 lr 1.81e-04
+[routing:prob] step 500/976 loss 1.0177 lr 1.59e-04
+[routing:prob] step 550/976 loss 0.9923 lr 1.38e-04
+[routing:prob] step 600/976 loss 1.0181 lr 1.17e-04
+[routing:prob] step 650/976 loss 0.9775 lr 9.74e-05
+[routing:prob] step 700/976 loss 0.9877 lr 7.95e-05
+[routing:prob] step 750/976 loss 1.0303 lr 6.39e-05
+[routing:prob] step 800/976 loss 0.9671 lr 5.09e-05
+[routing:prob] step 850/976 loss 0.9311 lr 4.08e-05
+[routing:prob] step 900/976 loss 0.9312 lr 3.39e-05
+[routing:prob] step 950/976 loss 0.9011 lr 3.04e-05
+[routing:prob] step 975/976 loss 0.9945 lr 3.00e-05
+[routing:prob] done: val 0.9889 · 15,021 tok/s · 3,528 MiB peak · MaxVio 1.9728 · 14/384 dead
+
+== 7. the bias window: per micro-batch against per whole batch
+[scope:micro] step 0/976 loss 1.8199 lr 6.00e-06
+[scope:micro] step 50/976 loss 1.4539 lr 1.55e-04
+[scope:micro] step 100/976 loss 1.3639 lr 2.93e-04
+[scope:micro] step 150/976 loss 1.1865 lr 2.84e-04
+[scope:micro] step 200/976 loss 1.2609 lr 2.73e-04
+[scope:micro] step 250/976 loss 1.2162 lr 2.58e-04
+[scope:micro] step 300/976 loss 1.2130 lr 2.41e-04
+[scope:micro] step 350/976 loss 1.1579 lr 2.23e-04
+[scope:micro] step 400/976 loss 1.1316 lr 2.02e-04
+[scope:micro] step 450/976 loss 1.1232 lr 1.81e-04
+[scope:micro] step 500/976 loss 1.0176 lr 1.59e-04
+[scope:micro] step 550/976 loss 0.9895 lr 1.38e-04
+[scope:micro] step 600/976 loss 1.0210 lr 1.17e-04
+[scope:micro] step 650/976 loss 0.9701 lr 9.74e-05
+[scope:micro] step 700/976 loss 0.9844 lr 7.95e-05
+[scope:micro] step 750/976 loss 1.0373 lr 6.39e-05
+[scope:micro] step 800/976 loss 0.9672 lr 5.09e-05
+[scope:micro] step 850/976 loss 0.9297 lr 4.08e-05
+[scope:micro] step 900/976 loss 0.9260 lr 3.39e-05
+[scope:micro] step 950/976 loss 0.9062 lr 3.04e-05
+[scope:micro] step 975/976 loss 0.9944 lr 3.00e-05
+[scope:micro] done: val 0.9896 · 14,376 tok/s · 3,528 MiB peak · MaxVio 0.0124 · 0/384 dead
+
+wrote results.json

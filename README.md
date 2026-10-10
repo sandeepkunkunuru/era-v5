@@ -23,6 +23,7 @@ screenshots. You press a button, the boundary moves, and you check the claim you
 | [Session 11](./session-11-optimizers) | Optimizers & schedules | Adam by hand to 1e-16; bias correction's effect is a closed form in β₂ (peaks at 6.57×); warmup's fingerprint outlasts the warmup (step 283) |
 | [Session 12](./session-12-zero) | ZeRO on 32 virtual GPUs | stages 0–3 written by hand on 32 processes: 16.00 → 4.38 → 2.44 → 0.50 bytes/parameter, identical losses |
 | [Session 13](./session-13-reversibility) | Reversibility, measured | all three of the paper's reversible stacks written from scratch: **79.6% less memory for 37.7% less speed**, and the memory buys no throughput back at this depth |
+| [Session 14](./session-14-moe) | A dense model grown into a mixture of experts | the conversion is **exact** when the down-projection is scaled by top-k, and skipping that scaling costs **+3.0 nats** on the spot; with balancing off the loss looks fine and **61 of 384 experts are dead** |
 
 ### Session 2 — cross-lingual fertility parity
 
