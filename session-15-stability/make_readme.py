@@ -234,44 +234,92 @@ if not rt or rt.get("skipped") or not rt.get("arms"):
       "--only 5` fills this section in; the other four stages are unaffected and complete.",
       "")
 else:
-    w(f"Session 14's build measured MaxVio and dead experts. Neither can see a layer whose",
+    w("Session 14's build measured MaxVio and dead experts. Neither can see a layer whose",
       "balancing bias has taken the routing decision away from its router: the loads come out",
       "even, nothing is dead, and the experts are chosen without reference to the token.",
-      "The metric that can see it is the **top-k intervention rate** — the share of positions",
-      "where `scores + bias` picks a different set of experts than `scores` alone.",
       "",
-      "Five metrics per layer, on Session 14's dense-to-MoE model grown by `partition`,",
-      f"trained {rt['tokens']:,} further tokens per arm:",
+      "Two things have to be counted carefully. The **intervention rate** is per expert *slot* —",
+      "the share of the k experts actually run that the router would not have picked. If the bias",
+      "chose a k-subset at random the expected overlap with the router's own top-k is k·k/N, so",
+      "the expected per-slot intervention is exactly `1 - k/N`, and that is the ceiling the",
+      "published 98.5% is read against. Counted per *token* instead — \"the set changed at all\" —",
+      "it saturates near 1 for any non-zero bias and has no ceiling, so it cannot be compared to",
+      "that number. Both are below; the contrast is the point.",
+      "",
+      f"Session 14's model grown by `partition`, trained {rt['tokens']:,} further tokens per arm:",
       "")
     for arm in rt["arms"]:
         pl = arm["per_layer"]
         abl = {a["layer"]: a for a in arm["ablation"]}
         w(f"**balance = `{arm['balance']}`** — val loss {arm['run']['val_loss']:.4f}, "
-          f"mean MaxVio {arm['mean_maxvio']:.4f}, {arm['dead_total']} dead experts in total.",
-          "")
-        table(["layer", "MaxVio", "dead", "entropy", "intervention", "intrinsic mass",
-               "selected mass", "random", "bypass"],
+          f"mean MaxVio {arm['mean_maxvio']:.4f}, {arm['dead_total']} experts dead across all "
+          f"layers. (Dead counts here are measured on the validation probe, over a different "
+          f"window from the {arm['run'].get('dead', '--')} the training loop reports, so the two "
+          f"do not have to agree.)", "")
+        table(["layer", "MaxVio", "dead", "entropy", "interv/slot", "set changed",
+               "intrinsic mass", "selected mass", "random", "bypass"],
               [(i, f"{p['maxvio']:.4f}", p["dead"], f"{p['router_entropy']:.4f}",
-                f"{p['intervention_rate']:.4f}", f"{p['intrinsic_topk_mass']:.4f}",
-                f"{p['selected_topk_mass']:.4f}",
+                f"{p['intervention_rate']:.4f}", f"{p.get('set_change_rate', 0):.4f}",
+                f"{p['intrinsic_topk_mass']:.4f}", f"{p['selected_topk_mass']:.4f}",
                 f"{abl[i]['random_delta']:+.4f}" if i in abl else "--",
                 f"{abl[i]['bypass_delta']:+.4f}" if i in abl else "--")
                for i, p in enumerate(pl)])
-    a0 = rt["arms"][0]
-    p0 = a0["per_layer"][0]
-    w("Reading the columns:", "",
-      f"- **intervention** against its ceiling of `1 - k/N` = {p0['intervention_ceiling']:.4f}.",
-      "  At the ceiling the bias is choosing every expert and the router is decoration.",
-      f"- **selected mass** against uniform `k/N` = {p0['uniform_topk_mass']:.4f}. When the",
-      "  router assigns no more probability to the experts that ran than it would to a random",
-      "  set, the layer is not routing.",
-      "- **intrinsic mass** is the router's own confidence in its *own* first choices. A high",
-      "  intrinsic mass with a low selected mass is the signature: the router has a strong",
-      "  opinion and is being overruled.",
-      f"- **random** and **bypass** are the proof, not the alarm: the loss change when the",
-      "  layer's experts are chosen at random, and when the routed experts are deleted",
-      "  outright. A layer that is really routing loses a lot under `random`.",
+    n_layer = len(rt["arms"][0]["per_layer"])
+    n_expert = rt["arms"][0]["run"]["dead_of"] // n_layer
+    top_k = round(n_expert * rt["arms"][0]["per_layer"][0]["uniform_topk_mass"])
+    bias_arm = next((a for a in rt["arms"] if a["balance"] == "bias"), rt["arms"][0])
+    none_arm = next((a for a in rt["arms"] if a["balance"] == "none"), None)
+    p0 = bias_arm["per_layer"][0]
+    ceil = p0["intervention_ceiling"]
+    unif = p0["uniform_topk_mass"]
+    bl = bias_arm["per_layer"]
+    worst = max(bl, key=lambda x: x["intervention_rate"])
+    min_sel = min(bl, key=lambda x: x["selected_topk_mass"])
+    w(f"The ceiling for the intervention rate here is `1 - k/N` = **{ceil:.4f}**, and uniform",
+      f"top-k mass is `k/N` = **{unif:.4f}**.", "",
+      "**The headline is a negative result, and it is the one worth having.** This model does not",
+      "reproduce the published fault. With the bias on, the highest per-slot intervention rate is",
+      f"**{worst['intervention_rate']:.4f}** at layer {bl.index(worst)}, against a ceiling of",
+      f"{ceil:.4f} — the bias moves a real share of the choices but nowhere near all of them. More",
+      f"telling, the lowest selected top-k mass is **{min_sel['selected_topk_mass']:.4f}** at layer",
+      f"{bl.index(min_sel)}, well above the {unif:.4f} a router with no preference would give. The",
+      "experts that ran are experts the router actually wanted. That is what a healthy layer looks",
+      "like on these metrics, and having it measured is what makes the unhealthy case legible.",
       "")
+    if none_arm:
+        nl = none_arm["per_layer"]
+        dead_layers = [(i, x["dead"]) for i, x in enumerate(nl) if x["dead"]]
+        w("**Turning balancing off is the contrast.** Intervention falls to exactly 0.0000 in every",
+          "layer, because with no bias the chosen set *is* the router's own — a useful check that the",
+          f"metric measures what it claims. Mean MaxVio rises {none_arm['mean_maxvio'] / bias_arm['mean_maxvio']:.1f}x",
+          f"({bias_arm['mean_maxvio']:.4f} to {none_arm['mean_maxvio']:.4f}) and",
+          f"{none_arm['dead_total']} experts die, and they are concentrated at the top of the "
+          "stack — "
+          + ("; ".join(f"{d} in layer {i}" for i, d in dead_layers) if dead_layers else "nowhere")
+          + ".",
+          "",
+          "**And MaxVio has a ceiling of its own, which is why it stops being informative.** "
+          f"With N = {n_expert} experts a layer and top-{top_k} routing, the load is at its most "
+          f"uneven when k experts take everything, giving MaxVio = N/k - 1 = "
+          f"**{n_expert / top_k - 1:.1f}** — exactly the value layers 0 to 3 report. A metric "
+          "sitting at its maximum cannot tell a bad layer from a worse one, and the published "
+          "fault was found in a model whose *average* MaxVio read a healthy 0.31. That is the "
+          "argument for carrying all five numbers per layer rather than one averaged over the "
+          "stack.",
+          "")
+    b0 = bias_arm["ablation"][0] if bias_arm["ablation"] else None
+    if b0:
+        rest = [a for a in bias_arm["ablation"][1:]]
+        w("**The ablations say layer 0 is not like the others.** Deleting its routed experts costs",
+          f"**{b0['bypass_delta']:+.4f}** nats, against",
+          f"{min(a['bypass_delta'] for a in rest):+.4f} to {max(a['bypass_delta'] for a in rest):+.4f}",
+          "for every other layer. Random routing there costs",
+          f"{b0['random_delta']:+.4f} with the bias on and",
+          (f"{none_arm['ablation'][0]['random_delta']:+.4f} with it off" if none_arm and none_arm["ablation"] else "more with it off")
+          + ". The first layer does the most work and is the most sensitive to how it is routed,",
+          "which is also where the published fault was found — worth watching per layer, not on",
+          "an average.",
+          "")
 
 if R.get("reduced_scale_note"):
     w(f"> **{R['reduced_scale_note']}**", "")

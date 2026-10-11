@@ -207,18 +207,80 @@ After 5 real optimizer steps, 51 frozen tensors were re-hashed and
 
 Session 14's build measured MaxVio and dead experts. Neither can see a layer whose
 balancing bias has taken the routing decision away from its router: the loads come out
-even, nothing is dead, and the experts are chosen without reference to the token. The
-metric that can see it is the **top-k intervention rate** — the share of positions where
-`scores + bias` picks a different set of experts than `scores` alone — read against its
-ceiling of `1 - k/N`, together with the **selected top-k mass** read against `k/N`.
+even, nothing is dead, and the experts are chosen without reference to the token.
 
-`routing.py` implements all five metrics and the two ablations the reference model's team
-used as proof: route each token to k random experts, and delete the routed experts
-outright. A layer that is really routing loses a great deal of loss under the first.
+Two things have to be counted carefully. The **intervention rate** is per expert *slot* —
+the share of the k experts actually run that the router would not have picked. If the bias
+chose a k-subset at random the expected overlap with the router's own top-k is k·k/N, so
+the expected per-slot intervention is exactly `1 - k/N`, and that is the ceiling the
+published 98.5% is read against. Counted per *token* instead — "the set changed at all" —
+it saturates near 1 for any non-zero bias and has no ceiling, so it cannot be compared to
+that number. Both are below; the contrast is the point.
 
-**The numbers are not in this build yet.** The machine lost its GPU to a kernel upgrade
-mid-run, and the CPU fallback had not finished at the time of writing. `python run.py
---only 5` fills this section in; the other four stages are unaffected and complete.
+Session 14's model grown by `partition`, trained 800,000 further tokens per arm:
+
+**balance = `bias`** — val loss 1.2779, mean MaxVio 0.5173, 0 experts dead across all layers. (Dead counts here are measured on the validation probe, over a different window from the 0 the training loop reports, so the two do not have to agree.)
+
+| layer | MaxVio | dead | entropy | interv/slot | set changed | intrinsic mass | selected mass | random | bypass |
+|---|---|---|---|---|---|---|---|---|---|
+| 0 | 0.4574 | 0 | 3.4294 | 0.3461 | 0.9512 | 0.3375 | 0.3205 | +0.1282 | +2.6421 |
+| 1 | 0.6714 | 0 | 3.4301 | 0.3780 | 0.9853 | 0.3372 | 0.3178 | +0.0171 | +0.0516 |
+| 2 | 0.4789 | 0 | 3.4328 | 0.3951 | 0.9958 | 0.3339 | 0.3134 | +0.0109 | +0.0312 |
+| 3 | 0.4968 | 0 | 3.4446 | 0.3149 | 0.9869 | 0.3163 | 0.3045 | +0.0089 | +0.0338 |
+| 4 | 0.3209 | 0 | 3.4485 | 0.3605 | 0.9934 | 0.3115 | 0.2975 | +0.0078 | +0.0308 |
+| 5 | 0.4921 | 0 | 3.4561 | 0.2041 | 0.9222 | 0.2969 | 0.2934 | +0.0208 | +0.0617 |
+| 6 | 0.2908 | 0 | 3.4582 | 0.1752 | 0.8809 | 0.2911 | 0.2889 | +0.0208 | +0.0480 |
+| 7 | 0.4223 | 0 | 3.4578 | 0.1746 | 0.8851 | 0.2920 | 0.2898 | +0.0147 | +0.0388 |
+| 8 | 0.6874 | 0 | 3.4592 | 0.1404 | 0.8060 | 0.2881 | 0.2869 | +0.0100 | +0.0380 |
+| 9 | 0.5271 | 0 | 3.4596 | 0.1387 | 0.8073 | 0.2869 | 0.2855 | +0.0112 | +0.0364 |
+| 10 | 0.6130 | 0 | 3.4590 | 0.1774 | 0.8967 | 0.2892 | 0.2871 | +0.0096 | +0.0450 |
+| 11 | 0.7494 | 0 | 3.4561 | 0.2470 | 0.9502 | 0.2964 | 0.2911 | +0.0103 | +0.0834 |
+
+**balance = `none`** — val loss 1.2440, mean MaxVio 2.1420, 25 experts dead across all layers. (Dead counts here are measured on the validation probe, over a different window from the 21 the training loop reports, so the two do not have to agree.)
+
+| layer | MaxVio | dead | entropy | interv/slot | set changed | intrinsic mass | selected mass | random | bypass |
+|---|---|---|---|---|---|---|---|---|---|
+| 0 | 3.0000 | 19 | 3.3856 | 0.0000 | 0.0000 | 0.4252 | 0.4252 | +0.7539 | +2.9296 |
+| 1 | 3.0000 | 1 | 3.3447 | 0.0000 | 0.0000 | 0.4546 | 0.4546 | +0.0508 | +0.0582 |
+| 2 | 3.0000 | 4 | 3.3618 | 0.0000 | 0.0000 | 0.4399 | 0.4399 | +0.0275 | +0.0398 |
+| 3 | 2.9981 | 1 | 3.3546 | 0.0000 | 0.0000 | 0.4393 | 0.4393 | +0.0213 | +0.0423 |
+| 4 | 2.9426 | 0 | 3.4108 | 0.0000 | 0.0000 | 0.3833 | 0.3833 | +0.0171 | +0.0428 |
+| 5 | 2.3792 | 0 | 3.4475 | 0.0000 | 0.0000 | 0.3192 | 0.3192 | +0.0199 | +0.0564 |
+| 6 | 1.8095 | 0 | 3.4563 | 0.0000 | 0.0000 | 0.2970 | 0.2970 | +0.0170 | +0.0467 |
+| 7 | 0.8410 | 0 | 3.4583 | 0.0000 | 0.0000 | 0.2915 | 0.2915 | +0.0171 | +0.0399 |
+| 8 | 0.8137 | 0 | 3.4591 | 0.0000 | 0.0000 | 0.2891 | 0.2891 | +0.0140 | +0.0401 |
+| 9 | 0.9955 | 0 | 3.4594 | 0.0000 | 0.0000 | 0.2880 | 0.2880 | +0.0137 | +0.0392 |
+| 10 | 1.3001 | 0 | 3.4573 | 0.0000 | 0.0000 | 0.2935 | 0.2935 | +0.0095 | +0.0494 |
+| 11 | 2.6239 | 0 | 3.4522 | 0.0000 | 0.0000 | 0.3077 | 0.3077 | +0.0084 | +0.0887 |
+
+The ceiling for the intervention rate here is `1 - k/N` = **0.7500**, and uniform
+top-k mass is `k/N` = **0.2500**.
+
+**The headline is a negative result, and it is the one worth having.** This model does not
+reproduce the published fault. With the bias on, the highest per-slot intervention rate is
+**0.3951** at layer 2, against a ceiling of
+0.7500 — the bias moves a real share of the choices but nowhere near all of them. More
+telling, the lowest selected top-k mass is **0.2855** at layer
+9, well above the 0.2500 a router with no preference would give. The
+experts that ran are experts the router actually wanted. That is what a healthy layer looks
+like on these metrics, and having it measured is what makes the unhealthy case legible.
+
+**Turning balancing off is the contrast.** Intervention falls to exactly 0.0000 in every
+layer, because with no bias the chosen set *is* the router's own — a useful check that the
+metric measures what it claims. Mean MaxVio rises 4.1x
+(0.5173 to 2.1420) and
+25 experts die, and they are concentrated at the top of the stack — 19 in layer 0; 1 in layer 1; 4 in layer 2; 1 in layer 3.
+
+**And MaxVio has a ceiling of its own, which is why it stops being informative.** With N = 32 experts a layer and top-8 routing, the load is at its most uneven when k experts take everything, giving MaxVio = N/k - 1 = **3.0** — exactly the value layers 0 to 3 report. A metric sitting at its maximum cannot tell a bad layer from a worse one, and the published fault was found in a model whose *average* MaxVio read a healthy 0.31. That is the argument for carrying all five numbers per layer rather than one averaged over the stack.
+
+**The ablations say layer 0 is not like the others.** Deleting its routed experts costs
+**+2.6421** nats, against
++0.0308 to +0.0834
+for every other layer. Random routing there costs
++0.1282 with the bias on and
++0.7539 with it off. The first layer does the most work and is the most sensitive to how it is routed,
+which is also where the published fault was found — worth watching per layer, not on
+an average.
 
 ## Files
 

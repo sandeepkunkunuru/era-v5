@@ -12,9 +12,20 @@ that can is the top-k intervention rate: the share of choices the bias changes.
 
     dead_fraction          experts that received no tokens
     router_entropy         how strongly the router prefers some experts, in nats
-    intervention_rate      share of positions where (scores + bias) picks a different set
+    intervention_rate      share of chosen expert SLOTS that the router would not have
+                           chosen -- per slot, not per token (see below)
+    set_change_rate        share of tokens whose chosen SET differs at all, for contrast
     intrinsic_topk_mass    router probability mass on the router's OWN first k choices
     selected_topk_mass     router probability mass on the experts actually used
+
+The intervention rate has to be counted per slot, not per token. If the bias picked a
+k-subset at random, independent of the router, the expected overlap with the router's own
+top-k is k*k/N, so the expected per-slot intervention is exactly 1 - k/N -- which is the
+ceiling the reference model's 98.5% is read against (1 - 6/384 = 98.4%). Counted per
+token instead, "the set changed at all" saturates near 1 for any non-zero bias and has no
+such bound, so it cannot be compared to that ceiling at all. Both are reported here
+because the contrast is the point: a high set-change rate is normal, a high per-slot
+intervention rate is not.
 
 When selected mass falls to k/N the router has no preference at all for what was run, and
 intervention near 1 - k/N means the bias is choosing everything. Those two together are
@@ -41,7 +52,8 @@ class Probe:
         self.load = torch.zeros(self.N)
         self.n = 0
         self.ent = 0.0
-        self.interv = 0
+        self.interv = 0.0
+        self.changed = 0
         self.intr_mass = 0.0
         self.sel_mass = 0.0
 
@@ -53,10 +65,14 @@ class Probe:
             chosen = (scores + bias).topk(self.k, dim=-1).indices
             intrinsic = scores.topk(self.k, dim=-1).indices
 
-            # Intervention: the bias changed the SET, not merely the order within it.
             a = torch.zeros_like(scores, dtype=torch.bool).scatter_(1, chosen, True)
             b = torch.zeros_like(a).scatter_(1, intrinsic, True)
-            self.interv += int((a != b).any(dim=1).sum())
+            # Per slot: how many of the k experts actually run were not the router's own
+            # choices. This is the quantity with a 1 - k/N ceiling.
+            overlap = (a & b).sum(dim=1).float()
+            self.interv += float((1.0 - overlap / self.k).sum())
+            # Per token: did the set change at all. No ceiling; reported for contrast.
+            self.changed += int((a != b).any(dim=1).sum())
 
             self.load += torch.bincount(chosen.reshape(-1).cpu(),
                                         minlength=self.N).float()
@@ -78,6 +94,7 @@ class Probe:
             entropy_uniform=round(float(torch.log(torch.tensor(float(self.N)))), 4),
             intervention_rate=round(self.interv / n, 4),
             intervention_ceiling=round(1 - self.k / self.N, 4),
+            set_change_rate=round(self.changed / n, 4),
             intrinsic_topk_mass=round(self.intr_mass / n, 4),
             selected_topk_mass=round(self.sel_mass / n, 4),
             uniform_topk_mass=round(self.k / self.N, 6),

@@ -140,11 +140,16 @@ CELLS = [
          "    print(f\"  {r['rule']:38s} found {r['found']:2d}  false/10k {r['per_10k']:8.2f}\")",
          "rt = R.get('routing')",
          "if rt and rt.get('arms'):",
+         "    ceil = rt['arms'][0]['per_layer'][0]['intervention_ceiling']",
+         "    unif = rt['arms'][0]['per_layer'][0]['uniform_topk_mass']",
+         "    print(f'  per-slot intervention ceiling 1-k/N = {ceil:.4f} "
+         "· uniform top-k mass k/N = {unif:.4f}')",
          "    for a in rt['arms']:",
          "        iv = [p['intervention_rate'] for p in a['per_layer']]",
+         "        sel = [p['selected_topk_mass'] for p in a['per_layer']]",
          "        print(f\"  balance={a['balance']:5s} MaxVio {a['mean_maxvio']:.4f} \"",
-         "              f\"dead {a['dead_total']:3d} intervention min {min(iv):.3f} \"",
-         "              f\"max {max(iv):.3f}\")"),
+         "              f\"dead {a['dead_total']:3d} interv/slot {min(iv):.3f}-{max(iv):.3f} \"",
+         "              f\"min selected mass {min(sel):.3f}\")"),
 
     md("## What to take away",
        "",
