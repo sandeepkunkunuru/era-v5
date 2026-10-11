@@ -1,0 +1,390 @@
+{
+  "quick": false,
+  "torch": "2.12.1+cu130",
+  "device": "cpu",
+  "gpu": "cpu",
+  "stages": [
+    5
+  ],
+  "started": "2026-10-11 19:56:44",
+  "detectors": {
+    "grad_norm": [
+      {
+        "found": 21,
+        "missed": 19,
+        "false_alarms": 0,
+        "alarms": 21,
+        "rule": "fixed 5.0",
+        "curve": "grad_norm",
+        "per_10k": 0.0,
+        "seconds": 0.0
+      },
+      {
+        "found": 40,
+        "missed": 0,
+        "false_alarms": 0,
+        "alarms": 40,
+        "rule": "OLMo 2 spike score (7 sigma / 1,000)",
+        "curve": "grad_norm",
+        "per_10k": 0.0,
+        "seconds": 0.34
+      },
+      {
+        "found": 40,
+        "missed": 0,
+        "false_alarms": 6057,
+        "alarms": 6130,
+        "rule": "ZClip EMA z (alpha 0.97, z 2.5)",
+        "curve": "grad_norm",
+        "per_10k": 201.9,
+        "seconds": 0.23
+      },
+      {
+        "found": 0,
+        "missed": 40,
+        "false_alarms": 0,
+        "alarms": 0,
+        "rule": "Megatron ratio to max (10x)",
+        "curve": "grad_norm",
+        "per_10k": 0.0,
+        "seconds": 0.05
+      }
+    ],
+    "ema_z_sweep": [
+      {
+        "found": 40,
+        "missed": 0,
+        "false_alarms": 6057,
+        "alarms": 6130,
+        "z": 2.5,
+        "per_10k": 201.9
+      },
+      {
+        "found": 40,
+        "missed": 0,
+        "false_alarms": 1724,
+        "alarms": 1782,
+        "z": 3.0,
+        "per_10k": 57.47
+      },
+      {
+        "found": 40,
+        "missed": 0,
+        "false_alarms": 163,
+        "alarms": 212,
+        "z": 4.0,
+        "per_10k": 5.43
+      },
+      {
+        "found": 40,
+        "missed": 0,
+        "false_alarms": 13,
+        "alarms": 55,
+        "z": 5.0,
+        "per_10k": 0.43
+      },
+      {
+        "found": 40,
+        "missed": 0,
+        "false_alarms": 1,
+        "alarms": 41,
+        "z": 6.0,
+        "per_10k": 0.03
+      },
+      {
+        "found": 40,
+        "missed": 0,
+        "false_alarms": 0,
+        "alarms": 40,
+        "z": 8.0,
+        "per_10k": 0.0
+      }
+    ],
+    "loss": [
+      {
+        "found": 21,
+        "missed": 19,
+        "false_alarms": 14882,
+        "alarms": 14927,
+        "rule": "fixed 5.0",
+        "curve": "loss",
+        "per_10k": 496.07,
+        "seconds": 0.0
+      },
+      {
+        "found": 40,
+        "missed": 0,
+        "false_alarms": 0,
+        "alarms": 54,
+        "rule": "OLMo 2 spike score (7 sigma / 1,000)",
+        "curve": "loss",
+        "per_10k": 0.0,
+        "seconds": 0.34
+      },
+      {
+        "found": 40,
+        "missed": 0,
+        "false_alarms": 2787,
+        "alarms": 2957,
+        "rule": "ZClip EMA z (alpha 0.97, z 2.5)",
+        "curve": "loss",
+        "per_10k": 92.9,
+        "seconds": 0.23
+      },
+      {
+        "found": 0,
+        "missed": 40,
+        "false_alarms": 0,
+        "alarms": 0,
+        "rule": "Megatron ratio to max (10x)",
+        "curve": "loss",
+        "per_10k": 0.0,
+        "seconds": 0.05
+      }
+    ],
+    "steps": 300000
+  },
+  "downsampling": {
+    "steps": 300000,
+    "width": 2000,
+    "height": 600,
+    "rows": [
+      {
+        "method": "mean",
+        "points": 2000,
+        "wrong_pixels": 28475,
+        "of_pixels": 31259,
+        "peak_error": 4.7619,
+        "note": "one value a column"
+      },
+      {
+        "method": "min/max",
+        "points": 2000,
+        "wrong_pixels": 13110,
+        "of_pixels": 31259,
+        "peak_error": 0.0,
+        "note": "same point budget"
+      },
+      {
+        "method": "M4",
+        "points": 1992,
+        "wrong_pixels": 19452,
+        "of_pixels": 31259,
+        "peak_error": 0.0,
+        "note": "same point budget"
+      },
+      {
+        "method": "LTTB",
+        "points": 2000,
+        "wrong_pixels": 10462,
+        "of_pixels": 31259,
+        "peak_error": 0.0,
+        "note": "same point budget"
+      },
+      {
+        "method": "min/max per column",
+        "points": 4000,
+        "wrong_pixels": 3019,
+        "of_pixels": 31259,
+        "peak_error": 0.0,
+        "note": "2 a column"
+      },
+      {
+        "method": "M4 per column",
+        "points": 7953,
+        "wrong_pixels": 0,
+        "of_pixels": 31259,
+        "peak_error": 0.0,
+        "note": "<=4 a column, as published"
+      }
+    ],
+    "spikes_planted": 40
+  },
+  "seconds": 104.2,
+  "misload": {
+    "sweep": [
+      {
+        "frac": 1.0,
+        "tensors_misnamed": 88,
+        "params_random": 21538176,
+        "loss": 5.6052,
+        "gap": 4.4327
+      },
+      {
+        "frac": 0.5,
+        "tensors_misnamed": 44,
+        "params_random": 9737856,
+        "loss": 6.2643,
+        "gap": 5.0918
+      },
+      {
+        "frac": 0.25,
+        "tensors_misnamed": 22,
+        "params_random": 5802240,
+        "loss": 4.0866,
+        "gap": 2.914
+      },
+      {
+        "frac": 0.1,
+        "tensors_misnamed": 9,
+        "params_random": 2114688,
+        "loss": 1.9704,
+        "gap": 0.7978
+      },
+      {
+        "frac": 0.05,
+        "tensors_misnamed": 4,
+        "params_random": 787200,
+        "loss": 1.4313,
+        "gap": 0.2588
+      },
+      {
+        "frac": 0.02,
+        "tensors_misnamed": 2,
+        "params_random": 393600,
+        "loss": 1.2923,
+        "gap": 0.1198
+      }
+    ],
+    "batch_noise_sigma": 0.0924,
+    "broken_loss": 5.6164,
+    "correct_loss": 1.1726,
+    "gap": 4.4439,
+    "missing_keys": 88,
+    "unexpected_keys": 88,
+    "state_unchanged_by_load": true,
+    "params_broken": 21538176,
+    "params_correct": 21538176,
+    "cheap_checks": {
+      "checkpoint file exists": true,
+      "checkpoint is the right size": true,
+      "the model load returns without error": true,
+      "parameter count looks right": true,
+      "training starts and the loss is finite": true
+    },
+    "strict_load_catches": true,
+    "target_keyspace_catches": true,
+    "cookbook_reference": {
+      "broken": 2.95,
+      "correct": 2.55,
+      "gap": 0.4,
+      "source": "LightningLM cookbook \u00a77.2"
+    }
+  },
+  "freezing": {
+    "decay_on_frozen": {
+      "steps": 20,
+      "lr": 0.001,
+      "weight_decay": 0.1,
+      "max_abs_drift": 0.00017801,
+      "relative": 0.001998,
+      "hash_before": "df11b063295bbb7e",
+      "hash_after": "0cce92b032bd97f8",
+      "hash_catches": true,
+      "predicted_shrink": 0.001998,
+      "fixed_drift": 0.0,
+      "fixed_hash_stable": true
+    },
+    "zero_grad_all_trainable": {
+      "embedding": {
+        "tensors": 2,
+        "params": 294912,
+        "trainable_without_grad": 0,
+        "zero_grad_elements": 0,
+        "zero_grad_share": 0.0
+      },
+      "attention": {
+        "tensors": 24,
+        "params": 7077888,
+        "trainable_without_grad": 0,
+        "zero_grad_elements": 0,
+        "zero_grad_share": 0.0
+      },
+      "experts": {
+        "tensors": 36,
+        "params": 56623104,
+        "trainable_without_grad": 0,
+        "zero_grad_elements": 6930432,
+        "zero_grad_share": 0.1224
+      },
+      "router": {
+        "tensors": 12,
+        "params": 147456,
+        "trainable_without_grad": 0,
+        "zero_grad_elements": 0,
+        "zero_grad_share": 0.0
+      },
+      "norms": {
+        "tensors": 25,
+        "params": 9600,
+        "trainable_without_grad": 0,
+        "zero_grad_elements": 0,
+        "zero_grad_share": 0.0
+      }
+    },
+    "zero_grad_experts_only": {
+      "embedding": {
+        "tensors": 2,
+        "params": 294912,
+        "trainable_without_grad": 0,
+        "zero_grad_elements": 0,
+        "zero_grad_share": 0.0
+      },
+      "attention": {
+        "tensors": 24,
+        "params": 7077888,
+        "trainable_without_grad": 0,
+        "zero_grad_elements": 0,
+        "zero_grad_share": 0.0
+      },
+      "experts": {
+        "tensors": 36,
+        "params": 56623104,
+        "trainable_without_grad": 0,
+        "zero_grad_elements": 6930432,
+        "zero_grad_share": 0.1224
+      },
+      "router": {
+        "tensors": 12,
+        "params": 147456,
+        "trainable_without_grad": 0,
+        "zero_grad_elements": 0,
+        "zero_grad_share": 0.0
+      },
+      "norms": {
+        "tensors": 25,
+        "params": 9600,
+        "trainable_without_grad": 0,
+        "zero_grad_elements": 0,
+        "zero_grad_share": 0.0
+      }
+    },
+    "grad_norm": {
+      "all_trainable": 12.1989,
+      "experts_only": 0.5579,
+      "ratio": 0.0457,
+      "note": "the clip limit and the alarm band are set on this number, so freezing moves both"
+    },
+    "memory": {
+      "trainable_params": 56770560,
+      "frozen_params": 7382400,
+      "bytes_trained": 908328960,
+      "bytes_frozen": 14764800,
+      "total_bytes": 923093760,
+      "all_trainable_bytes": 1026447360
+    },
+    "memory_experts_frozen": {
+      "trainable_params": 7529856,
+      "frozen_params": 56623104,
+      "bytes_trained": 120477696,
+      "bytes_frozen": 113246208,
+      "total_bytes": 233723904,
+      "all_trainable_bytes": 1026447360
+    },
+    "frozen_hash_after_5_steps": {
+      "checked": 51,
+      "moved": 0,
+      "moved_names": []
+    }
+  }
+}

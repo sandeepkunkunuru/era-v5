@@ -1,0 +1,116 @@
+{
+  "decay_on_frozen": {
+    "steps": 20,
+    "lr": 0.001,
+    "weight_decay": 0.1,
+    "max_abs_drift": 0.00017801,
+    "relative": 0.001998,
+    "hash_before": "df11b063295bbb7e",
+    "hash_after": "0cce92b032bd97f8",
+    "hash_catches": true,
+    "predicted_shrink": 0.001998,
+    "fixed_drift": 0.0,
+    "fixed_hash_stable": true
+  },
+  "zero_grad_all_trainable": {
+    "embedding": {
+      "tensors": 2,
+      "params": 294912,
+      "trainable_without_grad": 0,
+      "zero_grad_elements": 0,
+      "zero_grad_share": 0.0
+    },
+    "attention": {
+      "tensors": 24,
+      "params": 7077888,
+      "trainable_without_grad": 0,
+      "zero_grad_elements": 0,
+      "zero_grad_share": 0.0
+    },
+    "experts": {
+      "tensors": 36,
+      "params": 56623104,
+      "trainable_without_grad": 0,
+      "zero_grad_elements": 6930432,
+      "zero_grad_share": 0.1224
+    },
+    "router": {
+      "tensors": 12,
+      "params": 147456,
+      "trainable_without_grad": 0,
+      "zero_grad_elements": 0,
+      "zero_grad_share": 0.0
+    },
+    "norms": {
+      "tensors": 25,
+      "params": 9600,
+      "trainable_without_grad": 0,
+      "zero_grad_elements": 0,
+      "zero_grad_share": 0.0
+    }
+  },
+  "zero_grad_experts_only": {
+    "embedding": {
+      "tensors": 2,
+      "params": 294912,
+      "trainable_without_grad": 0,
+      "zero_grad_elements": 0,
+      "zero_grad_share": 0.0
+    },
+    "attention": {
+      "tensors": 24,
+      "params": 7077888,
+      "trainable_without_grad": 0,
+      "zero_grad_elements": 0,
+      "zero_grad_share": 0.0
+    },
+    "experts": {
+      "tensors": 36,
+      "params": 56623104,
+      "trainable_without_grad": 0,
+      "zero_grad_elements": 6930432,
+      "zero_grad_share": 0.1224
+    },
+    "router": {
+      "tensors": 12,
+      "params": 147456,
+      "trainable_without_grad": 0,
+      "zero_grad_elements": 0,
+      "zero_grad_share": 0.0
+    },
+    "norms": {
+      "tensors": 25,
+      "params": 9600,
+      "trainable_without_grad": 0,
+      "zero_grad_elements": 0,
+      "zero_grad_share": 0.0
+    }
+  },
+  "grad_norm": {
+    "all_trainable": 12.1989,
+    "experts_only": 0.5579,
+    "ratio": 0.0457,
+    "note": "the clip limit and the alarm band are set on this number, so freezing moves both"
+  },
+  "memory": {
+    "trainable_params": 56770560,
+    "frozen_params": 7382400,
+    "bytes_trained": 908328960,
+    "bytes_frozen": 14764800,
+    "total_bytes": 923093760,
+    "all_trainable_bytes": 1026447360
+  },
+  "memory_experts_frozen": {
+    "trainable_params": 7529856,
+    "frozen_params": 56623104,
+    "bytes_trained": 120477696,
+    "bytes_frozen": 113246208,
+    "total_bytes": 233723904,
+    "all_trainable_bytes": 1026447360
+  },
+  "frozen_hash_after_5_steps": {
+    "checked": 51,
+    "moved": 0,
+    "moved_names": []
+  }
+}

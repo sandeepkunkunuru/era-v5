@@ -1,0 +1,53 @@
+Session 15 stability harness · torch 2.12.1+cu130 · NVIDIA GeForce RTX 4050 Laptop GPU · quick · stages [5]
+
+== 5. routing health · 400,000 tokens a run, device cuda
+Session 15 stability harness · torch 2.12.1+cu130 · NVIDIA GeForce RTX 4050 Laptop GPU · full · stages [1, 2]
+
+== 1. spike detectors · 300,000 steps, 40 planted spikes
+
+   on the grad_norm: median 0.469, max 20.83
+   rule                                    found  missed   false  false/10k
+   fixed 5.0                                  21      19       0       0.00
+   OLMo 2 spike score (7 sigma / 1,000)       40       0       0       0.00
+   ZClip EMA z (alpha 0.97, z 2.5)            40       0    6057     201.90
+   Megatron ratio to max (10x)                 0      40       0       0.00
+
+   ZClip EMA z-score, sweeping the threshold
+       z  found  missed   false  false/10k
+     2.5     40       0    6057     201.90
+     3.0     40       0    1724      57.47
+     4.0     40       0     163       5.43
+     5.0     40       0      13       0.43
+     6.0     40       0       1       0.03
+     8.0     40       0       0       0.00
+
+   on the loss: median 2.044, max 15.55
+   rule                                    found  missed   false  false/10k
+   fixed 5.0                                  21      19   14882     496.07
+   OLMo 2 spike score (7 sigma / 1,000)       40       0       0       0.00
+   ZClip EMA z (alpha 0.97, z 2.5)            40       0    2787      92.90
+   Megatron ratio to max (10x)                 0      40       0       0.00
+
+== 2. downsampling · 300,000 steps onto 2000 pixels (150 steps a column), rasterised 2000x600
+   method                  points  wrong px        of  peak error note
+   mean                     2,000    28,475    31,259      4.7619  one value a column
+   min/max                  2,000    13,110    31,259      0.0000  same point budget
+   M4                       1,992    19,452    31,259      0.0000  same point budget
+   LTTB                     2,000    10,462    31,259      0.0000  same point budget
+   min/max per column       4,000     3,019    31,259      0.0000  2 a column
+   M4 per column            7,953         0    31,259      0.0000  <=4 a column, as published
+
+done in 3s
+Session 15 stability harness · torch 2.12.1+cu130 · NVIDIA GeForce RTX 4050 Laptop GPU · full · stages [3, 4]
+
+== 3. the silent checkpoint misload
+
+== 4. freezing: the constraints that break without an error
+
+done in 104s
+Session 15 stability harness · torch 2.12.1+cu130 · cpu · full · stages [5]
+
+== 5. routing health · 800,000 tokens a run, device cpu
+Session 15 stability harness · torch 2.12.1+cu130 · cpu · full · stages [5]
+
+== 5. routing health · 800,000 tokens a run, device cpu

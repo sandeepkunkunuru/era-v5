@@ -14,6 +14,7 @@ dist/
 !session-12-zero/run.log
 !session-13-reversibility/run.log
 !session-14-moe/run.log
+!session-15-stability/run.log
 # console captures duplicate run.log
 *.out
 

@@ -149,8 +149,10 @@ def run(net, tag, tokens, batch, accum=1, lr=LR, mon_last=0.2):
                    dead=st["dead"], dead_of=st["dead_total"],
                    balance=cfg.balance, scope=cfg.scope,
                    layer0_share=[round(v, 5) for v in st["per_layer_share"][0]])
-    log(f"[{tag}] done: val {row['val_loss']} · {row['tokens_per_s']:,} tok/s · "
-        f"{row['peak_mem_mib']:,} MiB peak" +
+    # peak_mem_mib is None off CUDA, and ",d" on None raises -- so a CPU run used to die
+    # here, after the training had finished, which is the worst possible place for it.
+    peak = f"{row['peak_mem_mib']:,} MiB peak" if row["peak_mem_mib"] is not None else "cpu"
+    log(f"[{tag}] done: val {row['val_loss']} · {row['tokens_per_s']:,} tok/s · " + peak +
         (f" · MaxVio {row['maxvio']} · {row['dead']}/{row['dead_of']} dead" if cfg.moe else ""))
     return row
 
